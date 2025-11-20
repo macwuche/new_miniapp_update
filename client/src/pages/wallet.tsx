@@ -1,14 +1,27 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Wallet, ShieldCheck, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer";
+import { Wallet, ShieldCheck, ArrowRight, Loader2, CheckCircle2, Globe } from "lucide-react";
 import { useState } from "react";
+
+const WALLETS = [
+  { name: "Wallet Connect", url: "walletconnect.com", color: "bg-blue-600" },
+  { name: "Onchain", url: "onchain.com", color: "bg-indigo-500" },
+  { name: "Trust Wallet", url: "trustwallet.com", color: "bg-blue-400" },
+  { name: "MetaMask", url: "metamask.io", color: "bg-orange-500" },
+  { name: "Blockchain", url: "blockchain.com", color: "bg-purple-600" },
+  { name: "Phantom", url: "phantom.app", color: "bg-purple-500" },
+  { name: "Coinbase", url: "coinbase.com", color: "bg-blue-700" },
+];
 
 export default function WalletPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleConnect = () => {
+  const handleConnect = (walletName: string) => {
+    setIsOpen(false);
     setIsConnecting(true);
     // Simulate connection delay
     setTimeout(() => {
@@ -35,50 +48,58 @@ export default function WalletPage() {
                  </div>
                  <h3 className="text-xl font-bold mb-2">No Wallet Connected</h3>
                  <p className="text-blue-100 text-sm mb-6 max-w-[200px]">
-                   Connect your TON or Ethereum wallet to deposit funds.
+                   Connect your crypto wallet to deposit funds and start trading.
                  </p>
                  
-                 <Button 
-                   onClick={handleConnect}
-                   className="bg-white text-blue-600 hover:bg-blue-50 font-bold w-full shadow-lg shadow-blue-900/20 h-12 rounded-xl"
-                   disabled={isConnecting}
-                 >
-                   {isConnecting ? (
-                     <>
-                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                       Connecting...
-                     </>
-                   ) : (
-                     "Connect Wallet"
-                   )}
-                 </Button>
+                 <Drawer open={isOpen} onOpenChange={setIsOpen}>
+                   <DrawerTrigger asChild>
+                     <Button 
+                       className="bg-white text-blue-600 hover:bg-blue-50 font-bold w-full shadow-lg shadow-blue-900/20 h-12 rounded-xl"
+                       disabled={isConnecting}
+                     >
+                       {isConnecting ? (
+                         <>
+                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                           Connecting...
+                         </>
+                       ) : (
+                         "Connect Wallet"
+                       )}
+                     </Button>
+                   </DrawerTrigger>
+                   <DrawerContent className="h-[85vh]">
+                     <div className="mx-auto w-full max-w-sm">
+                       <DrawerHeader>
+                         <DrawerTitle className="text-2xl font-bold text-center">Choose Wallet</DrawerTitle>
+                         <DrawerDescription className="text-center">Select a wallet to connect to the platform</DrawerDescription>
+                       </DrawerHeader>
+                       <div className="p-4 overflow-y-auto h-full pb-20">
+                         <div className="flex flex-col gap-3">
+                           {WALLETS.map((wallet) => (
+                             <button 
+                               key={wallet.name}
+                               onClick={() => handleConnect(wallet.name)}
+                               className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 active:scale-[0.98] transition-all text-left"
+                             >
+                               <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0`}>
+                                 {wallet.name[0]}
+                               </div>
+                               <div className="flex-1 min-w-0">
+                                 <div className="flex items-center justify-between">
+                                   <h4 className="font-bold text-gray-900 text-base truncate">{wallet.name}</h4>
+                                 </div>
+                                 <p className="text-sm text-gray-500 font-medium truncate">{wallet.url}</p>
+                               </div>
+                               <ArrowRight size={20} className="text-gray-300" />
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+                     </div>
+                   </DrawerContent>
+                 </Drawer>
                </div>
             </Card>
-
-            <div className="mt-8">
-              <h4 className="font-bold text-gray-900 mb-4">Supported Wallets</h4>
-              <div className="space-y-3">
-                {[
-                  { name: "Tonkeeper", color: "bg-blue-400" },
-                  { name: "MetaMask", color: "bg-orange-500" },
-                  { name: "WalletConnect", color: "bg-blue-600" }
-                ].map((wallet) => (
-                  <button 
-                    key={wallet.name} 
-                    onClick={handleConnect}
-                    className="w-full flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl ${wallet.color} flex items-center justify-center text-white font-bold text-xs`}>
-                        {wallet.name[0]}
-                      </div>
-                      <span className="font-medium text-gray-900">{wallet.name}</span>
-                    </div>
-                    <ArrowRight size={20} className="text-gray-300" />
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         ) : (
           <div className="space-y-6">
