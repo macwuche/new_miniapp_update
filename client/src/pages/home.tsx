@@ -81,12 +81,14 @@ export default function Home() {
                   <span className="text-xs font-medium">Deposit</span>
                 </button>
               </Link>
-              <button className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
-                <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
-                  <ArrowUpRight size={20} strokeWidth={2.5} />
-                </div>
-                <span className="text-xs font-medium">Withdraw</span>
-              </button>
+              <Link href="/withdraw">
+                <button className="w-full group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
+                  <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
+                    <ArrowUpRight size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xs font-medium">Withdraw</span>
+                </button>
+              </Link>
               <Link href="/trade">
                 <button className="w-full group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
                   <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
