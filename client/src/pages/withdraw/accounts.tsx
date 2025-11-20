@@ -87,14 +87,16 @@ export default function PaymentAccounts() {
                     <Label className="text-sm font-bold text-gray-700">
                       Currency
                     </Label>
-                    <Select defaultValue="USD">
+                    <Select defaultValue="BTC">
                       <SelectTrigger className="h-11 rounded-lg border-gray-200 bg-white">
                         <SelectValue placeholder="Currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
+                        <SelectItem value="BTC">BTC</SelectItem>
+                        <SelectItem value="ETH">ETH</SelectItem>
+                        <SelectItem value="USDT">USDT</SelectItem>
+                        <SelectItem value="TRX">TRX</SelectItem>
+                        <SelectItem value="SOL">SOL</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
