@@ -3,8 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function PaymentAccounts() {
+  const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
+
   return (
     <MobileLayout>
       <div className="min-h-screen bg-gray-50 pb-24">
@@ -43,12 +50,82 @@ export default function PaymentAccounts() {
                 Please add a crypto address(s) to your accounts that you'd like to withdraw funds.
               </p>
 
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold border-none shadow-md shadow-yellow-500/20 h-10 px-6 rounded-lg">
+              <Button 
+                className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold border-none shadow-md shadow-yellow-500/20 h-10 px-6 rounded-lg"
+                onClick={() => setIsAddAccountOpen(true)}
+              >
                 Add Account
               </Button>
             </div>
           </Card>
         </div>
+
+        {/* Add Account Dialog */}
+        <Dialog open={isAddAccountOpen} onOpenChange={setIsAddAccountOpen}>
+          <DialogContent className="sm:max-w-md rounded-xl w-[95%] p-0 overflow-hidden bg-white">
+            <DialogHeader className="p-6 pb-4 border-b border-gray-100">
+              <DialogTitle className="text-xl font-bold text-gray-900">Add a Crypto Account</DialogTitle>
+              <DialogDescription className="text-sm text-gray-500 mt-1">
+                Add a Crypto withdrawal account to withdraw your funds.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                {/* Email & Currency Row */}
+                <div className="flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label className="text-sm font-bold text-gray-700">
+                      Your account email address <span className="text-red-500">*</span>
+                    </Label>
+                    <Input 
+                      placeholder="Enter email address" 
+                      className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="w-28 space-y-2">
+                    <Label className="text-sm font-bold text-gray-700">
+                      Currency
+                    </Label>
+                    <Select defaultValue="USD">
+                      <SelectTrigger className="h-11 rounded-lg border-gray-200 bg-white">
+                        <SelectValue placeholder="Currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 italic -mt-4">
+                  You can easily identify your account using the provided Email.
+                </p>
+
+                {/* Wallet Address */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold text-gray-700">
+                    Crypto Wallet Address (BTC/USDT)
+                  </Label>
+                  <Input 
+                    placeholder="btcxxxxxxxxxxxxxxxxxxxxxxxxxxxx5c" 
+                    className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-400 italic pt-1">
+                    . The system wont process Your payout if you leave blank.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 pt-2 border-t border-gray-50">
+              <Button className="bg-blue-400 hover:bg-blue-500 text-white font-bold h-11 px-6 rounded-lg shadow-sm w-auto min-w-[140px]">
+                Add Account
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </MobileLayout>
   );
