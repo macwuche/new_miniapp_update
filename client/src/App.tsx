@@ -10,6 +10,7 @@ import Profile from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
 import ConnectWallet from "@/pages/connect-wallet";
 import Deposit from "@/pages/deposit";
+import Trade from "@/pages/trade";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/wallet" component={WalletPage} />
       <Route path="/connect-wallet" component={ConnectWallet} />
       <Route path="/deposit" component={Deposit} />
+      <Route path="/trade" component={Trade} />
       <Route path="/portfolio" component={Home} /> {/* Reuse home for now as placeholder */}
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={AdminLogin} />

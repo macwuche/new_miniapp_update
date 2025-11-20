@@ -87,12 +87,14 @@ export default function Home() {
                 </div>
                 <span className="text-xs font-medium">Send</span>
               </button>
-              <button className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
-                <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
-                  <TrendingUp size={20} strokeWidth={2.5} />
-                </div>
-                <span className="text-xs font-medium">Trade</span>
-              </button>
+              <Link href="/trade">
+                <button className="w-full group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
+                  <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
+                    <TrendingUp size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xs font-medium">Trade</span>
+                </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -102,13 +104,17 @@ export default function Home() {
       <div className="px-4 -mt-6 relative z-10 mb-8">
         <Card className="p-4 shadow-xl shadow-gray-200/50 border-none bg-white/95 backdrop-blur-xl rounded-2xl">
           <div className="flex flex-col gap-3">
-            <Button className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-transform active:scale-[0.99]">
-              Trade Now
-            </Button>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-12 rounded-xl border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold hover:border-gray-300">
-                Connect Wallet
+            <Link href="/trade">
+              <Button className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-transform active:scale-[0.99]">
+                Trade Now
               </Button>
+            </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/connect-wallet">
+                <Button variant="outline" className="w-full h-12 rounded-xl border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold hover:border-gray-300">
+                  Connect Wallet
+                </Button>
+              </Link>
               <Button variant="outline" className="h-12 rounded-xl border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold hover:border-gray-300">
                 Investment Account
               </Button>
