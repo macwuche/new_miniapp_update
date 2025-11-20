@@ -6,11 +6,20 @@ import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function TradeConfirm() {
   const [_, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const handleConfirm = () => {
     setIsProcessing(true);
@@ -25,6 +34,11 @@ export default function TradeConfirm() {
         setLocation("/portfolio");
       }, 2000);
     }, 1500);
+  };
+
+  const handleCancelConfirm = () => {
+    setIsCancelDialogOpen(false);
+    setLocation("/");
   };
 
   return (
@@ -110,11 +124,12 @@ export default function TradeConfirm() {
                 )}
               </Button>
               
-              <Link href="/trade">
-                <button className="w-full text-center text-red-500 font-medium text-sm hover:text-red-600 py-2">
-                  Cancel
-                </button>
-              </Link>
+              <button 
+                className="w-full text-center text-red-500 font-medium text-sm hover:text-red-600 py-2"
+                onClick={() => setIsCancelDialogOpen(true)}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -132,6 +147,34 @@ export default function TradeConfirm() {
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent className="rounded-2xl w-[90%] max-w-xs">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-lg">Cancel Investment?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Are you sure if you want to close this investment plan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:justify-center">
+            <Button 
+              variant="destructive" 
+              className="w-full rounded-xl"
+              onClick={handleCancelConfirm}
+            >
+              Yes i want to
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full rounded-xl mt-0"
+              onClick={() => setIsCancelDialogOpen(false)}
+            >
+              Not now
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileLayout>
   );
 }
