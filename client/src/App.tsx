@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Markets from "@/pages/markets";
 import Profile from "@/pages/profile";
+import WalletPage from "@/pages/wallet";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 
@@ -15,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/markets" component={Markets} />
+      <Route path="/wallet" component={WalletPage} />
       <Route path="/portfolio" component={Home} /> {/* Reuse home for now as placeholder */}
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={AdminLogin} />
