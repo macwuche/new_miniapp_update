@@ -131,7 +131,7 @@
     @apply border-border;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground overflow-hidden;
+    @apply font-sans antialiased bg-background text-foreground overflow-x-hidden min-h-screen;
     -webkit-tap-highlight-color: transparent;
   }
   
@@ -142,6 +142,21 @@
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  /* Safe area utilities */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+  
+  /* Prevent iOS input zoom */
+  @media screen and (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 }
 
