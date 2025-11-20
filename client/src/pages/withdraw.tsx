@@ -21,9 +21,11 @@ export default function Withdraw() {
         </p>
 
         <div className="w-full max-w-xs space-y-6">
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20">
-            Add Withdraw Account
-          </Button>
+          <Link href="/withdraw/accounts">
+            <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20">
+              Add Withdraw Account
+            </Button>
+          </Link>
 
           <Link href="/">
             <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">

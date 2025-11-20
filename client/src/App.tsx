@@ -11,6 +11,7 @@ import WalletPage from "@/pages/wallet";
 import ConnectWallet from "@/pages/connect-wallet";
 import Deposit from "@/pages/deposit";
 import Withdraw from "@/pages/withdraw";
+import PaymentAccounts from "@/pages/withdraw/accounts";
 import Trade from "@/pages/trade";
 import TradeConfirm from "@/pages/trade/confirm";
 import AdminLogin from "@/pages/admin/login";
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/connect-wallet" component={ConnectWallet} />
       <Route path="/deposit" component={Deposit} />
       <Route path="/withdraw" component={Withdraw} />
+      <Route path="/withdraw/accounts" component={PaymentAccounts} />
       <Route path="/trade" component={Trade} />
       <Route path="/trade/confirm" component={TradeConfirm} />
       <Route path="/portfolio" component={Home} /> {/* Reuse home for now as placeholder */}
