@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, ChevronDown, Wallet, Settings, Percent } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useState } from "react";
 
 const INVESTMENT_PLANS = [
@@ -36,8 +36,13 @@ const INVESTMENT_PLANS = [
 ];
 
 export default function Trade() {
+  const [_, setLocation] = useLocation();
   const [selectedPlan, setSelectedPlan] = useState(INVESTMENT_PLANS[0]);
   const [amount, setAmount] = useState("100");
+
+  const handleContinue = () => {
+    setLocation("/trade/confirm");
+  };
 
   return (
     <MobileLayout>
@@ -131,7 +136,10 @@ export default function Trade() {
             </div>
 
             {/* Action Button */}
-            <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20 mt-4">
+            <Button 
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20 mt-4"
+              onClick={handleContinue}
+            >
               Continue to Invest
             </Button>
 
