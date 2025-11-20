@@ -3,6 +3,7 @@ import { useTelegram } from "@/lib/telegram-mock";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Wallet, TrendingUp, ArrowRight, DollarSign, Bitcoin } from "lucide-react";
+import { Link } from "wouter";
 import generatedImage from "@assets/generated_images/Abstract_trading_chart_background_with_blue_waves_f608156d.png";
 
 // Simple Sparkline Component
@@ -72,12 +73,14 @@ export default function Home() {
             <h2 className="text-4xl font-black tracking-tight mb-8 drop-shadow-sm">$12,450.00</h2>
             
             <div className="grid grid-cols-3 gap-3">
-              <button className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
-                <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
-                  <Wallet size={20} strokeWidth={2.5} />
-                </div>
-                <span className="text-xs font-medium">Deposit</span>
-              </button>
+              <Link href="/deposit">
+                <button className="w-full group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
+                  <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
+                    <Wallet size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xs font-medium">Deposit</span>
+                </button>
+              </Link>
               <button className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
                 <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
                   <ArrowRight size={20} strokeWidth={2.5} />
