@@ -2,10 +2,11 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Link } from "wouter";
 
 const MARKET_DATA = {
   crypto: [
-    { name: "Bitcoin", symbol: "BTC", price: "94,321.50", change: "+2.4%", isUp: true },
+    { name: "Bitcoin", symbol: "BTC", price: "86,401.25", change: "+0.6%", isUp: true },
     { name: "Ethereum", symbol: "ETH", price: "3,421.20", change: "-0.8%", isUp: false },
     { name: "Solana", symbol: "SOL", price: "145.30", change: "+5.2%", isUp: true },
     { name: "Ripple", symbol: "XRP", price: "1.20", change: "-1.2%", isUp: false },
@@ -48,28 +49,30 @@ export default function Markets() {
           {Object.entries(MARKET_DATA).map(([category, items]) => (
             <TabsContent key={category} value={category} className="space-y-3 mt-0">
               {items.map((asset) => (
-                <div key={asset.symbol} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-transform">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
-                      {asset.symbol.slice(0, 2)}
+                <Link key={asset.symbol} href={`/asset/${asset.symbol}`}>
+                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-transform mb-3 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                        {asset.symbol.slice(0, 2)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">{asset.name}</h4>
+                        <p className="text-xs text-gray-500">{asset.symbol}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900">{asset.name}</h4>
-                      <p className="text-xs text-gray-500">{asset.symbol}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">${asset.price}</p>
+                        <p className={`text-xs font-medium ${asset.isUp ? 'text-green-500' : 'text-red-500'}`}>
+                          {asset.change}
+                        </p>
+                      </div>
+                      <button className="text-gray-300 hover:text-yellow-400" onClick={(e) => e.preventDefault()}>
+                        <Star size={18} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900">${asset.price}</p>
-                      <p className={`text-xs font-medium ${asset.isUp ? 'text-green-500' : 'text-red-500'}`}>
-                        {asset.change}
-                      </p>
-                    </div>
-                    <button className="text-gray-300 hover:text-yellow-400">
-                      <Star size={18} />
-                    </button>
-                  </div>
-                </div>
+                </Link>
               ))}
             </TabsContent>
           ))}

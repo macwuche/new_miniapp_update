@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Markets from "@/pages/markets";
+import AssetDetail from "@/pages/asset-detail";
 import Profile from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
 import ConnectWallet from "@/pages/connect-wallet";
@@ -22,6 +23,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/markets" component={Markets} />
+      <Route path="/asset/:symbol" component={AssetDetail} />
       <Route path="/wallet" component={WalletPage} />
       <Route path="/connect-wallet" component={ConnectWallet} />
       <Route path="/deposit" component={Deposit} />
