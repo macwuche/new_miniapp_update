@@ -45,6 +45,7 @@ export default function Markets() {
       </div>
 
       <div className="px-6 py-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Tradable Assets</h2>
         <Tabs defaultValue="crypto" className="w-full">
           <TabsList className="w-full bg-gray-100/80 p-1.5 rounded-2xl mb-8 h-14 flex gap-1">
             <TabsTrigger 
