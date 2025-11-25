@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Markets from "@/pages/markets";
 import AssetDetail from "@/pages/asset-detail";
+import BotStatus from "@/pages/bot-status";
 import Portfolio from "@/pages/portfolio";
 import PortfolioAssetAction from "@/pages/portfolio/asset-action";
 import Profile from "@/pages/profile";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/markets" component={Markets} />
       <Route path="/asset/:symbol" component={AssetDetail} />
+      <Route path="/asset/:symbol/bot-status" component={BotStatus} />
       <Route path="/wallet" component={WalletPage} />
       <Route path="/connect-wallet" component={ConnectWallet} />
       <Route path="/deposit" component={Deposit} />

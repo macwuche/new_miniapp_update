@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useState } from "react";
+import aiLogo from "@assets/ai (1)_1764071986101.png";
 
 // Mock data for the chart
 const CHART_DATA = [
@@ -27,6 +28,9 @@ export default function AssetDetail() {
   const [match, params] = useRoute("/asset/:symbol");
   const symbol = params?.symbol || "BTC";
   const [selectedTimeframe, setSelectedTimeframe] = useState("LIVE");
+  
+  // Mock bot state (would come from backend/context)
+  const [isBotActive, setIsBotActive] = useState(false);
 
   // Mock asset data based on symbol (simplified)
   const assetData = {
@@ -62,9 +66,21 @@ export default function AssetDetail() {
 
           {/* Price Info */}
           <h1 className="text-4xl font-bold text-gray-900 mb-1 tracking-tight">${assetData.price}</h1>
-          <p className={`text-lg font-medium ${assetData.isUp ? "text-green-500" : "text-red-500"}`}>
+          <p className={`text-lg font-medium ${assetData.isUp ? "text-green-500" : "text-red-500"} mb-4`}>
             {assetData.name} {assetData.change}
           </p>
+
+          {/* AI Trading Bot Indicator */}
+          <Link href={`/asset/${symbol}/bot-status`}>
+            <div className="flex flex-col items-center cursor-pointer group">
+              <div className={`w-12 h-12 transition-all duration-300 ${isBotActive ? 'grayscale-0 scale-110 drop-shadow-md' : 'grayscale opacity-60 hover:opacity-80'}`}>
+                <img src={aiLogo} alt="AI Trading" className="w-full h-full object-contain" />
+              </div>
+              <span className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${isBotActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                AI {isBotActive ? "ON" : "OFF"}
+              </span>
+            </div>
+          </Link>
         </div>
 
         {/* Chart Section */}
