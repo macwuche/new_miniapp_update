@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Markets from "@/pages/markets";
 import AssetDetail from "@/pages/asset-detail";
+import Portfolio from "@/pages/portfolio";
 import Profile from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
 import ConnectWallet from "@/pages/connect-wallet";
@@ -31,7 +32,7 @@ function Router() {
       <Route path="/withdraw/accounts" component={PaymentAccounts} />
       <Route path="/trade" component={Trade} />
       <Route path="/trade/confirm" component={TradeConfirm} />
-      <Route path="/portfolio" component={Home} /> {/* Reuse home for now as placeholder */}
+      <Route path="/portfolio" component={Portfolio} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
