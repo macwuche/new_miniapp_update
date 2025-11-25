@@ -43,21 +43,30 @@ export default function Markets() {
           <TabsList className="w-full bg-gray-100/80 p-1.5 rounded-2xl mb-8 h-14 flex gap-1">
             <TabsTrigger 
               value="crypto" 
-              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 
+                hover:bg-white hover:text-yellow-600
+                data-[state=active]:bg-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-md 
+                transition-all duration-200 flex items-center justify-center gap-2"
             >
               <Bitcoin size={18} strokeWidth={2.5} />
               Crypto
             </TabsTrigger>
             <TabsTrigger 
               value="stocks" 
-              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 
+                hover:bg-white hover:text-[#fe3f26]
+                data-[state=active]:bg-[#fe3f26] data-[state=active]:text-white data-[state=active]:shadow-md 
+                transition-all duration-200 flex items-center justify-center gap-2"
             >
               <TrendingUp size={18} strokeWidth={2.5} />
               Stocks
             </TabsTrigger>
             <TabsTrigger 
               value="forex" 
-              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 
+                hover:bg-white hover:text-[#08937b]
+                data-[state=active]:bg-[#08937b] data-[state=active]:text-white data-[state=active]:shadow-md 
+                transition-all duration-200 flex items-center justify-center gap-2"
             >
               <DollarSign size={18} strokeWidth={2.5} />
               Forex
