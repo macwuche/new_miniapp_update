@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import Markets from "@/pages/markets";
 import AssetDetail from "@/pages/asset-detail";
 import Portfolio from "@/pages/portfolio";
+import PortfolioAssetAction from "@/pages/portfolio/asset-action";
 import Profile from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
 import ConnectWallet from "@/pages/connect-wallet";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/trade" component={Trade} />
       <Route path="/trade/confirm" component={TradeConfirm} />
       <Route path="/portfolio" component={Portfolio} />
+      <Route path="/portfolio/:symbol" component={PortfolioAssetAction} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
