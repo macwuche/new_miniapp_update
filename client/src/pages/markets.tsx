@@ -6,10 +6,11 @@ import { Link } from "wouter";
 
 const MARKET_DATA = {
   crypto: [
-    { name: "Bitcoin", symbol: "BTC", price: "86,401.25", change: "+0.6%", isUp: true },
-    { name: "Ethereum", symbol: "ETH", price: "3,421.20", change: "-0.8%", isUp: false },
-    { name: "Solana", symbol: "SOL", price: "145.30", change: "+5.2%", isUp: true },
-    { name: "Ripple", symbol: "XRP", price: "1.20", change: "-1.2%", isUp: false },
+    { name: "Bitcoin", symbol: "BTC/USDT", price: "86,401.25", change: "+0.6%", isUp: true },
+    { name: "Ethereum", symbol: "ETH/USDT", price: "3,421.20", change: "-0.8%", isUp: false },
+    { name: "Solana", symbol: "SOL/USDT", price: "145.30", change: "+5.2%", isUp: true },
+    { name: "Ripple", symbol: "XRP/USDT", price: "1.20", change: "-1.2%", isUp: false },
+    { name: "ETH/SOL", symbol: "ETH/SOL", price: "23.54", change: "+1.1%", isUp: true },
   ],
   stocks: [
     { name: "Apple Inc.", symbol: "AAPL", price: "182.50", change: "+0.5%", isUp: true },
