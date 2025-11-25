@@ -6,6 +6,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Mock available assets to add
 const AVAILABLE_ASSETS = {
@@ -34,6 +44,21 @@ export default function ManageAssets() {
   const { toast } = useToast();
   const [assets, setAssets] = useState(AVAILABLE_ASSETS);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // State for removal confirmation
+  const [assetToRemove, setAssetToRemove] = useState<{category: keyof typeof AVAILABLE_ASSETS, index: number} | null>(null);
+
+  const handleToggleClick = (category: keyof typeof AVAILABLE_ASSETS, index: number) => {
+    const asset = assets[category][index];
+    
+    if (asset.added) {
+      // If already added, show confirmation to remove
+      setAssetToRemove({ category, index });
+    } else {
+      // If not added, add immediately
+      toggleAsset(category, index);
+    }
+  };
 
   const toggleAsset = (category: keyof typeof AVAILABLE_ASSETS, index: number) => {
     const newAssets = { ...assets };
@@ -46,6 +71,13 @@ export default function ManageAssets() {
       description: `${asset.symbol} has been ${asset.added ? "added to" : "removed from"} your watchlist.`,
       duration: 2000,
     });
+  };
+
+  const confirmRemoval = () => {
+    if (assetToRemove) {
+      toggleAsset(assetToRemove.category, assetToRemove.index);
+      setAssetToRemove(null);
+    }
   };
 
   return (
@@ -107,7 +139,7 @@ export default function ManageAssets() {
                           ? "bg-green-50 text-green-600 hover:bg-green-100" 
                           : "bg-primary text-white hover:bg-primary/90"
                       }`}
-                      onClick={() => toggleAsset(category as keyof typeof AVAILABLE_ASSETS, index)}
+                      onClick={() => handleToggleClick(category as keyof typeof AVAILABLE_ASSETS, index)}
                     >
                       {asset.added ? (
                         <>
@@ -134,6 +166,27 @@ export default function ManageAssets() {
             ))}
           </Tabs>
         </div>
+
+        {/* Removal Confirmation Dialog */}
+        <AlertDialog open={!!assetToRemove} onOpenChange={(open) => !open && setAssetToRemove(null)}>
+          <AlertDialogContent className="rounded-2xl w-[90%] max-w-md bg-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove Asset?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove {assetToRemove ? assets[assetToRemove.category][assetToRemove.index].symbol : ''} from your watchlist?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl border-gray-200">Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
+                onClick={confirmRemoval}
+              >
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MobileLayout>
   );
