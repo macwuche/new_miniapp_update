@@ -1,6 +1,6 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Star, Bitcoin, TrendingUp, DollarSign } from "lucide-react";
+import { Search, Star, Bitcoin, TrendingUp, DollarSign, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 
@@ -29,7 +29,12 @@ export default function Markets() {
   return (
     <MobileLayout>
       <div className="px-6 pt-8 pb-4 bg-white sticky top-0 z-10 border-b border-gray-100">
-        <h1 className="text-2xl font-bold mb-4">Markets</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Markets</h1>
+          <button className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 active:bg-gray-200 transition-colors">
+            <MoreVertical size={24} className="text-gray-600" />
+          </button>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <Input 
