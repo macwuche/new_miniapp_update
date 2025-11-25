@@ -21,11 +21,14 @@ import TradeConfirm from "@/pages/trade/confirm";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 
+import ManageAssets from "@/pages/markets/manage";
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/markets" component={Markets} />
+      <Route path="/markets/manage" component={ManageAssets} />
       <Route path="/asset/:symbol" component={AssetDetail} />
       <Route path="/asset/:symbol/bot-status" component={BotStatus} />
       <Route path="/wallet" component={WalletPage} />
