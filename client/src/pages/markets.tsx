@@ -1,6 +1,6 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Star } from "lucide-react";
+import { Search, Star, Bitcoin, TrendingUp, DollarSign } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 
@@ -40,35 +40,53 @@ export default function Markets() {
 
       <div className="px-6 py-6">
         <Tabs defaultValue="crypto" className="w-full">
-          <TabsList className="w-full bg-gray-100 p-1 rounded-xl mb-6 h-10">
-            <TabsTrigger value="crypto" className="rounded-lg flex-1 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">Crypto</TabsTrigger>
-            <TabsTrigger value="stocks" className="rounded-lg flex-1 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">Stocks</TabsTrigger>
-            <TabsTrigger value="forex" className="rounded-lg flex-1 text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">Forex</TabsTrigger>
+          <TabsList className="w-full bg-gray-100/80 p-1.5 rounded-2xl mb-8 h-14 flex gap-1">
+            <TabsTrigger 
+              value="crypto" 
+              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Bitcoin size={18} strokeWidth={2.5} />
+              Crypto
+            </TabsTrigger>
+            <TabsTrigger 
+              value="stocks" 
+              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <TrendingUp size={18} strokeWidth={2.5} />
+              Stocks
+            </TabsTrigger>
+            <TabsTrigger 
+              value="forex" 
+              className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <DollarSign size={18} strokeWidth={2.5} />
+              Forex
+            </TabsTrigger>
           </TabsList>
 
           {Object.entries(MARKET_DATA).map(([category, items]) => (
-            <TabsContent key={category} value={category} className="space-y-3 mt-0">
+            <TabsContent key={category} value={category} className="space-y-3 mt-0 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
               {items.map((asset) => (
                 <Link key={asset.symbol} href={`/asset/${asset.symbol}`}>
-                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-transform mb-3 cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors">
                         {asset.symbol.slice(0, 2)}
                       </div>
                       <div>
-                        <h4 className="font-bold text-gray-900">{asset.name}</h4>
-                        <p className="text-xs text-gray-500">{asset.symbol}</p>
+                        <h4 className="font-bold text-gray-900 text-base">{asset.name}</h4>
+                        <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-gray-900">${asset.price}</p>
-                        <p className={`text-xs font-medium ${asset.isUp ? 'text-green-500' : 'text-red-500'}`}>
+                        <p className="font-bold text-gray-900 text-base">${asset.price}</p>
+                        <p className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${asset.isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                           {asset.change}
                         </p>
                       </div>
-                      <button className="text-gray-300 hover:text-yellow-400" onClick={(e) => e.preventDefault()}>
-                        <Star size={18} />
+                      <button className="text-gray-300 hover:text-yellow-400 transition-colors" onClick={(e) => e.preventDefault()}>
+                        <Star size={20} />
                       </button>
                     </div>
                   </div>
