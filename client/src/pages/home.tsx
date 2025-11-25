@@ -102,31 +102,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Quick Actions / Inline Keyboard Simulation */}
-      <div className="px-4 -mt-6 relative z-10 mb-8">
-        <Card className="p-4 shadow-xl shadow-gray-200/50 border-none bg-white/95 backdrop-blur-xl rounded-2xl">
-          <div className="flex flex-col gap-3">
-            <Link href="/trade">
-              <Button className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-transform active:scale-[0.99]">
-                Trade Now
-              </Button>
-            </Link>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/connect-wallet">
-                <Button variant="outline" className="w-full h-12 rounded-xl border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold hover:border-gray-300">
-                  Connect Wallet
-                </Button>
-              </Link>
-              <Button variant="outline" className="h-12 rounded-xl border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold hover:border-gray-300">
-                Investment Account
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-
       {/* Featured Assets */}
-      <div className="px-6 mb-6">
+      <div className="px-6 mb-6 mt-8">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-gray-900 text-lg">Popular Assets</h3>
           <span className="text-primary text-sm font-medium cursor-pointer hover:opacity-80">See All</span>
