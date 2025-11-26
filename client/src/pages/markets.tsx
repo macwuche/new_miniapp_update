@@ -85,7 +85,7 @@ export default function Markets() {
           {Object.entries(MARKET_DATA).map(([category, items]) => (
             <TabsContent key={category} value={category} className="space-y-3 mt-0 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
               {items.map((asset) => (
-                <Link key={asset.symbol} href={`/asset/${asset.symbol}`}>
+                <Link key={asset.symbol} href={`/asset/${encodeURIComponent(asset.symbol)}`}>
                   <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors">

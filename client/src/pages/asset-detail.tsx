@@ -26,7 +26,11 @@ const TIMEFRAMES = ["LIVE", "1D", "7D", "1M", "3M", "6M", "1Y"];
 
 export default function AssetDetail() {
   const [match, params] = useRoute("/asset/:symbol");
-  const symbol = params?.symbol || "BTC";
+  const rawSymbol = params?.symbol ? decodeURIComponent(params.symbol) : "BTC";
+  
+  // Handle pair display (e.g. BTC/USDT -> BTC)
+  const displaySymbol = rawSymbol.includes('/') ? rawSymbol.split('/')[0] : rawSymbol;
+  
   const [selectedTimeframe, setSelectedTimeframe] = useState("LIVE");
   
   // Mock bot state (would come from backend/context)
@@ -34,8 +38,8 @@ export default function AssetDetail() {
 
   // Mock asset data based on symbol (simplified)
   const assetData = {
-    symbol: symbol,
-    name: symbol === "BTC" ? "Bitcoin" : symbol === "ETH" ? "Ethereum" : "Asset",
+    symbol: rawSymbol,
+    name: displaySymbol === "BTC" ? "Bitcoin" : displaySymbol === "ETH" ? "Ethereum" : "Asset",
     price: "86,401.25",
     change: "+0.6%",
     isUp: true,
@@ -61,7 +65,7 @@ export default function AssetDetail() {
         <div className="flex flex-col items-center pt-2 px-6">
           {/* Asset Icon */}
           <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-orange-200 rotate-3">
-             <span className="text-white font-bold text-2xl">{assetData.symbol[0]}</span>
+             <span className="text-white font-bold text-2xl">{displaySymbol[0]}</span>
           </div>
 
           {/* Price Info */}
@@ -71,7 +75,7 @@ export default function AssetDetail() {
           </p>
 
           {/* AI Trading Bot Indicator */}
-          <Link href={`/asset/${symbol}/bot-status`}>
+          <Link href={`/asset/${encodeURIComponent(rawSymbol)}/bot-status`}>
             <div className="flex flex-col items-center cursor-pointer group">
               <div className={`w-12 h-12 transition-all duration-300 ${isBotActive ? 'grayscale-0 scale-110 drop-shadow-md' : 'grayscale opacity-60 hover:opacity-80'}`}>
                 <img src={aiLogo} alt="AI Trading" className="w-full h-full object-contain" />
