@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, Power, Activity, Cpu, Settings } from "lucide-react";
+import { ArrowLeft, Power, Activity, Cpu, Settings, ShoppingCart } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import aiLogo from "@assets/ai (1)_1764071986101.png";
 
 export default function BotStatus() {
   const [match, params] = useRoute("/asset/:symbol/bot-status");
-  const symbol = params?.symbol || "BTC";
+  const symbol = params?.symbol ? decodeURIComponent(params.symbol) : "BTC";
   
   // Mock state - in a real app this would come from the backend
   const [isActive, setIsActive] = useState(false);
@@ -18,15 +18,19 @@ export default function BotStatus() {
     <MobileLayout>
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
-        <div className="px-6 pt-8 pb-4 bg-white sticky top-0 z-10 border-b border-gray-100">
+        <div className="px-6 pt-8 pb-4 bg-white sticky top-0 z-10 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href={`/asset/${symbol}`}>
+            <Link href={`/asset/${encodeURIComponent(symbol)}`}>
               <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors">
                 <ArrowLeft size={20} />
               </div>
             </Link>
             <h1 className="text-xl font-bold text-gray-900">AI Trading Bot</h1>
           </div>
+          
+          <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 text-gray-600 hover:bg-gray-50">
+            <ShoppingCart size={24} />
+          </Button>
         </div>
 
         <div className="p-6 flex flex-col items-center">
@@ -86,18 +90,26 @@ export default function BotStatus() {
             </div>
           </Card>
           
-          {/* Toggle Button (Mock) */}
-          <Button 
-            className={`w-full mt-6 h-14 text-lg font-bold rounded-xl shadow-lg transition-all ${
-              isActive 
-                ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-red-100' 
-                : 'bg-primary text-white hover:bg-primary/90 shadow-blue-200'
-            }`}
-            onClick={() => setIsActive(!isActive)}
-          >
-            <Power className="mr-2" size={20} strokeWidth={2.5} />
-            {isActive ? "Stop Bot" : "Activate Bot"}
-          </Button>
+          {/* Action Buttons */}
+          <div className="w-full mt-6 flex gap-3">
+            <Button 
+              className="flex-1 h-14 text-base font-bold rounded-xl bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 shadow-sm"
+            >
+              Buy trading bot
+            </Button>
+
+            <Button 
+              className={`flex-1 h-14 text-base font-bold rounded-xl shadow-lg transition-all ${
+                isActive 
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-red-100' 
+                  : 'bg-primary text-white hover:bg-primary/90 shadow-blue-200'
+              }`}
+              onClick={() => setIsActive(!isActive)}
+            >
+              <Power className="mr-2" size={20} strokeWidth={2.5} />
+              {isActive ? "Stop Bot" : "Activate Bot"}
+            </Button>
+          </div>
         </div>
       </div>
     </MobileLayout>
