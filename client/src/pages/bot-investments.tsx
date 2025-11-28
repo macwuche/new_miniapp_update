@@ -5,9 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// Mock data for purchased bots
+const PURCHASED_BOTS = [
+  {
+    id: 2,
+    name: "CryptoGain Elite",
+    description: "High-performance cryptocurrency trading bot designed for the volatile crypto markets. Leverages machine learning to identify optimal entry and exit points across major cryptocurrencies.",
+    invested: 250.00,
+    currentValue: 250.00,
+    pnl: 0.00,
+    roi: 0.00,
+    status: "Active",
+    startDate: "Nov 28, 2025",
+    color: "bg-blue-500"
+  },
+  {
+    id: 1,
+    name: "ForexMaster Pro",
+    description: "Advanced forex trading bot specializing in major currency pairs. Uses sophisticated algorithms to analyze market trends.",
+    invested: 500.00,
+    currentValue: 512.40,
+    pnl: 12.40,
+    roi: 2.48,
+    status: "Active",
+    startDate: "Nov 25, 2025",
+    color: "bg-indigo-500"
+  }
+];
+
 export default function BotInvestments() {
-  // Simulated active investment state
-  const hasInvestment = true;
+  // Calculate stats
+  const totalInvested = PURCHASED_BOTS.reduce((acc, bot) => acc + bot.invested, 0);
+  const totalCurrentValue = PURCHASED_BOTS.reduce((acc, bot) => acc + bot.currentValue, 0);
+  const totalProfit = PURCHASED_BOTS.reduce((acc, bot) => acc + (bot.pnl > 0 ? bot.pnl : 0), 0);
+  const totalLoss = PURCHASED_BOTS.reduce((acc, bot) => acc + (bot.pnl < 0 ? Math.abs(bot.pnl) : 0), 0);
+  const activeBotsCount = PURCHASED_BOTS.length;
 
   return (
     <MobileLayout>
@@ -47,7 +79,7 @@ export default function BotInvestments() {
               <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
                 <Wallet size={16} />
               </div>
-              <p className="text-lg font-black text-gray-900">$250.00</p>
+              <p className="text-lg font-black text-gray-900">${totalInvested.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               <p className="text-[10px] text-gray-500 font-medium mt-0.5">Total Invested</p>
             </Card>
 
@@ -55,7 +87,7 @@ export default function BotInvestments() {
               <div className="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-3">
                 <TrendingUp size={16} />
               </div>
-              <p className="text-lg font-black text-gray-900">$0.00</p>
+              <p className="text-lg font-black text-gray-900">${totalCurrentValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               <p className="text-[10px] text-gray-500 font-medium mt-0.5">Current Balance</p>
             </Card>
 
@@ -63,7 +95,7 @@ export default function BotInvestments() {
               <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
                 <ArrowUpFromLine size={16} />
               </div>
-              <p className="text-lg font-black text-emerald-600">+$0.00</p>
+              <p className="text-lg font-black text-emerald-600">+${totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               <p className="text-[10px] text-gray-500 font-medium mt-0.5">Total Profit</p>
             </Card>
 
@@ -71,7 +103,7 @@ export default function BotInvestments() {
               <div className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-3">
                 <ArrowDownToLine size={16} />
               </div>
-              <p className="text-lg font-black text-red-600">-$0.00</p>
+              <p className="text-lg font-black text-red-600">-${totalLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               <p className="text-[10px] text-gray-500 font-medium mt-0.5">Total Loss</p>
             </Card>
 
@@ -79,7 +111,7 @@ export default function BotInvestments() {
               <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
                 <Bot size={16} />
               </div>
-              <p className="text-lg font-black text-gray-900">1</p>
+              <p className="text-lg font-black text-gray-900">{activeBotsCount}</p>
               <p className="text-[10px] text-gray-500 font-medium mt-0.5">Active Bots</p>
             </Card>
           </div>
@@ -99,50 +131,65 @@ export default function BotInvestments() {
                 </Link>
               </div>
 
-              {hasInvestment ? (
-                <div className="w-full bg-gray-50 rounded-2xl p-5 mb-4 relative border border-gray-100">
-                  <div className="absolute top-5 right-5">
-                    <span className="text-xs font-bold text-gray-400">Cancelled</span>
-                  </div>
-                  
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-md shrink-0">
-                      <Bot size={24} />
-                    </div>
-                    <div className="pr-16">
-                      <h3 className="font-bold text-gray-900 text-base mb-1">CryptoGain Elite</h3>
-                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
-                        High-performance cryptocurrency trading bot designed for the volatile crypto markets. Leverages machine learning to identify optimal entry and exit points across major cryptocurrencies.
-                      </p>
-                    </div>
-                  </div>
+              {activeBotsCount > 0 ? (
+                <div className="space-y-4 w-full">
+                  {PURCHASED_BOTS.map((bot) => (
+                    <div key={bot.id} className="w-full bg-gray-50 rounded-2xl p-5 relative border border-gray-100">
+                      <div className="absolute top-5 right-5">
+                        {bot.status === "Cancelled" ? (
+                           <span className="text-xs font-bold text-gray-400">Cancelled</span>
+                        ) : (
+                           <span className="flex items-center text-xs font-bold text-emerald-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                              Active
+                           </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-start gap-4 mb-6">
+                        <div className={`w-12 h-12 rounded-xl ${bot.color} flex items-center justify-center text-white shadow-md shrink-0`}>
+                          <Bot size={24} />
+                        </div>
+                        <div className="pr-20">
+                          <h3 className="font-bold text-gray-900 text-base mb-1">{bot.name}</h3>
+                          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                            {bot.description}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div>
-                      <p className="text-[10px] font-medium text-gray-400 mb-1">Invested</p>
-                      <p className="text-sm font-bold text-gray-900">$250.00</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-medium text-gray-400 mb-1">Current Value</p>
-                      <p className="text-sm font-bold text-gray-900">$250.00</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-medium text-gray-400 mb-1">P&L</p>
-                      <p className="text-sm font-bold text-emerald-500">+$0.00</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-medium text-gray-400 mb-1">ROI</p>
-                      <p className="text-sm font-bold text-emerald-500">+0.00%</p>
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-4 gap-4 mb-6">
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 mb-1">Invested</p>
+                          <p className="text-sm font-bold text-gray-900">${bot.invested.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 mb-1">Current Value</p>
+                          <p className="text-sm font-bold text-gray-900">${bot.currentValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 mb-1">P&L</p>
+                          <p className={`text-sm font-bold ${bot.pnl >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {bot.pnl >= 0 ? '+' : ''}${bot.pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-medium text-gray-400 mb-1">ROI</p>
+                          <p className={`text-sm font-bold ${bot.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {bot.roi >= 0 ? '+' : ''}{bot.roi.toFixed(2)}%
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-200/60">
-                    <p className="text-[10px] font-medium text-gray-400">Started: Nov 28, 2025</p>
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg px-3">
-                      <Eye size={12} className="mr-1.5" />
-                      View
-                    </Button>
-                  </div>
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200/60">
+                        <p className="text-[10px] font-medium text-gray-400">Started: {bot.startDate}</p>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg px-3">
+                          <Eye size={12} className="mr-1.5" />
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-center">
