@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, CheckCircle2, TrendingUp, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, TrendingUp, AlertCircle, XCircle } from "lucide-react";
 import { Link, useParams, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -146,6 +146,8 @@ export default function BotDetails() {
   
   const [amount, setAmount] = useState("");
   const [autoReinvest, setAutoReinvest] = useState(false);
+  const [isInvested, setIsInvested] = useState(false);
+  const [investedAmount, setInvestedAmount] = useState(0);
 
   if (!bot) {
     return (
@@ -186,13 +188,23 @@ export default function BotDetails() {
       return;
     }
 
+    setInvestedAmount(Number(amount));
+    setIsInvested(true);
+    
     toast({
       title: "Investment Successful",
       description: `You have successfully invested $${amount} in ${bot.name}.`,
     });
-    
-    // Simulate navigation or success state
-    setTimeout(() => setLocation("/bot-market"), 1500);
+  };
+
+  const handleCancelInvestment = () => {
+    setIsInvested(false);
+    setInvestedAmount(0);
+    setAmount("");
+    toast({
+      title: "Investment Cancelled",
+      description: "Your investment has been cancelled and funds returned to your wallet.",
+    });
   };
 
   return (
@@ -307,46 +319,75 @@ export default function BotDetails() {
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-4">
-                  <label className="text-xs font-medium text-gray-500">Investment Amount</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                    <Input 
-                      type="number" 
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="pl-7 h-12 bg-gray-50 border-gray-200 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder={bot.minInvest.toString()}
-                    />
+                {isInvested ? (
+                  <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                    <h4 className="text-sm font-bold text-gray-900 mb-4">Your Investment</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Amount Invested</span>
+                        <span className="font-bold text-gray-900">${investedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Current Profit</span>
+                        <span className="font-bold text-green-600">+$0.00</span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
+                        <span className="text-gray-500 font-medium">Total Value</span>
+                        <span className="font-bold text-gray-900">${investedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full mt-4 h-10 bg-red-600 hover:bg-red-700 font-bold rounded-xl shadow-md text-sm"
+                      onClick={handleCancelInvestment}
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Cancel Investment
+                    </Button>
                   </div>
-                  <div className="flex justify-between text-[10px] text-gray-400">
-                    <span>Min: ${bot.minInvest.toFixed(2)}</span>
-                    <span>Max: ${bot.maxInvest.toLocaleString()}.00</span>
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="space-y-2 mb-4">
+                      <label className="text-xs font-medium text-gray-500">Investment Amount</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <Input 
+                          type="number" 
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="pl-7 h-12 bg-gray-50 border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder={bot.minInvest.toString()}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-gray-400">
+                        <span>Min: ${bot.minInvest.toFixed(2)}</span>
+                        <span>Max: ${bot.maxInvest.toLocaleString()}.00</span>
+                      </div>
+                    </div>
 
-                <div className="flex items-center space-x-2 mb-6">
-                  <Checkbox 
-                    id="reinvest" 
-                    checked={autoReinvest}
-                    onCheckedChange={(checked) => setAutoReinvest(checked as boolean)}
-                    className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                  />
-                  <label
-                    htmlFor="reinvest"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-600"
-                  >
-                    Auto-purchase profits
-                  </label>
-                </div>
+                    <div className="flex items-center space-x-2 mb-6">
+                      <Checkbox 
+                        id="reinvest" 
+                        checked={autoReinvest}
+                        onCheckedChange={(checked) => setAutoReinvest(checked as boolean)}
+                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                      />
+                      <label
+                        htmlFor="reinvest"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-600"
+                      >
+                        Auto-purchase profits
+                      </label>
+                    </div>
 
-                <Button 
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl shadow-lg shadow-blue-200 transition-all"
-                  onClick={handleInvest}
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Start trading
-                </Button>
+                    <Button 
+                      className="w-full h-12 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl shadow-lg shadow-blue-200 transition-all"
+                      onClick={handleInvest}
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Start trading
+                    </Button>
+                  </>
+                )}
               </Card>
 
               <Card className="p-6 border-none shadow-sm bg-white">
