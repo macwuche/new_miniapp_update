@@ -286,11 +286,11 @@ export default function BotDetails() {
                 
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Minimum Investment</span>
+                    <span className="text-gray-500">Minimum Trading Amount</span>
                     <span className="font-bold text-gray-900">${bot.minInvest.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Maximum Investment</span>
+                    <span className="text-gray-500">Maximum Trading Amount</span>
                     <span className="font-bold text-gray-900">${bot.maxInvest.toLocaleString()}.00</span>
                   </div>
                   <div className="flex justify-between text-sm">
