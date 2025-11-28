@@ -4,6 +4,12 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Mock data for purchased bots
 const PURCHASED_BOTS = [
@@ -232,14 +238,35 @@ export default function BotInvestments() {
                       New Investment
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="w-full justify-start h-10 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-xl mb-2">
-                    <ArrowUpFromLine size={14} className="mr-2" />
-                    Withdraw Funds
-                  </Button>
-                  <Button variant="ghost" className="w-full justify-start h-10 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl mb-2">
-                    <ArrowDownToLine size={14} className="mr-2" />
-                    Deposit Funds
-                  </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="w-full justify-start h-10 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-xl mb-2">
+                        <ArrowUpFromLine size={14} className="mr-2" />
+                        Withdraw Funds
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56 rounded-xl p-2">
+                      <Link href="/withdraw">
+                        <DropdownMenuItem className="rounded-lg cursor-pointer">
+                          Withdraw with connected wallet
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/withdraw">
+                        <DropdownMenuItem className="rounded-lg cursor-pointer">
+                          Withdraw to crypto address
+                        </DropdownMenuItem>
+                      </Link>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Link href="/deposit">
+                    <Button variant="ghost" className="w-full justify-start h-10 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl mb-2">
+                      <ArrowDownToLine size={14} className="mr-2" />
+                      Deposit Funds
+                    </Button>
+                  </Link>
+
                   <Button variant="ghost" className="w-full justify-start h-10 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold rounded-xl">
                     <LifeBuoy size={14} className="mr-2" />
                     Get Support
