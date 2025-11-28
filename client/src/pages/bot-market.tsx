@@ -250,10 +250,12 @@ export default function BotMarket() {
                         </div>
                       </div>
 
-                      <Button className="w-full h-12 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-                        Activate this bot
-                        <ArrowLeft className="rotate-180 ml-2" size={18} />
-                      </Button>
+                      <Link href={`/bot/${bot.id}`}>
+                        <Button className="w-full h-12 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
+                          Activate this bot
+                          <ArrowLeft className="rotate-180 ml-2" size={18} />
+                        </Button>
+                      </Link>
                     </Card>
                   ))}
                 </div>

@@ -23,6 +23,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 
 import ManageAssets from "@/pages/markets/manage";
 import BotMarket from "@/pages/bot-market";
+import BotDetails from "@/pages/bot-details";
 
 function Router() {
   return (
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/markets" component={Markets} />
       <Route path="/markets/manage" component={ManageAssets} />
       <Route path="/bot-market" component={BotMarket} />
+      <Route path="/bot/:id" component={BotDetails} />
       <Route path="/asset/:symbol" component={AssetDetail} />
       <Route path="/asset/:symbol/bot-status" component={BotStatus} />
       <Route path="/wallet" component={WalletPage} />
