@@ -53,36 +53,6 @@ const BOTS = [
     totalEarned: 454
   },
   {
-    id: 4,
-    name: "Commodity Weather AI",
-    type: "Commodities Trading",
-    category: "commodities",
-    success: "87%",
-    description: "Intelligent commodity trading bot that incorporates weather data, supply chain analysis, and seasonal patterns for agriculture.",
-    dailyProfit: "1.30% - 4.50%",
-    duration: "180 Days",
-    minInvest: 800,
-    maxInvest: 40000,
-    pairs: ["WHEAT", "CORN", "SOYBEANS", "COFFEE"],
-    activeUsers: 320,
-    totalEarned: 0
-  },
-  {
-    id: 5,
-    name: "Energy Futures Pro",
-    type: "Commodities Trading",
-    category: "commodities",
-    success: "83%",
-    description: "Professional energy trading bot focused on oil, gas, and renewable energy futures. Uses geopolitical analysis and supply data.",
-    dailyProfit: "1.70% - 5.10%",
-    duration: "90 Days",
-    minInvest: 1200,
-    maxInvest: 70000,
-    pairs: ["WTI_OIL", "BRENT_OIL", "NATURAL_GAS", "HEATING_OIL"],
-    activeUsers: 410,
-    totalEarned: 0
-  },
-  {
     id: 6,
     name: "Index Arbitrage Bot",
     type: "Indices Trading",
@@ -156,11 +126,12 @@ export default function BotMarket() {
 
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-8">
-              <Link href="/markets">
-                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 cursor-pointer transition-colors">
-                  <ArrowLeft size={20} />
-                </div>
-              </Link>
+              <div 
+                className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 cursor-pointer transition-colors"
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft size={20} />
+              </div>
               <div className="px-3 py-1 rounded-full bg-green-400/20 border border-green-400/30 text-green-100 text-xs font-bold flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                 AI-Powered Trading
@@ -175,9 +146,11 @@ export default function BotMarket() {
             </div>
 
             <div className="flex gap-3 justify-center">
-              <Button className="bg-white/20 hover:bg-white/30 text-white border-none rounded-xl backdrop-blur-md font-bold shadow-sm">
-                Back to Dashboard
-              </Button>
+              <Link href="/">
+                <Button className="bg-white/20 hover:bg-white/30 text-white border-none rounded-xl backdrop-blur-md font-bold shadow-sm">
+                  Back to Dashboard
+                </Button>
+              </Link>
               <Button className="bg-white text-blue-600 hover:bg-blue-50 border-none rounded-xl font-bold shadow-sm">
                 <Activity size={16} className="mr-2" />
                 My Bot Investments
@@ -219,15 +192,9 @@ export default function BotMarket() {
               >
                 Stocks
               </TabsTrigger>
-              <TabsTrigger 
-                value="commodities" 
-                className="rounded-full px-5 py-2 text-xs font-bold bg-white border border-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
-              >
-                Commodities
-              </TabsTrigger>
             </TabsList>
 
-            {["all", "forex", "crypto", "stocks", "commodities"].map((tab) => (
+            {["all", "forex", "crypto", "stocks"].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {BOTS.filter(b => tab === "all" || b.category === tab).map((bot) => (
@@ -236,8 +203,7 @@ export default function BotMarket() {
                         <div className="flex gap-3">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
                             ${bot.category === 'forex' ? 'bg-blue-500' : 
-                              bot.category === 'crypto' ? 'bg-purple-500' : 
-                              bot.category === 'commodities' ? 'bg-amber-500' : 'bg-orange-500'}`}>
+                              bot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'}`}>
                             <BarChart3 size={24} strokeWidth={2.5} />
                           </div>
                           <div>
