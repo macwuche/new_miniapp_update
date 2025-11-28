@@ -92,11 +92,13 @@ export default function BotStatus() {
           
           {/* Action Buttons */}
           <div className="w-full mt-6 flex gap-3">
-            <Button 
-              className="flex-1 h-14 text-base font-bold rounded-xl bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 shadow-sm"
-            >
-              Buy trading bot
-            </Button>
+            <Link href="/bot-market" className="flex-1">
+              <Button 
+                className="w-full h-14 text-base font-bold rounded-xl bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 shadow-sm"
+              >
+                Buy trading bot
+              </Button>
+            </Link>
 
             <Button 
               className={`flex-1 h-14 text-base font-bold rounded-xl shadow-lg transition-all ${
