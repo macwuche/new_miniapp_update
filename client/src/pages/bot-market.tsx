@@ -198,7 +198,7 @@ export default function BotMarket() {
               <TabsContent key={tab} value={tab} className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {BOTS.filter(b => tab === "all" || b.category === tab).map((bot) => (
-                    <Card key={bot.id} className="p-5 rounded-2xl border-none shadow-lg shadow-gray-200/50 bg-white overflow-hidden relative">
+                    <Card key={bot.id} className="p-5 rounded-2xl border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden relative">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex gap-3">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
