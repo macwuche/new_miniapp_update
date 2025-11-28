@@ -151,10 +151,12 @@ export default function BotMarket() {
                   Back to Dashboard
                 </Button>
               </Link>
-              <Button className="bg-white text-blue-600 hover:bg-blue-50 border-none rounded-xl font-bold shadow-sm">
-                <Activity size={16} className="mr-2" />
-                My Bot Investments
-              </Button>
+              <Link href="/bot-investments">
+                <Button className="bg-white text-blue-600 hover:bg-blue-50 border-none rounded-xl font-bold shadow-sm">
+                  <Activity size={16} className="mr-2" />
+                  My Bot Investments
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
