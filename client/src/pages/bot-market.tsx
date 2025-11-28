@@ -132,66 +132,68 @@ export default function BotMarket() {
             </TabsList>
 
             {["all", "forex", "crypto", "stocks"].map((tab) => (
-              <TabsContent key={tab} value={tab} className="space-y-4 mt-0">
-                {BOTS.filter(b => tab === "all" || b.category === tab).map((bot) => (
-                  <Card key={bot.id} className="p-5 rounded-2xl border-none shadow-lg shadow-gray-200/50 bg-white overflow-hidden relative">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex gap-3">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
-                          ${bot.category === 'forex' ? 'bg-blue-500' : 
-                            bot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'}`}>
-                          <BarChart3 size={24} strokeWidth={2.5} />
+              <TabsContent key={tab} value={tab} className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {BOTS.filter(b => tab === "all" || b.category === tab).map((bot) => (
+                    <Card key={bot.id} className="p-5 rounded-2xl border-none shadow-lg shadow-gray-200/50 bg-white overflow-hidden relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex gap-3">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
+                            ${bot.category === 'forex' ? 'bg-blue-500' : 
+                              bot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'}`}>
+                            <BarChart3 size={24} strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-gray-900 text-lg">{bot.name}</h3>
+                            <p className="text-xs text-gray-500 font-medium">{bot.type}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900 text-lg">{bot.name}</h3>
-                          <p className="text-xs text-gray-500 font-medium">{bot.type}</p>
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200 px-2 py-1">
+                          {bot.success} Success
+                        </Badge>
+                      </div>
+
+                      <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                        {bot.description}
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                          <p className="text-lg font-black text-gray-900">{bot.dailyProfit}</p>
+                          <p className="text-[10px] uppercase font-bold text-gray-400 mt-1">Daily Profit</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                          <p className="text-lg font-black text-gray-900">{bot.duration}</p>
+                          <p className="text-[10px] uppercase font-bold text-gray-400 mt-1">Duration</p>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200 px-2 py-1">
-                        {bot.success} Success
-                      </Badge>
-                    </div>
 
-                    <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                      {bot.description}
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
-                        <p className="text-lg font-black text-gray-900">{bot.dailyProfit}</p>
-                        <p className="text-[10px] uppercase font-bold text-gray-400 mt-1">Daily Profit</p>
+                      <div className="flex justify-between items-center mb-6 text-sm">
+                        <span className="text-gray-500 font-medium">Investment Range:</span>
+                        <span className="font-bold text-gray-900">${bot.minInvest} - ${bot.maxInvest.toLocaleString()}</span>
                       </div>
-                      <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
-                        <p className="text-lg font-black text-gray-900">{bot.duration}</p>
-                        <p className="text-[10px] uppercase font-bold text-gray-400 mt-1">Duration</p>
-                      </div>
-                    </div>
 
-                    <div className="flex justify-between items-center mb-6 text-sm">
-                      <span className="text-gray-500 font-medium">Investment Range:</span>
-                      <span className="font-bold text-gray-900">${bot.minInvest} - ${bot.maxInvest.toLocaleString()}</span>
-                    </div>
-
-                    <div className="mb-6">
-                      <p className="text-xs font-bold text-gray-400 uppercase mb-2">Trading Pairs</p>
-                      <div className="flex flex-wrap gap-2">
-                        {bot.pairs.map(pair => (
-                          <span key={pair} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg border border-blue-100">
-                            {pair}
+                      <div className="mb-6">
+                        <p className="text-xs font-bold text-gray-400 uppercase mb-2">Trading Pairs</p>
+                        <div className="flex flex-wrap gap-2">
+                          {bot.pairs.map(pair => (
+                            <span key={pair} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg border border-blue-100">
+                              {pair}
+                            </span>
+                          ))}
+                          <span className="px-2 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-lg border border-gray-100">
+                            +2 more
                           </span>
-                        ))}
-                        <span className="px-2 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-lg border border-gray-100">
-                          +2 more
-                        </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <Button className="w-full h-12 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-                      Invest Now
-                      <ArrowLeft className="rotate-180 ml-2" size={18} />
-                    </Button>
-                  </Card>
-                ))}
+                      <Button className="w-full h-12 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
+                        Invest Now
+                        <ArrowLeft className="rotate-180 ml-2" size={18} />
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
               </TabsContent>
             ))}
           </Tabs>
