@@ -51,6 +51,96 @@ const BOTS = [
     pairs: ["AAPL", "GOOGL", "MSFT", "AMZN"],
     activeUsers: 850,
     totalEarned: 454
+  },
+  {
+    id: 4,
+    name: "Commodity Weather AI",
+    type: "Commodities Trading",
+    category: "commodities",
+    success: "87%",
+    description: "Intelligent commodity trading bot that incorporates weather data, supply chain analysis, and seasonal patterns for agriculture.",
+    dailyProfit: "1.30% - 4.50%",
+    duration: "180 Days",
+    minInvest: 800,
+    maxInvest: 40000,
+    pairs: ["WHEAT", "CORN", "SOYBEANS", "COFFEE"],
+    activeUsers: 320,
+    totalEarned: 0
+  },
+  {
+    id: 5,
+    name: "Energy Futures Pro",
+    type: "Commodities Trading",
+    category: "commodities",
+    success: "83%",
+    description: "Professional energy trading bot focused on oil, gas, and renewable energy futures. Uses geopolitical analysis and supply data.",
+    dailyProfit: "1.70% - 5.10%",
+    duration: "90 Days",
+    minInvest: 1200,
+    maxInvest: 70000,
+    pairs: ["WTI_OIL", "BRENT_OIL", "NATURAL_GAS", "HEATING_OIL"],
+    activeUsers: 410,
+    totalEarned: 0
+  },
+  {
+    id: 6,
+    name: "Index Arbitrage Bot",
+    type: "Indices Trading",
+    category: "stocks",
+    success: "95%",
+    description: "Advanced arbitrage bot that exploits price differences between index futures and their underlying components. High-frequency strategies.",
+    dailyProfit: "0.80% - 2.50%",
+    duration: "365 Days",
+    minInvest: 2500,
+    maxInvest: 120000,
+    pairs: ["SPX", "NDX", "RUT", "VIX"],
+    activeUsers: 150,
+    totalEarned: 0
+  },
+  {
+    id: 7,
+    name: "Bond Yield Hunter",
+    type: "Bonds Trading",
+    category: "stocks",
+    success: "92%",
+    description: "Sophisticated fixed-income trading bot that navigates interest rate changes and yield curve movements. Perfect for institutional-grade stability.",
+    dailyProfit: "0.40% - 1.80%",
+    duration: "365 Days",
+    minInvest: 5000,
+    maxInvest: 200000,
+    pairs: ["10Y_TREASURY", "30Y_TREASURY", "2Y_TREASURY", "CORP_BONDS"],
+    activeUsers: 95,
+    totalEarned: 0
+  },
+  {
+    id: 8,
+    name: "AI Sentiment Trader",
+    type: "Mixed Trading",
+    category: "crypto",
+    success: "86%",
+    description: "Revolutionary sentiment-based trading bot that analyzes social media, news, and market sentiment across multiple asset classes.",
+    dailyProfit: "1.90% - 5.80%",
+    duration: "60 Days",
+    minInvest: 600,
+    maxInvest: 35000,
+    pairs: ["BTC/USD", "ETH/USD", "AAPL", "TSLA"],
+    activeUsers: 2100,
+    totalEarned: 0
+  },
+  {
+    id: 9,
+    name: "Volatility Surface Bot",
+    type: "Volatility Trading",
+    category: "stocks",
+    success: "88%",
+    description: "Advanced volatility trading bot that maps and trades the volatility surface across multiple assets. Ideal for sophisticated investors.",
+    dailyProfit: "1.10% - 4.20%",
+    duration: "45 Days",
+    minInvest: 3000,
+    maxInvest: 150000,
+    pairs: ["VIX", "VXX", "UVXY", "SVXY"],
+    activeUsers: 180,
+    totalEarned: 0
   }
 ];
 
@@ -129,9 +219,15 @@ export default function BotMarket() {
               >
                 Stocks
               </TabsTrigger>
+              <TabsTrigger 
+                value="commodities" 
+                className="rounded-full px-5 py-2 text-xs font-bold bg-white border border-gray-200 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
+              >
+                Commodities
+              </TabsTrigger>
             </TabsList>
 
-            {["all", "forex", "crypto", "stocks"].map((tab) => (
+            {["all", "forex", "crypto", "stocks", "commodities"].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {BOTS.filter(b => tab === "all" || b.category === tab).map((bot) => (
@@ -140,7 +236,8 @@ export default function BotMarket() {
                         <div className="flex gap-3">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
                             ${bot.category === 'forex' ? 'bg-blue-500' : 
-                              bot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'}`}>
+                              bot.category === 'crypto' ? 'bg-purple-500' : 
+                              bot.category === 'commodities' ? 'bg-amber-500' : 'bg-orange-500'}`}>
                             <BarChart3 size={24} strokeWidth={2.5} />
                           </div>
                           <div>
@@ -170,7 +267,7 @@ export default function BotMarket() {
 
                       <div className="flex justify-between items-center mb-6 text-sm">
                         <span className="text-gray-500 font-medium">Investment Range:</span>
-                        <span className="font-bold text-gray-900">${bot.minInvest} - ${bot.maxInvest.toLocaleString()}</span>
+                        <span className="font-bold text-gray-900">${bot.minInvest.toLocaleString()} - ${bot.maxInvest.toLocaleString()}</span>
                       </div>
 
                       <div className="mb-6">
