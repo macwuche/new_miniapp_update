@@ -336,7 +336,7 @@ export default function BotDetails() {
                     htmlFor="reinvest"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-600"
                   >
-                    Auto-reinvest profits
+                    Auto-purchase profits
                   </label>
                 </div>
 
@@ -345,7 +345,7 @@ export default function BotDetails() {
                   onClick={handleInvest}
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
-                  Start Investment
+                  Start trading
                 </Button>
               </Card>
 
