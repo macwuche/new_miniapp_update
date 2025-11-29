@@ -2,15 +2,65 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
-import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PaymentAccounts() {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [currency, setCurrency] = useState("BTC");
+  const [address, setAddress] = useState("");
+  const [_, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  const handleAddAccount = () => {
+    if (!email || !address) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Get existing wallets
+    const existingWallets = JSON.parse(localStorage.getItem("withdraw_wallets") || "[]");
+    
+    // Check for duplicates
+    const isDuplicate = existingWallets.some((w: any) => w.address === address);
+    if (isDuplicate) {
+      toast({
+        title: "Duplicate Wallet",
+        description: "This wallet address has already been added.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Add new wallet
+    const newWallet = {
+      id: Date.now(),
+      email,
+      currency,
+      address,
+      createdAt: new Date().toISOString()
+    };
+
+    localStorage.setItem("withdraw_wallets", JSON.stringify([...existingWallets, newWallet]));
+    
+    toast({
+      title: "Account Added",
+      description: "Your withdrawal account has been successfully added."
+    });
+    
+    setIsAddAccountOpen(false);
+    setLocation("/withdraw");
+  };
 
   return (
     <MobileLayout>
@@ -81,13 +131,15 @@ export default function PaymentAccounts() {
                     <Input 
                       placeholder="Enter email address" 
                       className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div className="w-28 space-y-2">
                     <Label className="text-sm font-bold text-gray-700">
                       Currency
                     </Label>
-                    <Select defaultValue="BTC">
+                    <Select defaultValue="BTC" onValueChange={setCurrency}>
                       <SelectTrigger className="h-11 rounded-lg border-gray-200 bg-white">
                         <SelectValue placeholder="Currency" />
                       </SelectTrigger>
@@ -113,6 +165,8 @@ export default function PaymentAccounts() {
                   <Input 
                     placeholder="btcxxxxxxxxxxxxxxxxxxxxxxxxxxxx5c" 
                     className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                   />
                   <p className="text-xs text-gray-400 italic pt-1">
                     . The system wont process Your payout if you leave blank.
@@ -122,7 +176,10 @@ export default function PaymentAccounts() {
             </div>
 
             <div className="p-6 pt-2 border-t border-gray-50">
-              <Button className="bg-blue-400 hover:bg-blue-500 text-white font-bold h-11 px-6 rounded-lg shadow-sm w-auto min-w-[140px]">
+              <Button 
+                className="bg-blue-400 hover:bg-blue-500 text-white font-bold h-11 px-6 rounded-lg shadow-sm w-auto min-w-[140px]"
+                onClick={handleAddAccount}
+              >
                 Add Account
               </Button>
             </div>

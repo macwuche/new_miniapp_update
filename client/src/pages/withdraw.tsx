@@ -1,55 +1,230 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { LogOut, ArrowLeft, Wallet, Trash2, Plus, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface WithdrawWallet {
+  id: number;
+  email: string;
+  currency: string;
+  address: string;
+  createdAt: string;
+}
 
 export default function Withdraw() {
+  const [wallets, setWallets] = useState<WithdrawWallet[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const { toast } = useToast();
+  const [withdrawalOpen, setWithdrawalOpen] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<WithdrawWallet | null>(null);
+  const [amount, setAmount] = useState("");
+
+  useEffect(() => {
+    const savedWallets = localStorage.getItem("withdraw_wallets");
+    if (savedWallets) {
+      setWallets(JSON.parse(savedWallets));
+    }
+    setIsLoaded(true);
+  }, []);
+
+  const handleDelete = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const updatedWallets = wallets.filter(w => w.id !== id);
+    setWallets(updatedWallets);
+    localStorage.setItem("withdraw_wallets", JSON.stringify(updatedWallets));
+    
+    toast({
+      title: "Wallet Removed",
+      description: "The wallet address has been removed from your account."
+    });
+  };
+
+  const handleWalletClick = (wallet: WithdrawWallet) => {
+    setSelectedWallet(wallet);
+    setWithdrawalOpen(true);
+  };
+
+  const handleWithdraw = () => {
+    if (!amount) {
+      toast({
+        title: "Enter Amount",
+        description: "Please enter the amount you wish to withdraw.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    toast({
+      title: "Withdrawal Initiated",
+      description: `Withdrawal of ${amount} ${selectedWallet?.currency} to ${selectedWallet?.address.slice(0, 6)}... has been initiated.`
+    });
+    setWithdrawalOpen(false);
+    setAmount("");
+  };
+
+  if (!isLoaded) return null;
+
+  // Empty State
+  if (wallets.length === 0) {
+    return (
+      <MobileLayout>
+        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+          <div className="mb-8 pt-2">
+            <div 
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft size={20} />
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center text-center -mt-20">
+            <div className="w-24 h-24 bg-blue-400 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-blue-200">
+              <LogOut className="text-white" size={40} strokeWidth={2.5} />
+            </div>
+
+            <h1 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">
+              You're almost ready to withdraw!
+            </h1>
+
+            <p className="text-gray-500 text-sm max-w-xs mx-auto mb-10 leading-relaxed">
+              To make a withdraw, please add a withdraw account from your profile (withdraw accounts).
+            </p>
+
+            <div className="w-full max-w-xs space-y-6">
+              <Link href="/withdraw/accounts">
+                <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20">
+                  Add Withdraw Account
+                </Button>
+              </Link>
+
+              <Link href="/">
+                <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
+                  Go to Dashboard
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="absolute bottom-24 left-0 right-0 text-center px-6">
+            <p className="text-xs text-gray-400">
+              Please feel free to contact us if you have any question.
+            </p>
+          </div>
+
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  // List View
   return (
     <MobileLayout>
       <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
-        <div className="mb-8 pt-2">
+        <div className="mb-6 pt-2 flex items-center justify-between">
           <div 
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
             onClick={() => window.history.back()}
           >
             <ArrowLeft size={20} />
           </div>
+          <h1 className="text-xl font-bold text-gray-900">Withdrawal Wallets</h1>
+          <div className="w-10" /> {/* Spacer for centering */}
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center text-center -mt-20">
-          <div className="w-24 h-24 bg-blue-400 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-blue-200">
-            <LogOut className="text-white" size={40} strokeWidth={2.5} />
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 items-start">
+            <AlertCircle className="text-blue-500 shrink-0 mt-0.5" size={18} />
+            <p className="text-sm text-blue-700 leading-relaxed">
+              Select a wallet below to withdraw your funds. You can add multiple withdrawal addresses.
+            </p>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">
-            You're almost ready to withdraw!
-          </h1>
+          {wallets.map((wallet) => (
+            <Card 
+              key={wallet.id} 
+              className="p-4 border-none shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden"
+              onClick={() => handleWalletClick(wallet)}
+            >
+              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 text-gray-600 font-bold">
+                    {wallet.currency}
+                  </div>
+                  <div className="overflow-hidden">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-gray-900">{wallet.currency} Wallet</h3>
+                      <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full uppercase">
+                        {wallet.currency}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 font-mono truncate max-w-[180px]">
+                      {wallet.address}
+                    </p>
+                  </div>
+                </div>
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  onClick={(e) => handleDelete(wallet.id, e)}
+                >
+                  <Trash2 size={18} />
+                </Button>
+              </div>
+            </Card>
+          ))}
 
-        <p className="text-gray-500 text-sm max-w-xs mx-auto mb-10 leading-relaxed">
-          To make a withdraw, please add a withdraw account from your profile (withdraw accounts).
-        </p>
-
-        <div className="w-full max-w-xs space-y-6">
           <Link href="/withdraw/accounts">
-            <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20">
-              Add Withdraw Account
+            <Button className="w-full h-14 mt-4 bg-white border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all">
+              <Plus size={20} />
+              Add Another Wallet
             </Button>
           </Link>
-
-          <Link href="/">
-            <button className="text-blue-600 font-bold text-sm hover:text-blue-700 transition-colors">
-              Go to Dashboard
-            </button>
-          </Link>
-        </div>
         </div>
 
-        <div className="absolute bottom-24 left-0 right-0 text-center px-6">
-          <p className="text-xs text-gray-400">
-            Please feel free to contact us if you have any question.
-          </p>
-        </div>
-
+        {/* Withdrawal Dialog */}
+        <Dialog open={withdrawalOpen} onOpenChange={setWithdrawalOpen}>
+          <DialogContent className="sm:max-w-md rounded-xl w-[95%] bg-white">
+            <DialogHeader>
+              <DialogTitle>Withdraw Funds</DialogTitle>
+              <DialogDescription>
+                Enter the amount you want to withdraw to <span className="font-mono text-gray-700 font-bold">{selectedWallet?.address.slice(0, 8)}...</span>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Amount ({selectedWallet?.currency})</Label>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="text-lg"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter className="flex-row gap-2 justify-end">
+              <Button variant="outline" onClick={() => setWithdrawalOpen(false)}>Cancel</Button>
+              <Button onClick={handleWithdraw} className="bg-blue-600 hover:bg-blue-700 text-white">
+                Confirm Withdraw
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MobileLayout>
   );
