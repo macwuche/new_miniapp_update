@@ -28,9 +28,11 @@ export default function BotStatus() {
             <h1 className="text-xl font-bold text-gray-900">AI Trading Bot</h1>
           </div>
           
-          <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 text-gray-600 hover:bg-gray-50">
-            <ShoppingCart size={24} />
-          </Button>
+          <Link href="/bot-market">
+            <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 text-gray-600 hover:bg-gray-50">
+              <ShoppingCart size={24} />
+            </Button>
+          </Link>
         </div>
 
         <div className="p-6 flex flex-col items-center">
@@ -51,11 +53,19 @@ export default function BotStatus() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
-              <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-              <span className="font-bold text-sm text-gray-700">
-                Status: {isActive ? "RUNNING" : "STOPPED"}
-              </span>
+            <div className="flex items-center gap-3 w-full justify-center">
+              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
+                <span className="font-bold text-sm text-gray-700">
+                  Status: {isActive ? "RUNNING" : "STOPPED"}
+                </span>
+              </div>
+              
+              <Link href="/bot-investments">
+                <Button size="sm" variant="outline" className="h-9 rounded-full text-xs font-bold border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800">
+                  My Bot Investments
+                </Button>
+              </Link>
             </div>
           </Card>
 
