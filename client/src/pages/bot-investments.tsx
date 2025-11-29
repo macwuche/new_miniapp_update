@@ -1,15 +1,21 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, Wallet, TrendingUp, TrendingDown, Bot, Activity, Plus, ArrowDownToLine, ArrowUpFromLine, LifeBuoy, Eye } from "lucide-react";
-import { Link } from "wouter";
+import { ArrowLeft, Wallet, TrendingUp, TrendingDown, Bot, Activity, Plus, ArrowDownToLine, ArrowUpFromLine, LifeBuoy, Eye, X } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for purchased bots
 const PURCHASED_BOTS = [
@@ -40,6 +46,66 @@ const PURCHASED_BOTS = [
 ];
 
 export default function BotInvestments() {
+  const [location, setLocation] = useLocation();
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState("");
+  const { toast } = useToast();
+  
+  // Withdrawal Selection State
+  const [selectedMethod, setSelectedMethod] = useState<'connected' | 'crypto' | null>(null);
+  const [selectedWallet, setSelectedWallet] = useState<any>(null);
+
+  useEffect(() => {
+    // Check for saved selection on mount
+    const savedMethod = localStorage.getItem('selected_withdrawal_method');
+    const savedWallet = localStorage.getItem('selected_withdrawal_wallet');
+
+    if (savedMethod && savedWallet) {
+      setSelectedMethod(savedMethod as any);
+      setSelectedWallet(JSON.parse(savedWallet));
+      // Clear it so it doesn't persist forever if they leave and come back
+      // Actually, user wants it to be "default", so maybe keep it? 
+      // For now let's keep it to show the state
+    }
+    
+    // Check URL params for return triggers
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'withdraw') {
+      setIsWithdrawOpen(true);
+    }
+  }, []);
+
+  const handleWithdraw = () => {
+    if (!withdrawalAmount || parseFloat(withdrawalAmount) <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to withdraw.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedWallet) {
+      toast({
+        title: "No Wallet Selected",
+        description: "Please select a withdrawal method first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Withdrawal Initiated",
+      description: `Withdrawing $${withdrawalAmount} to ${selectedWallet.name || selectedWallet.currency}...`,
+    });
+    setIsWithdrawOpen(false);
+    setWithdrawalAmount("");
+  };
+
+  const openWithdrawal = () => {
+    setIsWithdrawOpen(true);
+  };
+
   // Calculate stats
   const totalInvested = PURCHASED_BOTS.reduce((acc, bot) => acc + bot.invested, 0);
   const totalCurrentValue = PURCHASED_BOTS.reduce((acc, bot) => acc + bot.currentValue, 0);
@@ -239,26 +305,14 @@ export default function BotInvestments() {
                     </Button>
                   </Link>
                   
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="w-full justify-start h-10 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-xl mb-2">
-                        <ArrowUpFromLine size={14} className="mr-2" />
-                        Withdraw Funds
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56 rounded-xl p-2">
-                      <Link href="/withdraw">
-                        <DropdownMenuItem className="rounded-lg cursor-pointer">
-                          Withdraw with connected wallet
-                        </DropdownMenuItem>
-                      </Link>
-                      <Link href="/withdraw">
-                        <DropdownMenuItem className="rounded-lg cursor-pointer">
-                          Withdraw to crypto address
-                        </DropdownMenuItem>
-                      </Link>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start h-10 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-xl mb-2"
+                    onClick={openWithdrawal}
+                  >
+                    <ArrowUpFromLine size={14} className="mr-2" />
+                    Withdraw Funds
+                  </Button>
 
                   <Link href="/deposit">
                     <Button variant="ghost" className="w-full justify-start h-10 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl mb-2">
@@ -276,6 +330,98 @@ export default function BotInvestments() {
             </div>
           </div>
         </div>
+
+        {/* Withdrawal Dialog */}
+        <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
+          <DialogContent className="sm:max-w-md rounded-2xl w-[95%] bg-white p-0 overflow-hidden">
+            <DialogHeader className="p-6 pb-2">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                  Withdraw Funds
+                  {selectedWallet && (
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                      {selectedWallet.image ? (
+                        <img src={selectedWallet.image} alt="Wallet" className="w-5 h-5 object-contain" />
+                      ) : (
+                        <Wallet size={16} className="text-gray-500" />
+                      )}
+                    </div>
+                  )}
+                </DialogTitle>
+              </div>
+              <DialogDescription className="text-gray-500 mt-1">
+                Select a method to withdraw your profits.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="p-6 space-y-6 pt-2">
+              {/* Selection Buttons */}
+              <div className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className={`w-full justify-start h-14 px-4 rounded-xl border-2 ${selectedMethod === 'connected' ? 'border-blue-500 bg-blue-50/50 text-blue-700' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-600'}`}
+                  onClick={() => setLocation('/linked-wallets?returnTo=/bot-investments')}
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 text-blue-600">
+                    <Wallet size={16} />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-sm">Withdraw with connected wallet</div>
+                    <div className="text-[10px] opacity-70">Use Metamask, Trust Wallet, etc.</div>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  className={`w-full justify-start h-14 px-4 rounded-xl border-2 ${selectedMethod === 'crypto' ? 'border-blue-500 bg-blue-50/50 text-blue-700' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-600'}`}
+                  onClick={() => setLocation('/withdraw?returnTo=/bot-investments')}
+                >
+                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-3 text-orange-600">
+                    <ArrowUpFromLine size={16} />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-sm">Withdrawal to crypto address</div>
+                    <div className="text-[10px] opacity-70">Use BTC, ETH, USDT address</div>
+                  </div>
+                </Button>
+              </div>
+
+              {/* Amount Input - Only show if wallet selected */}
+              {selectedWallet && (
+                <div className="space-y-2 pt-2 border-t border-gray-100">
+                  <div className="flex justify-between">
+                    <Label>Amount</Label>
+                    <span className="text-xs text-gray-400">Available: ${totalProfit.toLocaleString()}</span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">$</span>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      className="pl-7 h-12 text-lg font-bold"
+                      value={withdrawalAmount}
+                      onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Selected: <span className="font-bold text-gray-700">{selectedWallet.name || selectedWallet.currency}</span> ({selectedWallet.address?.slice(0,6)}...)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setIsWithdrawOpen(false)}>Cancel</Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 font-bold"
+                onClick={handleWithdraw}
+                disabled={!selectedWallet || !withdrawalAmount}
+              >
+                Confirm Withdraw
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </MobileLayout>
   );

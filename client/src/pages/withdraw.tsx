@@ -16,6 +16,8 @@ interface WithdrawWallet {
   currency: string;
   address: string;
   createdAt: string;
+  image?: string; // Added for compatibility
+  name?: string; // Added for compatibility
 }
 
 export default function Withdraw() {
@@ -25,13 +27,29 @@ export default function Withdraw() {
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<WithdrawWallet | null>(null);
   const [amount, setAmount] = useState("");
+  
+  const [location, setLocation] = useLocation();
+  const [returnTo, setReturnTo] = useState<string | null>(null);
 
   useEffect(() => {
     const savedWallets = localStorage.getItem("withdraw_wallets");
     if (savedWallets) {
-      setWallets(JSON.parse(savedWallets));
+      const parsedWallets = JSON.parse(savedWallets);
+      // Inject bitcoin logo for BTC wallets
+      const walletsWithImages = parsedWallets.map((w: any) => ({
+        ...w,
+        image: w.currency === 'BTC' ? bitcoinLogo : undefined,
+        name: `${w.currency} Wallet`
+      }));
+      setWallets(walletsWithImages);
     }
     setIsLoaded(true);
+
+    const params = new URLSearchParams(window.location.search);
+    const returnPath = params.get('returnTo');
+    if (returnPath) {
+      setReturnTo(returnPath);
+    }
   }, []);
 
   const handleDelete = (id: number, e: React.MouseEvent) => {
@@ -49,6 +67,15 @@ export default function Withdraw() {
   };
 
   const handleWalletClick = (wallet: WithdrawWallet) => {
+    if (returnTo) {
+      // Save selection
+      localStorage.setItem('selected_withdrawal_method', 'crypto');
+      localStorage.setItem('selected_withdrawal_wallet', JSON.stringify(wallet));
+      // Return to origin
+      setLocation(`${returnTo}?action=withdraw`);
+      return;
+    }
+    
     setSelectedWallet(wallet);
     setWithdrawalOpen(true);
   };
@@ -184,8 +211,9 @@ export default function Withdraw() {
                   size="icon" 
                   className="text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
                   onClick={(e) => handleDelete(wallet.id, e)}
+                  disabled={!!returnTo}
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={18} className={returnTo ? "opacity-20" : ""} />
                 </Button>
               </div>
             </Card>

@@ -2,10 +2,32 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Wallet, ArrowLeft, Link as LinkIcon, Plus, Trash2 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import trustWalletLogo from "@/assets/trust-wallet.png";
+import { useEffect, useState } from "react";
 
 export default function LinkedWallets() {
+  const [location, setLocation] = useLocation();
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const returnPath = params.get('returnTo');
+    if (returnPath) {
+      setReturnTo(returnPath);
+    }
+  }, []);
+
+  const handleSelectWallet = (wallet: any) => {
+    if (returnTo) {
+      // Save selection
+      localStorage.setItem('selected_withdrawal_method', 'connected');
+      localStorage.setItem('selected_withdrawal_wallet', JSON.stringify(wallet));
+      // Return to origin
+      setLocation(`${returnTo}?action=withdraw`);
+    }
+  };
+
   // Mock data for linked wallets
   const linkedWallets = [
     {
@@ -50,7 +72,11 @@ export default function LinkedWallets() {
 
         <div className="space-y-4">
           {linkedWallets.map((wallet) => (
-            <Card key={wallet.id} className="p-4 border-none shadow-sm bg-white flex items-center justify-between">
+            <Card 
+              key={wallet.id} 
+              className={`p-4 border-none shadow-sm bg-white flex items-center justify-between ${returnTo ? 'cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all ring-1 ring-transparent hover:ring-blue-200' : ''}`}
+              onClick={() => handleSelectWallet(wallet)}
+            >
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center overflow-hidden`}>
                   {wallet.image ? (
@@ -72,9 +98,11 @@ export default function LinkedWallets() {
                 </div>
               </div>
               
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50">
-                <Trash2 size={18} />
-              </Button>
+              {!returnTo && (
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50">
+                  <Trash2 size={18} />
+                </Button>
+              )}
             </Card>
           ))}
 
