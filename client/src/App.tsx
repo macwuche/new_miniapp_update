@@ -12,6 +12,7 @@ import Portfolio from "@/pages/portfolio";
 import PortfolioAssetAction from "@/pages/portfolio/asset-action";
 import Profile from "@/pages/profile";
 import WalletPage from "@/pages/wallet";
+import LinkedWallets from "@/pages/linked-wallets";
 import ConnectWallet from "@/pages/connect-wallet";
 import Deposit from "@/pages/deposit";
 import Withdraw from "@/pages/withdraw";
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/asset/:symbol" component={AssetDetail} />
       <Route path="/asset/:symbol/bot-status" component={BotStatus} />
       <Route path="/wallet" component={WalletPage} />
+      <Route path="/linked-wallets" component={LinkedWallets} />
       <Route path="/connect-wallet" component={ConnectWallet} />
       <Route path="/deposit" component={Deposit} />
       <Route path="/withdraw" component={Withdraw} />

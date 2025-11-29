@@ -14,9 +14,11 @@ export default function WalletPage() {
       <div className="px-6 pt-8 pb-4">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold">Wallet</h1>
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
-            <MoreHorizontal size={24} />
-          </Button>
+          <Link href="/linked-wallets">
+            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
+              <MoreHorizontal size={24} />
+            </Button>
+          </Link>
         </div>
         <p className="text-gray-500 mb-8">Manage your crypto assets and connections.</p>
 
