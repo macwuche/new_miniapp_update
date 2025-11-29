@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Wallet, TrendingUp, ArrowUpRight, DollarSign, Bitcoin } from "lucide-react";
 import { Link } from "wouter";
+import { useState, useEffect } from "react";
 import generatedImage from "@assets/generated_images/Abstract_trading_chart_background_with_blue_waves_f608156d.png";
 import aiLogo from "@assets/ai (1)_1764071986101.png";
 
@@ -37,6 +38,12 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 
 export default function Home() {
   const { user } = useTelegram();
+  const [isBotActive, setIsBotActive] = useState(false);
+
+  useEffect(() => {
+    const active = localStorage.getItem("is_bot_active") === "true";
+    setIsBotActive(active);
+  }, []);
 
   return (
     <MobileLayout>
@@ -74,12 +81,14 @@ export default function Home() {
               <p className="text-blue-100 text-sm mb-1 font-medium">Total Balance</p>
               <div className="flex items-center gap-4">
                 <h2 className="text-4xl font-black tracking-tight drop-shadow-sm">$12,450.00</h2>
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg">
-                    <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
+                <Link href="/markets">
+                  <div className="flex flex-col items-center cursor-pointer group">
+                    <div className={`w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg transition-all duration-300 group-hover:scale-105 ${!isBotActive ? 'grayscale opacity-80' : ''}`}>
+                      <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-100 mt-1 tracking-wide">AI Bot</span>
                   </div>
-                  <span className="text-[10px] font-bold text-blue-100 mt-1 tracking-wide">AI Bot</span>
-                </div>
+                </Link>
               </div>
             </div>
             

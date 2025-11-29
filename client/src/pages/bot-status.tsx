@@ -11,8 +11,16 @@ export default function BotStatus() {
   const [match, params] = useRoute("/asset/:symbol/bot-status");
   const symbol = params?.symbol ? decodeURIComponent(params.symbol) : "BTC";
   
-  // Mock state - in a real app this would come from the backend
-  const [isActive, setIsActive] = useState(false);
+  // Mock state - using localStorage to persist across pages for the demo
+  const [isActive, setIsActive] = useState(() => {
+    return localStorage.getItem("is_bot_active") === "true";
+  });
+
+  const toggleBot = () => {
+    const newState = !isActive;
+    setIsActive(newState);
+    localStorage.setItem("is_bot_active", String(newState));
+  };
 
   return (
     <MobileLayout>
@@ -116,7 +124,7 @@ export default function BotStatus() {
                   ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-red-100' 
                   : 'bg-primary text-white hover:bg-primary/90 shadow-blue-200'
               }`}
-              onClick={() => setIsActive(!isActive)}
+              onClick={toggleBot}
             >
               <Power className="mr-2" size={20} strokeWidth={2.5} />
               {isActive ? "Stop Bot" : "Activate Bot"}
