@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import bitcoinLogo from "@/assets/bitcoin.png";
 
 interface WithdrawWallet {
   id: number;
@@ -158,8 +159,12 @@ export default function Withdraw() {
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 text-gray-600 font-bold">
-                    {wallet.currency}
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 text-gray-600 font-bold overflow-hidden">
+                    {wallet.currency === "BTC" ? (
+                      <img src={bitcoinLogo} alt="Bitcoin" className="w-8 h-8 object-contain" />
+                    ) : (
+                      <span>{wallet.currency}</span>
+                    )}
                   </div>
                   <div className="overflow-hidden">
                     <div className="flex items-center gap-2 mb-1">
