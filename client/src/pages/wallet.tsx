@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Wallet, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
+import trustWalletLogo from "@/assets/trust-wallet.png";
 
 export default function WalletPage() {
   // In a real app, this state would come from a global store or context
@@ -86,9 +87,14 @@ export default function WalletPage() {
                  </div>
                </div>
                
+               <h4 className="text-sm font-bold text-gray-500 mb-2">Connected Wallets</h4>
                <div className="flex flex-col items-center">
-                 <div className="w-12 h-12 rounded-full bg-[#3275BB] flex items-center justify-center mb-2 shadow-md">
-                   <ShieldCheck className="text-white" size={24} />
+                 <div className="w-12 h-12 rounded-full bg-[#3275BB] flex items-center justify-center mb-2 shadow-md overflow-hidden">
+                   <img 
+                     src={trustWalletLogo} 
+                     alt="Trust Wallet" 
+                     className="w-8 h-8 object-contain"
+                   />
                  </div>
                  <span className="text-sm font-bold text-gray-700">Trust Wallet</span>
                </div>
