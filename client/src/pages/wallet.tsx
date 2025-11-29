@@ -74,6 +74,26 @@ export default function WalletPage() {
                 </div>
              </Card>
 
+             <div className="flex flex-col items-center justify-center gap-2 py-4">
+               <div className="text-center flex gap-6 mb-4 opacity-60">
+                 <div className="text-center">
+                   <ShieldCheck className="mx-auto mb-1" size={24} />
+                   <span className="text-xs font-medium">Secure</span>
+                 </div>
+                 <div className="text-center">
+                   <CheckCircle2 className="mx-auto mb-1" size={24} />
+                   <span className="text-xs font-medium">Verified</span>
+                 </div>
+               </div>
+               
+               <div className="flex flex-col items-center">
+                 <div className="w-12 h-12 rounded-full bg-[#3275BB] flex items-center justify-center mb-2 shadow-md">
+                   <ShieldCheck className="text-white" size={24} />
+                 </div>
+                 <span className="text-sm font-bold text-gray-700">Trust Wallet</span>
+               </div>
+             </div>
+
              <div className="grid grid-cols-2 gap-4">
                <Card className="p-4 bg-white border-none shadow-sm">
                  <p className="text-gray-500 text-xs mb-1">TON Balance</p>
