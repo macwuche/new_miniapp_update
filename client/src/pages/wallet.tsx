@@ -1,7 +1,7 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Wallet, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { Wallet, ShieldCheck, Loader2, CheckCircle2, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 
@@ -12,7 +12,12 @@ export default function WalletPage() {
   return (
     <MobileLayout>
       <div className="px-6 pt-8 pb-4">
-        <h1 className="text-2xl font-bold mb-2">Wallet</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-bold">Wallet</h1>
+          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
+            <MoreHorizontal size={24} />
+          </Button>
+        </div>
         <p className="text-gray-500 mb-8">Manage your crypto assets and connections.</p>
 
         {!isConnected ? (
