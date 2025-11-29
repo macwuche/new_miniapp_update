@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Wallet, ArrowLeft, Link as LinkIcon, Plus, Trash2 } from "lucide-react";
 import { Link } from "wouter";
+import trustWalletLogo from "@/assets/trust-wallet.png";
 
 export default function LinkedWallets() {
   // Mock data for linked wallets
@@ -21,7 +22,8 @@ export default function LinkedWallets() {
       address: "0x71C...9A23",
       type: "EVM",
       color: "bg-green-100 text-green-600",
-      isConnected: false
+      isConnected: false,
+      image: trustWalletLogo
     },
     {
       id: 3,
@@ -50,8 +52,12 @@ export default function LinkedWallets() {
           {linkedWallets.map((wallet) => (
             <Card key={wallet.id} className="p-4 border-none shadow-sm bg-white flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center`}>
-                  <Wallet size={24} />
+                <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center overflow-hidden`}>
+                  {wallet.image ? (
+                    <img src={wallet.image} alt={wallet.name} className="w-8 h-8 object-contain" />
+                  ) : (
+                    <Wallet size={24} />
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
