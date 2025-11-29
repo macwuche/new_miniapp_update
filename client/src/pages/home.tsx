@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Wallet, TrendingUp, ArrowUpRight, DollarSign, Bitcoin } from "lucide-react";
 import { Link } from "wouter";
 import generatedImage from "@assets/generated_images/Abstract_trading_chart_background_with_blue_waves_f608156d.png";
+import aiLogo from "@assets/ai (1)_1764071986101.png";
 
 // Simple Sparkline Component
 const Sparkline = ({ data, color }: { data: number[], color: string }) => {
@@ -68,9 +69,16 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="text-center py-4">
-            <p className="text-blue-100 text-sm mb-1 font-medium">Total Balance</p>
-            <h2 className="text-4xl font-black tracking-tight mb-8 drop-shadow-sm">$12,450.00</h2>
+          <div className="text-center py-4 relative">
+            <div className="flex flex-col items-center justify-center mb-8">
+              <p className="text-blue-100 text-sm mb-1 font-medium">Total Balance</p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-4xl font-black tracking-tight drop-shadow-sm">$12,450.00</h2>
+                <div className="w-8 h-8 bg-white/20 rounded-full backdrop-blur-sm p-1.5 border border-white/30">
+                  <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
+                </div>
+              </div>
+            </div>
             
             <div className="grid grid-cols-3 gap-3">
               <Link href="/deposit">
