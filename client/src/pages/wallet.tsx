@@ -75,28 +75,36 @@ export default function WalletPage() {
                 </div>
              </Card>
 
-             <div className="flex flex-col items-center justify-center gap-2 py-4">
-               <div className="text-center flex gap-6 mb-4 opacity-60">
-                 <div className="text-center">
-                   <ShieldCheck className="mx-auto mb-1" size={24} />
-                   <span className="text-xs font-medium">Secure</span>
+             <div className="flex flex-col items-center justify-center gap-4 py-6">
+               <div className="flex gap-8 opacity-70">
+                 <div className="flex flex-col items-center gap-1">
+                   <div className="p-1 rounded-full border-2 border-gray-400">
+                     <ShieldCheck className="text-gray-500" size={16} strokeWidth={3} />
+                   </div>
+                   <span className="text-xs font-bold text-gray-500">Secure</span>
                  </div>
-                 <div className="text-center">
-                   <CheckCircle2 className="mx-auto mb-1" size={24} />
-                   <span className="text-xs font-medium">Verified</span>
+                 <div className="flex flex-col items-center gap-1">
+                   <div className="p-1 rounded-full border-2 border-gray-400">
+                     <CheckCircle2 className="text-gray-500" size={16} strokeWidth={3} />
+                   </div>
+                   <span className="text-xs font-bold text-gray-500">Verified</span>
                  </div>
                </div>
                
-               <h4 className="text-sm font-bold text-gray-500 mb-2">Connected Wallets</h4>
-               <div className="flex flex-col items-center">
-                 <div className="w-12 h-12 rounded-full bg-[#3275BB] flex items-center justify-center mb-2 shadow-md overflow-hidden">
-                   <img 
-                     src={trustWalletLogo} 
-                     alt="Trust Wallet" 
-                     className="w-8 h-8 object-contain"
-                   />
+               <div className="flex flex-col items-center w-full">
+                 <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Connected Wallets</h4>
+                 
+                 <div className="flex flex-col items-center">
+                   <div className="w-16 h-16 rounded-2xl bg-[#3275BB] flex items-center justify-center mb-3 shadow-lg shadow-blue-200 overflow-hidden transform transition-transform hover:scale-105">
+                     <img 
+                       src={trustWalletLogo} 
+                       alt="Trust Wallet" 
+                       className="w-10 h-10 object-contain"
+                     />
+                   </div>
+                   <span className="text-base font-bold text-gray-800">Trust Wallet</span>
+                   <span className="text-xs text-gray-400 mt-1">0x71C...9A23</span>
                  </div>
-                 <span className="text-sm font-bold text-gray-700">Trust Wallet</span>
                </div>
              </div>
 
