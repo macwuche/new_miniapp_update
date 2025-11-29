@@ -63,11 +63,12 @@ export default function Deposit() {
       <div className="bg-white min-h-screen pb-20">
         <div className="px-6 pt-8 pb-4 sticky top-0 bg-white z-10 border-b border-gray-50">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer">
-                <ArrowLeft size={20} />
-              </div>
-            </Link>
+            <div 
+              className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft size={20} />
+            </div>
             <h1 className="text-xl font-bold">Crypto Payment</h1>
           </div>
         </div>
