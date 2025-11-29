@@ -72,10 +72,13 @@ export default function Home() {
           <div className="text-center py-4 relative">
             <div className="flex flex-col items-center justify-center mb-8">
               <p className="text-blue-100 text-sm mb-1 font-medium">Total Balance</p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <h2 className="text-4xl font-black tracking-tight drop-shadow-sm">$12,450.00</h2>
-                <div className="w-8 h-8 bg-white/20 rounded-full backdrop-blur-sm p-1.5 border border-white/30">
-                  <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg">
+                    <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-[10px] font-bold text-blue-100 mt-1 tracking-wide">AI Bot</span>
                 </div>
               </div>
             </div>
