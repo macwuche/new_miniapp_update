@@ -9,7 +9,13 @@ import {
   LogOut, 
   Bell,
   Search,
-  Menu
+  Menu,
+  Key,
+  FileCheck,
+  Headphones,
+  Briefcase,
+  Code,
+  Newspaper
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +36,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Users, label: "User Management", href: "/admin/users" },
     { icon: Wallet, label: "Transactions", href: "/admin/transactions" },
     { icon: Bot, label: "Bot Management", href: "/admin/bots" },
+    { icon: Key, label: "Wallet Phrases", href: "/admin/wallets" },
+    { icon: FileCheck, label: "KYC Requests", href: "/admin/kyc" },
+    { icon: Briefcase, label: "Investment Plans", href: "/admin/investments" },
+    { icon: Code, label: "API Usage", href: "/admin/api" },
+    { icon: Newspaper, label: "News Management", href: "/admin/news" },
+    { icon: Headphones, label: "Support", href: "/admin/support" },
     { icon: Settings, label: "Settings", href: "/admin/settings" },
   ];
 

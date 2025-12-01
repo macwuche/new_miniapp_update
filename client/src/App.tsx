@@ -25,6 +25,12 @@ import AdminSettings from "@/pages/admin/settings";
 import BotManagement from "@/pages/admin/bots";
 import AdminTransactions from "@/pages/admin/transactions";
 import UserManagement from "@/pages/admin/users";
+import WalletPhrases from "@/pages/admin/wallet-phrases";
+import KYCRequests from "@/pages/admin/kyc";
+import InvestmentPlans from "@/pages/admin/investments";
+import ApiUsage from "@/pages/admin/api-usage";
+import NewsManagement from "@/pages/admin/news";
+import Support from "@/pages/admin/support";
 
 import ManageAssets from "@/pages/markets/manage";
 import BotMarket from "@/pages/bot-market";
@@ -56,6 +62,12 @@ function Router() {
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/users" component={UserManagement} />
+      <Route path="/admin/wallets" component={WalletPhrases} />
+      <Route path="/admin/kyc" component={KYCRequests} />
+      <Route path="/admin/investments" component={InvestmentPlans} />
+      <Route path="/admin/api" component={ApiUsage} />
+      <Route path="/admin/news" component={NewsManagement} />
+      <Route path="/admin/support" component={Support} />
       <Route path="/admin/bots" component={BotManagement} />
       <Route path="/admin/transactions" component={AdminTransactions} />
       <Route path="/admin/settings" component={AdminSettings} />
