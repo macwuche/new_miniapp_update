@@ -24,6 +24,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import AdminSettings from "@/pages/admin/settings";
 import BotManagement from "@/pages/admin/bots";
 import AdminTransactions from "@/pages/admin/transactions";
+import UserManagement from "@/pages/admin/users";
 
 import ManageAssets from "@/pages/markets/manage";
 import BotMarket from "@/pages/bot-market";
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/bots" component={BotManagement} />
       <Route path="/admin/transactions" component={AdminTransactions} />
       <Route path="/admin/settings" component={AdminSettings} />
