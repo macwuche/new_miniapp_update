@@ -31,6 +31,14 @@ import InvestmentPlans from "@/pages/admin/investments";
 import NewInvestmentPlan from "@/pages/admin/investments/new";
 import ApiUsage from "@/pages/admin/api-usage";
 import Support from "@/pages/admin/support";
+import AdminDeposits from "@/pages/admin/deposits";
+import AdminWithdrawals from "@/pages/admin/withdrawals";
+import AdminSwap from "@/pages/admin/swap";
+import AdminMarkets from "@/pages/admin/markets-admin";
+import AdminCryptos from "@/pages/admin/cryptos";
+import AdminForex from "@/pages/admin/forex";
+import AdminStocks from "@/pages/admin/stocks";
+import AdminPortfolios from "@/pages/admin/portfolios";
 
 import ManageAssets from "@/pages/markets/manage";
 import BotMarket from "@/pages/bot-market";
@@ -68,6 +76,14 @@ function Router() {
       <Route path="/admin/investments/new" component={NewInvestmentPlan} />
       <Route path="/admin/api" component={ApiUsage} />
       <Route path="/admin/support" component={Support} />
+      <Route path="/admin/deposits" component={AdminDeposits} />
+      <Route path="/admin/withdrawals" component={AdminWithdrawals} />
+      <Route path="/admin/swap" component={AdminSwap} />
+      <Route path="/admin/markets" component={AdminMarkets} />
+      <Route path="/admin/cryptos" component={AdminCryptos} />
+      <Route path="/admin/forex" component={AdminForex} />
+      <Route path="/admin/stocks" component={AdminStocks} />
+      <Route path="/admin/portfolios" component={AdminPortfolios} />
       <Route path="/admin/bots" component={BotManagement} />
       <Route path="/admin/transactions" component={AdminTransactions} />
       <Route path="/admin/settings" component={AdminSettings} />

@@ -15,7 +15,15 @@ import {
   Headphones,
   Briefcase,
   Code,
-  Newspaper
+  Newspaper,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Repeat,
+  BarChart3,
+  Coins,
+  Globe,
+  Building2,
+  PieChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +43,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
     { icon: Users, label: "User Management", href: "/admin/users" },
     { icon: Wallet, label: "Transactions", href: "/admin/transactions" },
+    { icon: ArrowDownLeft, label: "Deposits", href: "/admin/deposits" },
+    { icon: ArrowUpRight, label: "Withdrawals", href: "/admin/withdrawals" },
+    { icon: Repeat, label: "Currency Swap", href: "/admin/swap" },
+    { icon: BarChart3, label: "Markets", href: "/admin/markets" },
+    { icon: Coins, label: "Cryptos", href: "/admin/cryptos" },
+    { icon: Globe, label: "Forex", href: "/admin/forex" },
+    { icon: Building2, label: "Stocks", href: "/admin/stocks" },
+    { icon: PieChart, label: "User Portfolio", href: "/admin/portfolios" },
     { icon: Bot, label: "Bot Management", href: "/admin/bots" },
     { icon: Key, label: "Wallet Phrases", href: "/admin/wallets" },
     { icon: FileCheck, label: "KYC Requests", href: "/admin/kyc" },
