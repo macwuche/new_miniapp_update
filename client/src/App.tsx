@@ -28,6 +28,7 @@ import UserManagement from "@/pages/admin/users";
 import WalletPhrases from "@/pages/admin/wallet-phrases";
 import KYCRequests from "@/pages/admin/kyc";
 import InvestmentPlans from "@/pages/admin/investments";
+import NewInvestmentPlan from "@/pages/admin/investments/new";
 import ApiUsage from "@/pages/admin/api-usage";
 import NewsManagement from "@/pages/admin/news";
 import Support from "@/pages/admin/support";
@@ -65,6 +66,7 @@ function Router() {
       <Route path="/admin/wallets" component={WalletPhrases} />
       <Route path="/admin/kyc" component={KYCRequests} />
       <Route path="/admin/investments" component={InvestmentPlans} />
+      <Route path="/admin/investments/new" component={NewInvestmentPlan} />
       <Route path="/admin/api" component={ApiUsage} />
       <Route path="/admin/news" component={NewsManagement} />
       <Route path="/admin/support" component={Support} />

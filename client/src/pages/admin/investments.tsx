@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Pencil, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 // Mock data based on the reference image
 const PLANS = [
@@ -91,10 +92,12 @@ export default function InvestmentPlans() {
       <div className="mb-8">
         <h1 className="text-2xl font-normal text-gray-700 mb-6">System Plans</h1>
         
-        <Button className="bg-[#1a1f36] hover:bg-[#2c324c] text-white font-medium px-4 py-2 h-auto rounded-md text-sm">
-          <Plus size={16} className="mr-2" />
-          New plan
-        </Button>
+        <Link href="/admin/investments/new">
+          <Button className="bg-[#1a1f36] hover:bg-[#2c324c] text-white font-medium px-4 py-2 h-auto rounded-md text-sm">
+            <Plus size={16} className="mr-2" />
+            New plan
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
