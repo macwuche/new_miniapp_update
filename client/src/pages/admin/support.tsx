@@ -143,7 +143,6 @@ export default function Support() {
                   <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">User (Username)</TableHead>
                   <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">Subject</TableHead>
                   <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">Name</TableHead>
-                  <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">Email</TableHead>
                   <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">Message</TableHead>
                   <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">Status</TableHead>
                   <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider text-right">Last Reply</TableHead>
@@ -156,7 +155,6 @@ export default function Support() {
                     <TableCell className="text-gray-600 font-medium text-sm">{ticket.username}</TableCell>
                     <TableCell className="text-[#ff9f43] font-medium text-sm">{ticket.subject}</TableCell>
                     <TableCell className="text-gray-600 text-sm">{ticket.name}</TableCell>
-                    <TableCell className="text-gray-600 text-sm">{ticket.email}</TableCell>
                     <TableCell className="text-gray-600 text-sm max-w-xs truncate" title={ticket.message}>
                       {ticket.message}
                     </TableCell>
