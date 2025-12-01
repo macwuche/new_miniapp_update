@@ -30,7 +30,6 @@ import KYCRequests from "@/pages/admin/kyc";
 import InvestmentPlans from "@/pages/admin/investments";
 import NewInvestmentPlan from "@/pages/admin/investments/new";
 import ApiUsage from "@/pages/admin/api-usage";
-import NewsManagement from "@/pages/admin/news";
 import Support from "@/pages/admin/support";
 
 import ManageAssets from "@/pages/markets/manage";
@@ -68,7 +67,6 @@ function Router() {
       <Route path="/admin/investments" component={InvestmentPlans} />
       <Route path="/admin/investments/new" component={NewInvestmentPlan} />
       <Route path="/admin/api" component={ApiUsage} />
-      <Route path="/admin/news" component={NewsManagement} />
       <Route path="/admin/support" component={Support} />
       <Route path="/admin/bots" component={BotManagement} />
       <Route path="/admin/transactions" component={AdminTransactions} />

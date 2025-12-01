@@ -40,7 +40,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { icon: FileCheck, label: "KYC Requests", href: "/admin/kyc" },
     { icon: Briefcase, label: "Investment Plans", href: "/admin/investments" },
     { icon: Code, label: "API Usage", href: "/admin/api" },
-    { icon: Newspaper, label: "News Management", href: "/admin/news" },
     { icon: Headphones, label: "Support", href: "/admin/support" },
     { icon: Settings, label: "Settings", href: "/admin/settings" },
   ];
