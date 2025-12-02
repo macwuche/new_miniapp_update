@@ -85,7 +85,7 @@ export default function WalletPhrases() {
         </CardHeader>
         
         <CardContent>
-          <div className="rounded-sm border border-gray-200 overflow-hidden">
+          <div className="rounded-sm border border-gray-200 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">

@@ -189,7 +189,7 @@ export default function AdminCryptos() {
       </Dialog>
 
       <Card className="border-none shadow-sm bg-white overflow-hidden">
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50 border-b border-gray-100">

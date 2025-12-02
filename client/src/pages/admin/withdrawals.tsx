@@ -327,7 +327,7 @@ export default function AdminWithdrawals() {
 
       <Card className="border-none shadow-sm bg-white">
         <CardContent className="p-0">
-          <div className="rounded-sm border border-gray-100 overflow-hidden min-h-[400px] bg-white">
+          <div className="rounded-sm border border-gray-100 overflow-x-auto min-h-[400px] bg-white">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">

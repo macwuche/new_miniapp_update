@@ -135,7 +135,7 @@ export default function Support() {
           <CardTitle className="text-lg font-medium text-gray-700">All Ticket</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mt-4">
+          <div className="mt-4 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-white border-b border-gray-100 hover:bg-white">
