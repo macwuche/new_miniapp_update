@@ -29,6 +29,66 @@ import { Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
+import { Badge } from "@/components/ui/badge";
+
+// Mock data based on the reference image
+const MOCK_GATEWAYS = [
+  {
+    id: 1,
+    name: "X",
+    initiatedAt: "2024-11-10 01:27 PM",
+    limit: "$100 - $1000000",
+    charge: "0%",
+    currency: "$1 = 1 USD",
+    status: "Inactive"
+  },
+  {
+    id: 2,
+    name: "X",
+    initiatedAt: "2024-11-10 01:27 PM",
+    limit: "$100 - $100000",
+    charge: "3%",
+    currency: "$1 = 1 USD",
+    status: "Inactive"
+  },
+  {
+    id: 3,
+    name: "USDT (TRC20)",
+    initiatedAt: "2024-11-10 02:46 PM",
+    limit: "$400 - $10000000",
+    charge: "0%",
+    currency: "$1 = 1 ₮",
+    status: "Active"
+  },
+  {
+    id: 4,
+    name: "Bitcoin",
+    initiatedAt: "2024-11-12 05:54 AM",
+    limit: "$250 - $1000000",
+    charge: "0%",
+    currency: "$1 = 0 ₿",
+    status: "Active"
+  },
+  {
+    id: 5,
+    name: "Ethereum",
+    initiatedAt: "2024-11-12 05:58 AM",
+    limit: "$500 - $1000000",
+    charge: "0%",
+    currency: "$1 = 0 Ξ",
+    status: "Active"
+  },
+  {
+    id: 6,
+    name: "Tether (ERC 20)",
+    initiatedAt: "2024-11-12 06:02 AM",
+    limit: "$500 - $1000000",
+    charge: "0%",
+    currency: "$1 = 1 ₮",
+    status: "Active"
+  }
+];
+
 export default function AdminDeposits() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -224,10 +284,29 @@ export default function AdminDeposits() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Empty rows to match the visual height in the reference image */}
-                {[...Array(5)].map((_, i) => (
-                  <TableRow key={i} className="border-b border-gray-50 hover:bg-transparent h-16">
-                    <TableCell colSpan={7} className="p-0"></TableCell>
+                {MOCK_GATEWAYS.map((gateway) => (
+                  <TableRow key={gateway.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <TableCell className="font-medium text-gray-700 py-4">{gateway.name}</TableCell>
+                    <TableCell className="text-gray-600 py-4">{gateway.initiatedAt}</TableCell>
+                    <TableCell className="text-gray-600 py-4 font-medium">{gateway.limit}</TableCell>
+                    <TableCell className="text-gray-600 py-4">{gateway.charge}</TableCell>
+                    <TableCell className="text-gray-600 py-4 font-mono text-xs">{gateway.currency}</TableCell>
+                    <TableCell className="py-4">
+                      <Badge 
+                        className={`rounded-md px-2 py-1 text-xs font-normal ${
+                          gateway.status === "Active" 
+                            ? "bg-[#10b981] hover:bg-[#059669] text-white" 
+                            : "bg-[#ef4444] hover:bg-[#dc2626] text-white"
+                        }`}
+                      >
+                        {gateway.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right py-4">
+                      <Button variant="ghost" className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 h-8 px-3 text-sm font-medium">
+                        Edit
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
