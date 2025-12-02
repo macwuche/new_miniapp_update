@@ -1,23 +1,55 @@
 import { AdminLayout } from "@/components/layout/admin-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownLeft } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Plus } from "lucide-react";
 
 export default function AdminDeposits() {
   return (
     <AdminLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Deposits</h1>
-        <p className="text-gray-500 mt-2">Manage user deposits.</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-900">Traditional Gateways</h1>
       </div>
-      <Card className="border-dashed border-2 border-gray-200 shadow-none bg-gray-50">
-        <CardContent className="flex flex-col items-center justify-center h-64">
-          <div className="p-4 bg-white rounded-full mb-4 shadow-sm">
-            <ArrowDownLeft size={32} className="text-gray-400" />
+
+      <div className="mb-6">
+        <Button className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium px-6 py-2 h-auto rounded-md text-sm">
+          <Plus size={16} className="mr-2" />
+          Add Manual Gateway
+        </Button>
+      </div>
+
+      <Card className="border-none shadow-sm bg-white">
+        <CardContent className="p-0">
+          <div className="rounded-sm border border-gray-100 overflow-hidden min-h-[400px] bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                  <TableHead className="font-bold text-gray-700 py-4 w-[200px]">Name</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4">Initiated At</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4">Payment Limit</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4">Percent Charge</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4">Method Currency</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4 text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Empty rows to match the visual height in the reference image */}
+                {[...Array(5)].map((_, i) => (
+                  <TableRow key={i} className="border-b border-gray-50 hover:bg-transparent h-16">
+                    <TableCell colSpan={7} className="p-0"></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-          <h3 className="text-lg font-medium text-gray-900">Deposits Management</h3>
-          <p className="text-gray-500 text-center mt-2 max-w-md">
-            Page under construction.
-          </p>
         </CardContent>
       </Card>
     </AdminLayout>
