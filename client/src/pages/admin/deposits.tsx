@@ -40,7 +40,19 @@ const MOCK_GATEWAYS = [
     limit: "$100 - $1000000",
     charge: "0%",
     currency: "$1 = 1 USD",
-    status: "Inactive"
+    status: "Inactive",
+    
+    // Additional fields for edit form
+    minAmount: "100",
+    maxAmount: "1000000",
+    charges: "0",
+    chargesType: "percentage",
+    type: "fiat",
+    imageUrl: "",
+    walletAddress: "",
+    networkType: "",
+    typeFor: "deposit",
+    note: ""
   },
   {
     id: 2,
@@ -49,7 +61,18 @@ const MOCK_GATEWAYS = [
     limit: "$100 - $100000",
     charge: "3%",
     currency: "$1 = 1 USD",
-    status: "Inactive"
+    status: "Inactive",
+
+    minAmount: "100",
+    maxAmount: "100000",
+    charges: "3",
+    chargesType: "percentage",
+    type: "fiat",
+    imageUrl: "",
+    walletAddress: "",
+    networkType: "",
+    typeFor: "deposit",
+    note: ""
   },
   {
     id: 3,
@@ -58,7 +81,18 @@ const MOCK_GATEWAYS = [
     limit: "$400 - $10000000",
     charge: "0%",
     currency: "$1 = 1 ₮",
-    status: "Active"
+    status: "Active",
+
+    minAmount: "400",
+    maxAmount: "10000000",
+    charges: "0",
+    chargesType: "percentage",
+    type: "crypto",
+    imageUrl: "",
+    walletAddress: "T9yD14Nj9j7xAB4dbGeiX9h8zzf52",
+    networkType: "TRC20",
+    typeFor: "deposit",
+    note: ""
   },
   {
     id: 4,
@@ -67,7 +101,18 @@ const MOCK_GATEWAYS = [
     limit: "$250 - $1000000",
     charge: "0%",
     currency: "$1 = 0 ₿",
-    status: "Active"
+    status: "Active",
+
+    minAmount: "250",
+    maxAmount: "1000000",
+    charges: "0",
+    chargesType: "percentage",
+    type: "crypto",
+    imageUrl: "",
+    walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    networkType: "BTC",
+    typeFor: "deposit",
+    note: ""
   },
   {
     id: 5,
@@ -76,7 +121,18 @@ const MOCK_GATEWAYS = [
     limit: "$500 - $1000000",
     charge: "0%",
     currency: "$1 = 0 Ξ",
-    status: "Active"
+    status: "Active",
+
+    minAmount: "500",
+    maxAmount: "1000000",
+    charges: "0",
+    chargesType: "percentage",
+    type: "crypto",
+    imageUrl: "",
+    walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+    networkType: "ERC20",
+    typeFor: "deposit",
+    note: ""
   },
   {
     id: 6,
@@ -85,7 +141,18 @@ const MOCK_GATEWAYS = [
     limit: "$500 - $1000000",
     charge: "0%",
     currency: "$1 = 1 ₮",
-    status: "Active"
+    status: "Active",
+
+    minAmount: "500",
+    maxAmount: "1000000",
+    charges: "0",
+    chargesType: "percentage",
+    type: "crypto",
+    imageUrl: "",
+    walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+    networkType: "ERC20",
+    typeFor: "deposit",
+    note: ""
   }
 ];
 
@@ -93,6 +160,12 @@ export default function AdminDeposits() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingGateway, setEditingGateway] = useState<any>(null);
+
+  const handleOpen = (gateway: any = null) => {
+    setEditingGateway(gateway);
+    setOpen(true);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,12 +175,15 @@ export default function AdminDeposits() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({
-      title: "Gateway Added",
-      description: "New payment method has been successfully added.",
+      title: editingGateway ? "Gateway Updated" : "Gateway Added",
+      description: editingGateway 
+        ? "Payment method has been successfully updated." 
+        : "New payment method has been successfully added.",
     });
     
     setIsSubmitting(false);
     setOpen(false);
+    setEditingGateway(null);
   };
 
   return (
@@ -117,51 +193,76 @@ export default function AdminDeposits() {
       </div>
 
       <div className="mb-6">
+        <Button 
+          onClick={() => handleOpen(null)}
+          className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium px-6 py-2 h-auto rounded-md text-sm"
+        >
+          <Plus size={16} className="mr-2" />
+          Add Manual Gateway
+        </Button>
+
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium px-6 py-2 h-auto rounded-md text-sm">
-              <Plus size={16} className="mr-2" />
-              Add Manual Gateway
-            </Button>
-          </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="border-b pb-4 mb-4">
-              <DialogTitle className="text-lg font-normal text-gray-700">Add New payment Method</DialogTitle>
+              <DialogTitle className="text-lg font-normal text-gray-700">
+                {editingGateway ? "Edit Payment Method" : "Add New payment Method"}
+              </DialogTitle>
             </DialogHeader>
             
-            <form onSubmit={handleSave} className="space-y-6">
+            <form onSubmit={handleSave} className="space-y-6" key={editingGateway?.id || 'new'}>
               {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-gray-600 font-normal">Name</Label>
-                <Input id="name" placeholder="Payment method name" className="bg-white border-gray-200" required />
+                <Input 
+                  id="name" 
+                  defaultValue={editingGateway?.name}
+                  placeholder="Payment method name" 
+                  className="bg-white border-gray-200" 
+                  required 
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Minimum Amount */}
                 <div className="space-y-2">
                   <Label htmlFor="minAmount" className="text-gray-600 font-normal">Minimum Amount</Label>
-                  <Input id="minAmount" className="bg-white border-gray-200" required />
+                  <Input 
+                    id="minAmount" 
+                    defaultValue={editingGateway?.minAmount}
+                    className="bg-white border-gray-200" 
+                    required 
+                  />
                   <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
                 </div>
 
                 {/* Maximum Amount */}
                 <div className="space-y-2">
                   <Label htmlFor="maxAmount" className="text-gray-600 font-normal">Maximum Amount</Label>
-                  <Input id="maxAmount" className="bg-white border-gray-200" required />
+                  <Input 
+                    id="maxAmount" 
+                    defaultValue={editingGateway?.maxAmount}
+                    className="bg-white border-gray-200" 
+                    required 
+                  />
                   <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
                 </div>
 
                 {/* Charges */}
                 <div className="space-y-2">
                   <Label htmlFor="charges" className="text-gray-600 font-normal">Charges</Label>
-                  <Input id="charges" className="bg-white border-gray-200" required />
+                  <Input 
+                    id="charges" 
+                    defaultValue={editingGateway?.charges}
+                    className="bg-white border-gray-200" 
+                    required 
+                  />
                   <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
                 </div>
 
                 {/* Charges Type */}
                 <div className="space-y-2">
                   <Label htmlFor="chargesType" className="text-gray-600 font-normal">Charges Type</Label>
-                  <Select defaultValue="percentage">
+                  <Select defaultValue={editingGateway?.chargesType || "percentage"}>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -176,7 +277,7 @@ export default function AdminDeposits() {
                 {/* Type */}
                 <div className="space-y-2">
                   <Label htmlFor="type" className="text-gray-600 font-normal">Type</Label>
-                  <Select defaultValue="crypto">
+                  <Select defaultValue={editingGateway?.type || "crypto"}>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -191,13 +292,21 @@ export default function AdminDeposits() {
                 {/* Image URL */}
                 <div className="space-y-2">
                   <Label htmlFor="imageUrl" className="text-gray-600 font-normal">Image url (Logo)</Label>
-                  <Input id="imageUrl" className="bg-white border-gray-200" />
+                  <Input 
+                    id="imageUrl" 
+                    defaultValue={editingGateway?.imageUrl}
+                    className="bg-white border-gray-200" 
+                  />
                 </div>
 
                 {/* Wallet Address */}
                 <div className="space-y-2">
                   <Label htmlFor="walletAddress" className="text-gray-600 font-normal">Wallet Address</Label>
-                  <Input id="walletAddress" className="bg-white border-gray-200" />
+                  <Input 
+                    id="walletAddress" 
+                    defaultValue={editingGateway?.walletAddress}
+                    className="bg-white border-gray-200" 
+                  />
                 </div>
 
                 {/* Barcode Image */}
@@ -215,13 +324,18 @@ export default function AdminDeposits() {
                 {/* Wallet Address Network Type */}
                 <div className="space-y-2">
                   <Label htmlFor="networkType" className="text-gray-600 font-normal">Wallet Address Network Type</Label>
-                  <Input id="networkType" placeholder="eq ERC" className="bg-white border-gray-200" />
+                  <Input 
+                    id="networkType" 
+                    defaultValue={editingGateway?.networkType}
+                    placeholder="eq ERC" 
+                    className="bg-white border-gray-200" 
+                  />
                 </div>
 
                 {/* Status */}
                 <div className="space-y-2">
                   <Label htmlFor="status" className="text-gray-600 font-normal">Status</Label>
-                  <Select defaultValue="enable">
+                  <Select defaultValue={editingGateway?.status === "Active" ? "enable" : editingGateway?.status === "Inactive" ? "disable" : "enable"}>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -235,7 +349,7 @@ export default function AdminDeposits() {
                 {/* Type for */}
                 <div className="space-y-2">
                   <Label htmlFor="typeFor" className="text-gray-600 font-normal">Type for</Label>
-                  <Select defaultValue="deposit">
+                  <Select defaultValue={editingGateway?.typeFor || "deposit"}>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -249,7 +363,12 @@ export default function AdminDeposits() {
                 {/* Optional Note */}
                 <div className="space-y-2">
                   <Label htmlFor="note" className="text-gray-600 font-normal">Optional Note</Label>
-                  <Input id="note" placeholder="Payment may take up to 24 hours" className="bg-white border-gray-200" />
+                  <Input 
+                    id="note" 
+                    defaultValue={editingGateway?.note}
+                    placeholder="Payment may take up to 24 hours" 
+                    className="bg-white border-gray-200" 
+                  />
                 </div>
               </div>
 
@@ -260,7 +379,7 @@ export default function AdminDeposits() {
                   className="bg-[#1a1f36] hover:bg-[#2c324c] text-white font-medium px-6 py-2 h-10 rounded-md"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Saving..." : "Save Method"}
+                  {isSubmitting ? "Saving..." : (editingGateway ? "Update Method" : "Save Method")}
                 </Button>
               </div>
             </form>
@@ -303,7 +422,11 @@ export default function AdminDeposits() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Button variant="ghost" className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 h-8 px-3 text-sm font-medium">
+                      <Button 
+                        onClick={() => handleOpen(gateway)}
+                        variant="ghost" 
+                        className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 h-8 px-3 text-sm font-medium"
+                      >
                         Edit
                       </Button>
                     </TableCell>
