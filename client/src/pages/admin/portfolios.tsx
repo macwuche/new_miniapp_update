@@ -6,6 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { 
   Table, 
   TableBody, 
   TableCell, 
@@ -18,10 +26,12 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
-import { Search, PieChart, ArrowRight, Eye, Wallet, TrendingUp } from "lucide-react";
+import { Search, PieChart, ArrowRight, Eye, Wallet, TrendingUp, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for user portfolios
 const MOCK_PORTFOLIOS = [
@@ -112,22 +122,126 @@ const MOCK_PORTFOLIOS = [
 ];
 
 export default function AdminPortfolios() {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [selectedPortfolio, setSelectedPortfolio] = useState<any>(null);
+  const [isSwapOpen, setSwapOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredPortfolios = MOCK_PORTFOLIOS.filter(p => 
     p.user.name.toLowerCase().includes(search.toLowerCase()) || 
     p.user.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleManualSwap = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    toast({
+      title: "Swap Executed Successfully",
+      description: "Admin manual swap operation has been completed.",
+      className: "bg-green-50 border-green-200 text-green-800",
+    });
+    
+    setIsSubmitting(false);
+    setSwapOpen(false);
+  };
+
   return (
     <AdminLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">User Portfolios</h1>
-        <p className="text-gray-500 mt-2">
-          View assets of users who have performed swap operations.
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Portfolios</h1>
+          <p className="text-gray-500 mt-2">
+            View assets of users who have performed swap operations.
+          </p>
+        </div>
+        <Button 
+          onClick={() => setSwapOpen(true)}
+          className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium"
+        >
+          <ArrowRightLeft size={18} className="mr-2" />
+          Perform Manual Swap
+        </Button>
       </div>
+      
+      {/* Manual Swap Dialog */}
+      <Dialog open={isSwapOpen} onOpenChange={setSwapOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manual User Swap</DialogTitle>
+            <DialogDescription>
+              Execute a swap operation on behalf of a user.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleManualSwap} className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>Select User</Label>
+              <Select required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Search or select user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOCK_PORTFOLIOS.map(p => (
+                    <SelectItem key={p.id} value={p.id.toString()}>{p.user.name} ({p.user.email})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>From Asset</Label>
+                <Select required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select asset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="btc">Bitcoin (BTC)</SelectItem>
+                    <SelectItem value="eth">Ethereum (ETH)</SelectItem>
+                    <SelectItem value="usd">US Dollar (USD)</SelectItem>
+                    <SelectItem value="tsla">Tesla (TSLA)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>To Asset</Label>
+                <Select required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select asset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="btc">Bitcoin (BTC)</SelectItem>
+                    <SelectItem value="eth">Ethereum (ETH)</SelectItem>
+                    <SelectItem value="usd">US Dollar (USD)</SelectItem>
+                    <SelectItem value="tsla">Tesla (TSLA)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Amount to Swap</Label>
+              <Input type="number" placeholder="0.00" required min="0" step="0.000001" />
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => setSwapOpen(false)}>Cancel</Button>
+              <Button 
+                type="submit" 
+                className="bg-[#6f42c1] hover:bg-[#5a32a3]"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : "Execute Swap"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
