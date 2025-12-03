@@ -32,6 +32,7 @@ import NewInvestmentPlan from "@/pages/admin/investments/new";
 import ApiUsage from "@/pages/admin/api-usage";
 import Support from "@/pages/admin/support";
 import UserSupport from "@/pages/user-support";
+import Security from "@/pages/security";
 import AdminDeposits from "@/pages/admin/deposits";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminSwap from "@/pages/admin/swap";
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/portfolio/:symbol" component={PortfolioAssetAction} />
       <Route path="/profile" component={Profile} />
       <Route path="/support" component={UserSupport} />
+      <Route path="/security" component={Security} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/users" component={UserManagement} />
