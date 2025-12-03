@@ -22,7 +22,10 @@ import {
   AlertTriangle,
   UserCheck,
   UserX,
-  Clock
+  Clock,
+  Globe,
+  Star,
+  User
 } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -30,10 +33,14 @@ import { useToast } from "@/hooks/use-toast";
 // Mock User Data (In a real app, this would be fetched based on ID)
 const MOCK_USER_DETAILS = {
   id: "USR-1001",
-  name: "Alex Thompson",
+  firstName: "Alex",
+  lastName: "Thompson",
   username: "@alex_thompson",
   email: "alex.t@example.com",
   phone: "+1 (555) 123-4567",
+  languageCode: "en",
+  isPremium: true,
+  photoUrl: "https://ui-avatars.com/api/?name=Alex+Thompson&background=random&size=128",
   country: "United States",
   joined: "January 15, 2024",
   status: "Active",
@@ -78,6 +85,25 @@ export default function UserDetails() {
     });
   };
 
+  // Helper for language flags
+  const getLanguageFlag = (code: string) => {
+    const flags: Record<string, string> = {
+      'en': '🇺🇸',
+      'ru': '🇷🇺',
+      'es': '🇪🇸',
+      'fr': '🇫🇷',
+      'de': '🇩🇪',
+      'it': '🇮🇹',
+      'pt': '🇵🇹',
+      'tr': '🇹🇷',
+      'uk': '🇺🇦',
+      'zh': '🇨🇳',
+      'id': '🇮🇩',
+      'vi': '🇻🇳',
+    };
+    return flags[code.toLowerCase()] || '🌐';
+  };
+
   return (
     <AdminLayout>
       <div className="mb-6">
@@ -90,13 +116,20 @@ export default function UserDetails() {
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border-4 border-white shadow-sm">
-              <AvatarImage src={`https://ui-avatars.com/api/?name=${user.name}&background=random&size=128`} />
-              <AvatarFallback className="text-xl">{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-24 w-24 border-4 border-white shadow-sm">
+                <AvatarImage src={user.photoUrl} />
+                <AvatarFallback className="text-2xl">{user.firstName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              {user.isPremium && (
+                <div className="absolute -bottom-1 -right-1 bg-[#6f42c1] text-white rounded-full p-1 border-2 border-white shadow-sm" title="Telegram Premium">
+                  <Star size={14} fill="currentColor" />
+                </div>
+              )}
+            </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{user.firstName} {user.lastName}</h1>
                 <Badge className={user.status === "Active" ? "bg-green-100 text-green-700 hover:bg-green-200 border-none" : "bg-red-100 text-red-700"}>
                   {user.status}
                 </Badge>
@@ -138,29 +171,81 @@ export default function UserDetails() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
-                <div className="text-xs text-gray-500 uppercase font-medium">Email Address</div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-900">{user.email}</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5">Verified</Badge>
+                <div className="text-xs text-gray-500 uppercase font-medium">Full Name</div>
+                <div className="flex items-center gap-2">
+                  <User size={14} className="text-gray-400" />
+                  <span className="text-gray-900 font-medium">{user.firstName} {user.lastName}</span>
                 </div>
               </div>
               <Separator />
+              
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 uppercase font-medium">Telegram Username</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-600 font-medium">{user.username}</span>
+                  <div className="flex gap-2">
+                    {user.isPremium && (
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] h-5 gap-1">
+                        <Star size={10} fill="currentColor" /> Premium
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Separator />
+
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 uppercase font-medium">Email Address</div>
+                <div className="flex items-center justify-between">
+                  {user.email ? (
+                    <>
+                      <span className="text-gray-900">{user.email}</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5">Verified</Badge>
+                    </>
+                  ) : (
+                    <span className="text-gray-400 italic">Not provided</span>
+                  )}
+                </div>
+              </div>
+              <Separator />
+
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 uppercase font-medium">Phone Number</div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-900">{user.phone}</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5">Verified</Badge>
+                  {user.phone ? (
+                    <>
+                      <span className="text-gray-900">{user.phone}</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5">Verified</Badge>
+                    </>
+                  ) : (
+                    <span className="text-gray-400 italic">Not provided</span>
+                  )}
                 </div>
               </div>
               <Separator />
+
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 uppercase font-medium">Language</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg leading-none">{getLanguageFlag(user.languageCode)}</span>
+                  <span className="text-gray-900 uppercase font-medium">{user.languageCode}</span>
+                </div>
+              </div>
+              <Separator />
+
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 uppercase font-medium">Country</div>
                 <div className="flex items-center gap-2">
                   <MapPin size={14} className="text-gray-400" />
-                  <span className="text-gray-900">{user.country}</span>
+                  {user.country ? (
+                    <span className="text-gray-900">{user.country}</span>
+                  ) : (
+                    <span className="text-gray-400 italic">Not provided</span>
+                  )}
                 </div>
               </div>
               <Separator />
+
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 uppercase font-medium">Join Date</div>
                 <div className="flex items-center gap-2">
