@@ -2,7 +2,8 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { useTelegram } from "@/lib/telegram-mock";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Award, Zap } from "lucide-react";
+import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Award, Zap, Send, MessageSquare } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Profile() {
   const { user } = useTelegram();
@@ -64,21 +65,53 @@ export default function Profile() {
           <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2">Account</p>
           
           {[
-            { icon: Settings, label: "Settings" },
-            { icon: Shield, label: "Security" },
-            { icon: CreditCard, label: "Payment Methods" },
-            { icon: HelpCircle, label: "Support" },
+            { icon: Settings, label: "Settings", to: "/settings" },
+            { icon: Shield, label: "Security", to: "/security" },
+            { icon: CreditCard, label: "Payment Methods", to: "/withdraw/accounts" },
           ].map((item) => (
-            <button key={item.label} className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm active:bg-gray-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-50 rounded-lg text-gray-600">
-                  <item.icon size={20} />
+            <Link key={item.label} href={item.to}>
+              <button className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm active:bg-gray-50 transition-colors mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg text-gray-600">
+                    <item.icon size={20} />
+                  </div>
+                  <span className="font-medium text-gray-900">{item.label}</span>
                 </div>
-                <span className="font-medium text-gray-900">{item.label}</span>
+                <ChevronRight size={20} className="text-gray-300" />
+              </button>
+            </Link>
+          ))}
+
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2 mt-6">Support</p>
+
+          {/* Telegram Support */}
+          <a href="https://t.me/BrokerageSupport" target="_blank" rel="noopener noreferrer" className="block">
+            <button className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm active:bg-gray-50 transition-colors mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg text-blue-500">
+                  <Send size={20} />
+                </div>
+                <span className="font-medium text-gray-900">Telegram Support</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-400">
+                <span className="text-xs">Open</span>
+                <ChevronRight size={20} />
+              </div>
+            </button>
+          </a>
+
+          {/* In-App Support */}
+          <Link href="/support">
+            <button className="w-full flex items-center justify-between p-4 bg-white rounded-xl shadow-sm active:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg text-purple-500">
+                  <MessageSquare size={20} />
+                </div>
+                <span className="font-medium text-gray-900">In-App Support</span>
               </div>
               <ChevronRight size={20} className="text-gray-300" />
             </button>
-          ))}
+          </Link>
         </div>
 
         <Button variant="ghost" className="w-full mt-8 h-12 rounded-xl font-medium text-red-500 hover:bg-red-50 hover:text-red-600">

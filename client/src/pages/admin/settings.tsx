@@ -265,6 +265,11 @@ export default function AdminSettings() {
                   <Label>Telegram Announcement Channel</Label>
                   <Input defaultValue="@BrokerageAnnouncements" />
                 </div>
+                <div className="space-y-2">
+                  <Label>Telegram Support Contact</Label>
+                  <Input defaultValue="@BrokerageSupport" placeholder="@username or https://t.me/..." />
+                  <p className="text-xs text-gray-500">Users will be directed here for Telegram support.</p>
+                </div>
               </div>
               <Separator />
               <div className="space-y-4">
