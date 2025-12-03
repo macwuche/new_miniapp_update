@@ -21,6 +21,15 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { 
   Search, 
   Filter, 
   MoreHorizontal, 
@@ -29,7 +38,19 @@ import {
   Mail, 
   ShieldAlert, 
   Wallet,
-  MoreVertical
+  MoreVertical,
+  PlusCircle,
+  MinusCircle,
+  Briefcase,
+  Trash2,
+  FileCheck,
+  History,
+  Bot,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ArrowUpRight,
+  ArrowDownLeft
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -37,31 +58,91 @@ import { cn } from "@/lib/utils";
 
 // Mock data for users
 const MOCK_USERS = [
-  { id: "USR-1001", name: "Alex Thompson", email: "alex.t@example.com", balance: "$12,450.00", kyc: "Verified", status: "Active", joined: "2024-01-15" },
-  { id: "USR-1002", name: "Sarah Jenkins", email: "sarah.j@example.com", balance: "$3,200.50", kyc: "Pending", status: "Active", joined: "2024-02-20" },
-  { id: "USR-1003", name: "Michael Chen", email: "m.chen@example.com", balance: "$45,900.00", kyc: "Verified", status: "Suspended", joined: "2023-11-05" },
-  { id: "USR-1004", name: "David Miller", email: "d.miller@example.com", balance: "$0.00", kyc: "Unverified", status: "Active", joined: "2024-05-10" },
-  { id: "USR-1005", name: "Jessica Wu", email: "jess.wu@example.com", balance: "$8,750.25", kyc: "Verified", status: "Active", joined: "2024-03-12" },
-  { id: "USR-1006", name: "Robert Wilson", email: "r.wilson@example.com", balance: "$1,500.00", kyc: "Rejected", status: "Active", joined: "2024-04-01" },
-  { id: "USR-1007", name: "Emily Davis", email: "emily.d@example.com", balance: "$150.00", kyc: "Unverified", status: "Active", joined: "2024-05-14" },
+  { id: "USR-1001", name: "Alex Thompson", email: "alex.t@example.com", balance: "$12,450.00", rawBalance: 12450, kyc: "Verified", status: "Active", joined: "2024-01-15" },
+  { id: "USR-1002", name: "Sarah Jenkins", email: "sarah.j@example.com", balance: "$3,200.50", rawBalance: 3200.50, kyc: "Pending", status: "Active", joined: "2024-02-20" },
+  { id: "USR-1003", name: "Michael Chen", email: "m.chen@example.com", balance: "$45,900.00", rawBalance: 45900, kyc: "Verified", status: "Suspended", joined: "2023-11-05" },
+  { id: "USR-1004", name: "David Miller", email: "d.miller@example.com", balance: "$0.00", rawBalance: 0, kyc: "Unverified", status: "Active", joined: "2024-05-10" },
+  { id: "USR-1005", name: "Jessica Wu", email: "jess.wu@example.com", balance: "$8,750.25", rawBalance: 8750.25, kyc: "Verified", status: "Active", joined: "2024-03-12" },
+  { id: "USR-1006", name: "Robert Wilson", email: "r.wilson@example.com", balance: "$1,500.00", rawBalance: 1500, kyc: "Rejected", status: "Active", joined: "2024-04-01" },
+  { id: "USR-1007", name: "Emily Davis", email: "emily.d@example.com", balance: "$150.00", rawBalance: 150, kyc: "Unverified", status: "Active", joined: "2024-05-14" },
+];
+
+// Mock Transactions
+const MOCK_TRANSACTIONS = [
+  { id: "TX-101", type: "Deposit", amount: "$500.00", status: "Completed", date: "2024-05-20" },
+  { id: "TX-102", type: "Withdrawal", amount: "$200.00", status: "Pending", date: "2024-05-19" },
+  { id: "TX-103", type: "Trade", amount: "$1,200.00", status: "Completed", date: "2024-05-18" },
+  { id: "TX-104", type: "Swap", amount: "$300.00", status: "Completed", date: "2024-05-15" },
+];
+
+// Mock Bots
+const MOCK_BOTS = [
+  { id: "BOT-01", name: "BTC Scalper", strategy: "Scalping", profit: "+12.5%", status: "Active" },
+  { id: "BOT-02", name: "ETH Swing", strategy: "Swing Trading", profit: "-2.1%", status: "Paused" },
 ];
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
-
-  const handleAction = (action: string, userId: string) => {
-    toast({
-      title: `User ${action}`,
-      description: `Successfully applied ${action.toLowerCase()} to user ${userId}`,
-    });
-  };
+  
+  // Dialog States
+  const [selectedUser, setSelectedUser] = useState<typeof MOCK_USERS[0] | null>(null);
+  const [dialogType, setDialogType] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const filteredUsers = MOCK_USERS.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAction = (type: string, user: typeof MOCK_USERS[0]) => {
+    setSelectedUser(user);
+    setDialogType(type);
+    setAmount("");
+  };
+
+  const closeDialog = () => {
+    setDialogType(null);
+    setSelectedUser(null);
+    setAmount("");
+    setIsLoading(false);
+  };
+
+  const handleSubmitAction = async () => {
+    if (!selectedUser) return;
+    
+    setIsLoading(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    let message = "";
+    switch (dialogType) {
+      case 'add-balance':
+        message = `Successfully added $${amount} to ${selectedUser.name}'s balance`;
+        break;
+      case 'subtract-balance':
+        message = `Successfully subtracted $${amount} from ${selectedUser.name}'s balance`;
+        break;
+      case 'add-portfolio':
+        message = `Successfully added $${amount} to ${selectedUser.name}'s investment portfolio`;
+        break;
+      case 'delete-user':
+        message = `User ${selectedUser.name} has been permanently deleted`;
+        break;
+      case 'send-email':
+        message = `Email sent to ${selectedUser.email}`;
+        break;
+    }
+    
+    toast({
+      title: "Action Completed",
+      description: message,
+    });
+    
+    closeDialog();
+  };
 
   const getKycBadge = (status: string) => {
     switch (status) {
@@ -202,24 +283,58 @@ export default function UserManagement() {
                           <MoreHorizontal size={16} />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>User Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleAction('Viewed Profile', user.id)}>
+                        <DropdownMenuItem onClick={() => handleAction('view-profile', user)}>
                           <UserCheck size={14} className="mr-2" />
                           View Profile
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('Emailed', user.id)}>
+                        <DropdownMenuItem onClick={() => handleAction('send-email', user)}>
                           <Mail size={14} className="mr-2" />
                           Send Email
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('Wallet Checked', user.id)}>
+                        <DropdownMenuItem onClick={() => handleAction('check-wallet', user)}>
                           <Wallet size={14} className="mr-2" />
                           Check Wallet
                         </DropdownMenuItem>
+                        
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleAction('Suspended', user.id)} className="text-red-600">
-                          <ShieldAlert size={14} className="mr-2" />
-                          Suspend Account
+                        <DropdownMenuLabel className="text-xs text-gray-500">Financial</DropdownMenuLabel>
+                        
+                        <DropdownMenuItem onClick={() => handleAction('add-balance', user)}>
+                          <PlusCircle size={14} className="mr-2 text-green-600" />
+                          Add to Balance
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction('subtract-balance', user)}>
+                          <MinusCircle size={14} className="mr-2 text-red-600" />
+                          Subtract from Balance
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction('add-portfolio', user)}>
+                          <Briefcase size={14} className="mr-2 text-blue-600" />
+                          Add to Portfolio
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs text-gray-500">Monitoring</DropdownMenuLabel>
+
+                        <DropdownMenuItem onClick={() => handleAction('check-kyc', user)}>
+                          <FileCheck size={14} className="mr-2" />
+                          Check KYC
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction('check-transactions', user)}>
+                          <History size={14} className="mr-2" />
+                          Check Transactions
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction('check-bots', user)}>
+                          <Bot size={14} className="mr-2" />
+                          Check Trading Bots
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator />
+                        
+                        <DropdownMenuItem onClick={() => handleAction('delete-user', user)} className="text-red-600 focus:text-red-600">
+                          <Trash2 size={14} className="mr-2" />
+                          Delete User
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -230,6 +345,305 @@ export default function UserManagement() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* --- Dialogs --- */}
+
+      {/* Add/Subtract Balance Dialog */}
+      <Dialog open={dialogType === 'add-balance' || dialogType === 'subtract-balance'} onOpenChange={closeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogType === 'add-balance' ? 'Add Balance' : 'Subtract Balance'}</DialogTitle>
+            <DialogDescription>
+              {dialogType === 'add-balance' ? 'Add funds to' : 'Remove funds from'} {selectedUser?.name}'s main wallet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Current Balance</Label>
+              <div className="text-2xl font-bold font-mono">{selectedUser?.balance}</div>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount ({dialogType === 'add-balance' ? 'Credit' : 'Debit'})</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  className="pl-7" 
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button 
+              onClick={handleSubmitAction} 
+              disabled={!amount || isLoading}
+              className={dialogType === 'subtract-balance' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+            >
+              {isLoading ? 'Processing...' : (dialogType === 'add-balance' ? 'Add Funds' : 'Subtract Funds')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add to Portfolio Dialog */}
+      <Dialog open={dialogType === 'add-portfolio'} onOpenChange={closeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add to Portfolio</DialogTitle>
+            <DialogDescription>
+              Inject funds directly into {selectedUser?.name}'s investment portfolio.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+             <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+              <p className="text-sm text-blue-800">
+                This action will add funds to the user's "Investment" portfolio, separate from their main wallet balance.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Investment Amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  className="pl-7" 
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Note (Optional)</Label>
+              <Input placeholder="Reason for portfolio adjustment" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button 
+              onClick={handleSubmitAction} 
+              disabled={!amount || isLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isLoading ? 'Processing...' : 'Add to Portfolio'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={dialogType === 'delete-user'} onOpenChange={closeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertCircle size={20} />
+              Delete User Account
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-red-50 p-4 rounded-md border border-red-100 text-red-800 text-sm">
+            <p className="font-bold mb-1">Warning:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>User profile and personal data will be removed.</li>
+              <li>Wallet balance ({selectedUser?.balance}) will be frozen.</li>
+              <li>Active trading bots will be stopped.</li>
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button 
+              onClick={handleSubmitAction} 
+              disabled={isLoading}
+              variant="destructive"
+            >
+              {isLoading ? 'Deleting...' : 'Delete Permanently'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Check KYC Dialog */}
+      <Dialog open={dialogType === 'check-kyc'} onOpenChange={closeDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>KYC Status</DialogTitle>
+            <DialogDescription>
+              Verification details for {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 mb-6">
+              <div>
+                <p className="text-sm text-gray-500">Current Status</p>
+                <div className="mt-1">{selectedUser && getKycBadge(selectedUser.kyc)}</div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">User ID</p>
+                <p className="font-mono font-medium">{selectedUser?.id}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Submitted Documents</h4>
+              {selectedUser?.kyc === 'Verified' ? (
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center p-3 border rounded-lg">
+                    <FileCheck className="text-green-500 mr-3" size={20} />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">National ID Card</p>
+                      <p className="text-xs text-gray-500">Verified on 2024-03-15</p>
+                    </div>
+                    <Button variant="ghost" size="sm">View</Button>
+                  </div>
+                  <div className="flex items-center p-3 border rounded-lg">
+                    <FileCheck className="text-green-500 mr-3" size={20} />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Proof of Address</p>
+                      <p className="text-xs text-gray-500">Verified on 2024-03-15</p>
+                    </div>
+                    <Button variant="ghost" size="sm">View</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed">
+                  <p className="text-gray-500">No documents available for review.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={closeDialog}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Check Transactions Dialog */}
+      <Dialog open={dialogType === 'check-transactions'} onOpenChange={closeDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Transaction History</DialogTitle>
+            <DialogDescription>
+              Recent activity for {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {MOCK_TRANSACTIONS.map((tx) => (
+                    <TableRow key={tx.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {tx.type === 'Deposit' ? <ArrowDownLeft size={16} className="text-green-500" /> : 
+                           tx.type === 'Withdrawal' ? <ArrowUpRight size={16} className="text-red-500" /> :
+                           <History size={16} className="text-blue-500" />}
+                          {tx.type}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono">{tx.amount}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={
+                          tx.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                        }>{tx.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-gray-500">{tx.date}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Close</Button>
+            <Button className="bg-blue-600">View Full History</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Check Bots Dialog */}
+      <Dialog open={dialogType === 'check-bots'} onOpenChange={closeDialog}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Active Trading Bots</DialogTitle>
+            <DialogDescription>
+              AI trading assistants managed by {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {MOCK_BOTS.map((bot) => (
+              <div key={bot.id} className="flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                    <Bot size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">{bot.name}</h4>
+                    <p className="text-xs text-gray-500">{bot.strategy}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={`font-bold ${bot.profit.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                    {bot.profit}
+                  </div>
+                  <Badge variant="secondary" className="mt-1 text-xs">
+                    {bot.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={closeDialog}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Email Dialog (Placeholder) */}
+      <Dialog open={dialogType === 'send-email'} onOpenChange={closeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Email</DialogTitle>
+            <DialogDescription>Send a notification to {selectedUser?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Subject</Label>
+              <Input placeholder="Important notification..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <textarea className="w-full min-h-[100px] p-3 rounded-md border text-sm" placeholder="Type your message here..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button onClick={handleSubmitAction}>Send Email</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </AdminLayout>
   );
 }
