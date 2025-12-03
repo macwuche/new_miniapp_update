@@ -58,13 +58,13 @@ import { cn } from "@/lib/utils";
 
 // Mock data for users
 const MOCK_USERS = [
-  { id: "USR-1001", name: "Alex Thompson", email: "alex.t@example.com", balance: "$12,450.00", rawBalance: 12450, kyc: "Verified", status: "Active", joined: "2024-01-15" },
-  { id: "USR-1002", name: "Sarah Jenkins", email: "sarah.j@example.com", balance: "$3,200.50", rawBalance: 3200.50, kyc: "Pending", status: "Active", joined: "2024-02-20" },
-  { id: "USR-1003", name: "Michael Chen", email: "m.chen@example.com", balance: "$45,900.00", rawBalance: 45900, kyc: "Verified", status: "Suspended", joined: "2023-11-05" },
-  { id: "USR-1004", name: "David Miller", email: "d.miller@example.com", balance: "$0.00", rawBalance: 0, kyc: "Unverified", status: "Active", joined: "2024-05-10" },
-  { id: "USR-1005", name: "Jessica Wu", email: "jess.wu@example.com", balance: "$8,750.25", rawBalance: 8750.25, kyc: "Verified", status: "Active", joined: "2024-03-12" },
-  { id: "USR-1006", name: "Robert Wilson", email: "r.wilson@example.com", balance: "$1,500.00", rawBalance: 1500, kyc: "Rejected", status: "Active", joined: "2024-04-01" },
-  { id: "USR-1007", name: "Emily Davis", email: "emily.d@example.com", balance: "$150.00", rawBalance: 150, kyc: "Unverified", status: "Active", joined: "2024-05-14" },
+  { id: "USR-1001", name: "Alex Thompson", username: "@alex_thompson", balance: "$12,450.00", rawBalance: 12450, kyc: "Verified", status: "Active", joined: "2024-01-15" },
+  { id: "USR-1002", name: "Sarah Jenkins", username: "@sarah_j", balance: "$3,200.50", rawBalance: 3200.50, kyc: "Pending", status: "Active", joined: "2024-02-20" },
+  { id: "USR-1003", name: "Michael Chen", username: "@m_chen99", balance: "$45,900.00", rawBalance: 45900, kyc: "Verified", status: "Suspended", joined: "2023-11-05" },
+  { id: "USR-1004", name: "David Miller", username: "@david_miller", balance: "$0.00", rawBalance: 0, kyc: "Unverified", status: "Active", joined: "2024-05-10" },
+  { id: "USR-1005", name: "Jessica Wu", username: "@jess_wu_trading", balance: "$8,750.25", rawBalance: 8750.25, kyc: "Verified", status: "Active", joined: "2024-03-12" },
+  { id: "USR-1006", name: "Robert Wilson", username: "@rob_wilson", balance: "$1,500.00", rawBalance: 1500, kyc: "Rejected", status: "Active", joined: "2024-04-01" },
+  { id: "USR-1007", name: "Emily Davis", username: "@emily_davis", balance: "$150.00", rawBalance: 150, kyc: "Unverified", status: "Active", joined: "2024-05-14" },
 ];
 
 // Mock Transactions
@@ -93,7 +93,7 @@ export default function UserManagement() {
 
   const filteredUsers = MOCK_USERS.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -132,7 +132,7 @@ export default function UserManagement() {
         message = `User ${selectedUser.name} has been permanently deleted`;
         break;
       case 'send-email':
-        message = `Email sent to ${selectedUser.email}`;
+        message = `Message sent to ${selectedUser.username}`;
         break;
     }
     
@@ -222,7 +222,7 @@ export default function UserManagement() {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               <Input 
-                placeholder="Search name, email or ID..." 
+                placeholder="Search name, username or ID..." 
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -253,7 +253,7 @@ export default function UserManagement() {
                       </Avatar>
                       <div>
                         <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                        <p className="text-xs text-blue-600 font-medium">{user.username}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -624,8 +624,8 @@ export default function UserManagement() {
       <Dialog open={dialogType === 'send-email'} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Email</DialogTitle>
-            <DialogDescription>Send a notification to {selectedUser?.email}</DialogDescription>
+            <DialogTitle>Send Message</DialogTitle>
+            <DialogDescription>Send a notification to {selectedUser?.username}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -639,7 +639,7 @@ export default function UserManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSubmitAction}>Send Email</Button>
+            <Button onClick={handleSubmitAction}>Send Message</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
