@@ -6,13 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Save, AlertTriangle, Shield, Bell, Settings as SettingsIcon, DollarSign } from "lucide-react";
+import { Save, AlertTriangle, Shield, Bell, Settings as SettingsIcon, DollarSign, Image as ImageIcon, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 export default function AdminSettings() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -42,8 +54,12 @@ export default function AdminSettings() {
         </Button>
       </div>
 
-      <Tabs defaultValue="trading" className="space-y-6">
-        <TabsList className="bg-white border border-gray-200 p-1 h-12 w-full justify-start rounded-xl">
+      <Tabs defaultValue="branding" className="space-y-6">
+        <TabsList className="bg-white border border-gray-200 p-1 h-12 w-full justify-start rounded-xl overflow-x-auto">
+          <TabsTrigger value="branding" className="data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 h-10 px-6 rounded-lg">
+            <ImageIcon size={16} className="mr-2" />
+            Branding
+          </TabsTrigger>
           <TabsTrigger value="trading" className="data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 h-10 px-6 rounded-lg">
             <DollarSign size={16} className="mr-2" />
             Trading & Fees
@@ -61,6 +77,81 @@ export default function AdminSettings() {
             System
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="branding" className="space-y-6">
+          <Card className="border-none shadow-sm">
+            <CardHeader>
+              <CardTitle>Platform Branding</CardTitle>
+              <CardDescription>Customize your platform's visual identity and logos.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-base">Main Logo</Label>
+                    <p className="text-sm text-gray-500">Displayed on the login screen and sidebar.</p>
+                  </div>
+                  
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center gap-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                    {logoPreview ? (
+                      <div className="relative w-40 h-40 flex items-center justify-center bg-white rounded-lg shadow-sm p-2">
+                        <img src={logoPreview} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                          onClick={() => setLogoPreview(null)}
+                        >
+                          <span className="sr-only">Remove</span>
+                          <span className="text-xs">×</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="w-40 h-40 bg-white rounded-lg border border-gray-100 flex items-center justify-center">
+                        <ImageIcon className="text-gray-300 w-12 h-12" />
+                      </div>
+                    )}
+                    
+                    <div className="text-center">
+                      <Button variant="outline" className="relative" size="sm">
+                        <Upload size={16} className="mr-2" />
+                        Upload Image
+                        <Input 
+                          type="file" 
+                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                        />
+                      </Button>
+                      <p className="text-xs text-gray-400 mt-2">Recommended: 512x512px, PNG or SVG</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-base">Platform Name</Label>
+                    <p className="text-sm text-gray-500">Used in emails and browser titles.</p>
+                  </div>
+                  <Input defaultValue="TradeMaster Pro" />
+                  
+                  <Separator className="my-4" />
+
+                  <div className="space-y-1">
+                    <Label className="text-base">Dark Mode Logo</Label>
+                    <p className="text-sm text-gray-500">Optional version for dark themes.</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Button variant="outline" className="w-full" disabled>
+                      <Upload size={16} className="mr-2" />
+                      Upload Dark Variant
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="trading" className="space-y-6">
           <Card className="border-none shadow-sm">
