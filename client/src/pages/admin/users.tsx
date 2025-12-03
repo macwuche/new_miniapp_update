@@ -52,6 +52,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft
 } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -84,6 +85,7 @@ const MOCK_BOTS = [
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   // Dialog States
   const [selectedUser, setSelectedUser] = useState<typeof MOCK_USERS[0] | null>(null);
@@ -98,6 +100,10 @@ export default function UserManagement() {
   );
 
   const handleAction = (type: string, user: typeof MOCK_USERS[0]) => {
+    if (type === 'view-profile') {
+      setLocation(`/admin/users/${user.id}`);
+      return;
+    }
     setSelectedUser(user);
     setDialogType(type);
     setAmount("");

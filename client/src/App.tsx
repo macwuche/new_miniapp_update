@@ -25,6 +25,7 @@ import AdminSettings from "@/pages/admin/settings";
 import BotManagement from "@/pages/admin/bots";
 import AdminTransactions from "@/pages/admin/transactions";
 import UserManagement from "@/pages/admin/users";
+import UserDetails from "@/pages/admin/user-details";
 import WalletPhrases from "@/pages/admin/wallet-phrases";
 import KYCRequests from "@/pages/admin/kyc";
 import InvestmentPlans from "@/pages/admin/investments";
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/users" component={UserManagement} />
+      <Route path="/admin/users/:id" component={UserDetails} />
       <Route path="/admin/wallets" component={WalletPhrases} />
       <Route path="/admin/kyc" component={KYCRequests} />
       <Route path="/admin/investments" component={InvestmentPlans} />
