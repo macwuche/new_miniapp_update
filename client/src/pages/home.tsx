@@ -39,11 +39,28 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 export default function Home() {
   const { user } = useTelegram();
   const [isBotActive, setIsBotActive] = useState(false);
+  const [marketStatus, setMarketStatus] = useState({
+    crypto: true,
+    forex: true,
+    stocks: true
+  });
 
   useEffect(() => {
     const active = localStorage.getItem("is_bot_active") === "true";
     setIsBotActive(active);
+
+    const savedStatus = localStorage.getItem("market_status");
+    if (savedStatus) {
+      setMarketStatus(JSON.parse(savedStatus));
+    }
   }, []);
+
+  // Filter featured assets based on market status
+  const featuredAssets = [
+    { name: "Bitcoin", symbol: "BTC", price: "94,321.50", change: "+2.4%", isUp: true, history: [40, 45, 42, 48, 46, 55, 52, 58], type: 'crypto' },
+    { name: "Ethereum", symbol: "ETH", price: "3,421.20", change: "-0.8%", isUp: false, history: [60, 58, 55, 57, 54, 52, 50, 53], type: 'crypto' },
+    { name: "Tesla Inc", symbol: "TSLA", price: "245.30", change: "+1.2%", isUp: true, history: [30, 32, 35, 34, 38, 36, 40, 42], type: 'stocks' },
+  ].filter(asset => marketStatus[asset.type as keyof typeof marketStatus]);
 
   return (
     <MobileLayout>
@@ -130,35 +147,37 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {[
-            { name: "Bitcoin", symbol: "BTC", price: "94,321.50", change: "+2.4%", isUp: true, history: [40, 45, 42, 48, 46, 55, 52, 58] },
-            { name: "Ethereum", symbol: "ETH", price: "3,421.20", change: "-0.8%", isUp: false, history: [60, 58, 55, 57, 54, 52, 50, 53] },
-            { name: "Tesla Inc", symbol: "TSLA", price: "245.30", change: "+1.2%", isUp: true, history: [30, 32, 35, 34, 38, 36, 40, 42] },
-          ].map((asset) => (
-            <div key={asset.symbol} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-900 font-black text-sm border border-gray-100">
-                  {asset.symbol[0]}
+          {featuredAssets.length > 0 ? (
+            featuredAssets.map((asset) => (
+              <div key={asset.symbol} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-900 font-black text-sm border border-gray-100">
+                    {asset.symbol[0]}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900">{asset.name}</h4>
+                    <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-gray-900">{asset.name}</h4>
-                  <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:block opacity-50">
-                   <Sparkline data={asset.history} color={asset.isUp ? '#22c55e' : '#ef4444'} />
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900 text-base">${asset.price}</p>
-                  <p className={`text-xs font-bold ${asset.isUp ? 'text-green-500' : 'text-red-500'}`}>
-                    {asset.change}
-                  </p>
+                
+                <div className="flex items-center gap-4">
+                  <div className="hidden sm:block opacity-50">
+                     <Sparkline data={asset.history} color={asset.isUp ? '#22c55e' : '#ef4444'} />
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900 text-base">${asset.price}</p>
+                    <p className={`text-xs font-bold ${asset.isUp ? 'text-green-500' : 'text-red-500'}`}>
+                      {asset.change}
+                    </p>
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              No featured assets available
             </div>
-          ))}
+          )}
         </div>
       </div>
     </MobileLayout>
