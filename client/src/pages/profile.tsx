@@ -65,7 +65,6 @@ export default function Profile() {
           <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2">Account</p>
           
           {[
-            { icon: Settings, label: "Settings", to: "/settings" },
             { icon: Shield, label: "Security", to: "/security" },
             { icon: CreditCard, label: "Payment Methods", to: "/withdraw/accounts" },
           ].map((item) => (
