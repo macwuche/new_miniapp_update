@@ -1,7 +1,7 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Wallet, Trash2, Plus, CreditCard, Copy } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -9,14 +9,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+
+// Mock data for connected wallets (Web3)
+const CONNECTED_WALLETS = [
+  {
+    id: 1,
+    name: "Tonkeeper",
+    address: "EQD4...8j92",
+    type: "TON",
+    color: "bg-blue-100 text-blue-600",
+    isConnected: true
+  },
+  {
+    id: 2,
+    name: "Trust Wallet",
+    address: "0x71C...9A23",
+    type: "EVM",
+    color: "bg-green-100 text-green-600",
+    isConnected: false
+  }
+];
 
 export default function PaymentAccounts() {
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [currency, setCurrency] = useState("BTC");
   const [address, setAddress] = useState("");
+  const [withdrawWallets, setWithdrawWallets] = useState<any[]>([]);
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("withdraw_wallets") || "[]");
+    setWithdrawWallets(stored);
+  }, []);
 
   const handleAddAccount = () => {
     if (!email || !address) {
@@ -28,7 +55,6 @@ export default function PaymentAccounts() {
       return;
     }
 
-    // Get existing wallets
     const existingWallets = JSON.parse(localStorage.getItem("withdraw_wallets") || "[]");
     
     // Check for duplicates
@@ -42,7 +68,6 @@ export default function PaymentAccounts() {
       return;
     }
 
-    // Add new wallet
     const newWallet = {
       id: Date.now(),
       email,
@@ -51,7 +76,9 @@ export default function PaymentAccounts() {
       createdAt: new Date().toISOString()
     };
 
-    localStorage.setItem("withdraw_wallets", JSON.stringify([...existingWallets, newWallet]));
+    const updatedWallets = [...existingWallets, newWallet];
+    localStorage.setItem("withdraw_wallets", JSON.stringify(updatedWallets));
+    setWithdrawWallets(updatedWallets);
     
     toast({
       title: "Account Added",
@@ -59,7 +86,27 @@ export default function PaymentAccounts() {
     });
     
     setIsAddAccountOpen(false);
-    setLocation("/withdraw");
+    setEmail("");
+    setAddress("");
+    setCurrency("BTC");
+  };
+
+  const handleDelete = (id: number) => {
+    const updatedWallets = withdrawWallets.filter(w => w.id !== id);
+    localStorage.setItem("withdraw_wallets", JSON.stringify(updatedWallets));
+    setWithdrawWallets(updatedWallets);
+    toast({
+      title: "Method Deleted",
+      description: "Payment method removed successfully."
+    });
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      description: "Address copied to clipboard"
+    });
   };
 
   return (
@@ -68,55 +115,122 @@ export default function PaymentAccounts() {
         {/* Header */}
         <div className="px-6 pt-8 pb-4 bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <Link href="/withdraw">
+            <Link href="/profile">
               <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors">
                 <ArrowLeft size={20} />
               </div>
             </Link>
-            <h1 className="text-xl font-bold text-gray-900">Payment Accounts</h1>
+            <h1 className="text-xl font-bold text-gray-900">Payment Methods</h1>
           </div>
         </div>
 
-        <div className="p-6">
-          <p className="text-gray-500 text-sm mb-6">
-            You have full control to manage your crypto account setting.
-          </p>
-
-          {/* Tabs / Navigation */}
-          <div className="border-b border-gray-200 mb-6">
-            <div className="inline-block border-b-2 border-blue-500 pb-2 px-1">
-              <span className="text-blue-600 font-bold text-sm">Accounts</span>
+        <div className="p-6 space-y-8">
+          
+          {/* Section 1: Connected Web3 Wallets */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Connected Wallets</h2>
+              <Link href="/linked-wallets">
+                <Button variant="ghost" size="sm" className="text-blue-600 h-8">Manage</Button>
+              </Link>
             </div>
+            
+            {CONNECTED_WALLETS.map((wallet) => (
+              <Card key={wallet.id} className="border-none shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center`}>
+                      <Wallet size={24} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-gray-900">{wallet.name}</h3>
+                        {wallet.isConnected && (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none text-[10px] h-5">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 font-mono mt-0.5">{wallet.address}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Warning/Info Box */}
-          <Card className="bg-amber-50 border border-amber-100 rounded-xl p-6 shadow-sm">
-            <div className="space-y-4">
-              <p className="text-amber-800 font-bold text-sm">
-                You have not added any crypto withdraw account yet in your account.
-              </p>
-              
-              <p className="text-amber-700 text-sm leading-relaxed">
-                Please add a crypto address(s) to your accounts that you'd like to withdraw funds.
-              </p>
-
+          {/* Section 2: Withdrawal Addresses */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Withdrawal Addresses</h2>
               <Button 
-                className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold border-none shadow-md shadow-yellow-500/20 h-10 px-6 rounded-lg"
+                size="sm" 
+                className="bg-blue-600 hover:bg-blue-700 text-white h-8"
                 onClick={() => setIsAddAccountOpen(true)}
               >
-                Add Account
+                <Plus size={16} className="mr-1" /> Add New
               </Button>
             </div>
-          </Card>
+
+            {withdrawWallets.length === 0 ? (
+              <Card className="bg-amber-50 border border-amber-100 rounded-xl p-6 shadow-sm">
+                <div className="text-center space-y-2">
+                  <p className="text-amber-800 font-bold text-sm">No addresses added</p>
+                  <p className="text-amber-700 text-xs">
+                    Add crypto addresses to withdraw your funds securely.
+                  </p>
+                </div>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {withdrawWallets.map((wallet) => (
+                  <Card key={wallet.id} className="border-none shadow-sm overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                            <CreditCard size={20} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-gray-900">{wallet.currency} Address</h3>
+                              <span className="text-xs text-gray-400">({wallet.email})</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-gray-500 font-mono truncate max-w-[150px] sm:max-w-[200px]">
+                                {wallet.address}
+                              </p>
+                              <button onClick={() => copyToClipboard(wallet.address)} className="text-gray-400 hover:text-gray-600">
+                                <Copy size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg -mr-2 -mt-2"
+                          onClick={() => handleDelete(wallet.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Add Account Dialog */}
         <Dialog open={isAddAccountOpen} onOpenChange={setIsAddAccountOpen}>
           <DialogContent className="sm:max-w-md rounded-xl w-[95%] p-0 overflow-hidden bg-white">
             <DialogHeader className="p-6 pb-4 border-b border-gray-100">
-              <DialogTitle className="text-xl font-bold text-gray-900">Add a Crypto Account</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-gray-900">Add Withdrawal Method</DialogTitle>
               <DialogDescription className="text-sm text-gray-500 mt-1">
-                Add a Crypto withdrawal account to withdraw your funds.
+                Enter the details for your new withdrawal destination.
               </DialogDescription>
             </DialogHeader>
             
@@ -126,10 +240,10 @@ export default function PaymentAccounts() {
                 <div className="flex gap-4">
                   <div className="flex-1 space-y-2">
                     <Label className="text-sm font-bold text-gray-700">
-                      Your account email address <span className="text-red-500">*</span>
+                      Label / Email <span className="text-red-500">*</span>
                     </Label>
                     <Input 
-                      placeholder="Enter email address" 
+                      placeholder="e.g. My Main Wallet" 
                       className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -137,11 +251,11 @@ export default function PaymentAccounts() {
                   </div>
                   <div className="w-28 space-y-2">
                     <Label className="text-sm font-bold text-gray-700">
-                      Currency
+                      Asset
                     </Label>
                     <Select defaultValue="BTC" onValueChange={setCurrency}>
                       <SelectTrigger className="h-11 rounded-lg border-gray-200 bg-white">
-                        <SelectValue placeholder="Currency" />
+                        <SelectValue placeholder="Asset" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="BTC">BTC</SelectItem>
@@ -153,34 +267,35 @@ export default function PaymentAccounts() {
                     </Select>
                   </div>
                 </div>
-                <p className="text-xs text-gray-400 italic -mt-4">
-                  You can easily identify your account using the provided Email.
-                </p>
 
                 {/* Wallet Address */}
                 <div className="space-y-2">
                   <Label className="text-sm font-bold text-gray-700">
-                    Crypto Wallet Address (BTC/USDT)
+                    Wallet Address
                   </Label>
                   <Input 
-                    placeholder="btcxxxxxxxxxxxxxxxxxxxxxxxxxxxx5c" 
-                    className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500"
+                    placeholder="Paste address here" 
+                    className="h-11 rounded-lg border-gray-200 bg-white focus:border-blue-500 font-mono text-sm"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
-                  <p className="text-xs text-gray-400 italic pt-1">
-                    . The system wont process Your payout if you leave blank.
-                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 pt-2 border-t border-gray-50">
+            <div className="p-6 pt-2 border-t border-gray-50 flex gap-3">
               <Button 
-                className="bg-blue-400 hover:bg-blue-500 text-white font-bold h-11 px-6 rounded-lg shadow-sm w-auto min-w-[140px]"
+                variant="outline"
+                className="flex-1 h-11"
+                onClick={() => setIsAddAccountOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 flex-1 rounded-lg shadow-sm"
                 onClick={handleAddAccount}
               >
-                Add Account
+                Save Method
               </Button>
             </div>
           </DialogContent>
