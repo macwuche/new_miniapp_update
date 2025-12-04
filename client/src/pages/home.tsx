@@ -102,12 +102,57 @@ export default function Home() {
     }
   }, []);
 
-  // Filter featured assets based on market status
-  const featuredAssets = [
-    { name: "Bitcoin", symbol: "BTC", price: "94,321.50", change: "+2.4%", isUp: true, history: [40, 45, 42, 48, 46, 55, 52, 58], type: 'crypto' },
-    { name: "Ethereum", symbol: "ETH", price: "3,421.20", change: "-0.8%", isUp: false, history: [60, 58, 55, 57, 54, 52, 50, 53], type: 'crypto' },
-    { name: "Tesla Inc", symbol: "TSLA", price: "245.30", change: "+1.2%", isUp: true, history: [30, 32, 35, 34, 38, 36, 40, 42], type: 'stocks' },
-  ].filter(asset => marketStatus[asset.type as keyof typeof marketStatus]);
+  // Fetch popular assets from API
+  const [featuredAssets, setFeaturedAssets] = useState<any[]>([]);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(true);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      if (!marketStatus.crypto) {
+        setFeaturedAssets([]);
+        setIsLoadingAssets(false);
+        return;
+      }
+
+      try {
+        setIsLoadingAssets(true);
+        const apiUrl = localStorage.getItem("crypto_api_url") || "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_desc&per_page=5&page=1&x_cg_demo_api_key=CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Failed to fetch');
+        
+        const data = await response.json();
+        
+        // Transform data for display (take top 5)
+        const transformed = data.slice(0, 5).map((coin: any) => ({
+          id: coin.id,
+          name: coin.name,
+          symbol: coin.symbol.toUpperCase(),
+          price: coin.current_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          change: `${coin.price_change_percentage_24h > 0 ? '+' : ''}${coin.price_change_percentage_24h.toFixed(2)}%`,
+          isUp: coin.price_change_percentage_24h > 0,
+          image: coin.image,
+          marketCap: coin.market_cap,
+          // Generate mock history for sparkline based on price change
+          history: Array.from({ length: 10 }, () => coin.current_price * (1 + (Math.random() * 0.1 - 0.05))),
+          type: 'crypto'
+        }));
+
+        setFeaturedAssets(transformed);
+      } catch (error) {
+        console.error("Error fetching crypto assets:", error);
+        // Fallback to mock data if API fails
+        setFeaturedAssets([
+          { name: "Bitcoin", symbol: "BTC", price: "94,321.50", change: "+2.4%", isUp: true, history: [40, 45, 42, 48, 46, 55, 52, 58], type: 'crypto', image: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png" },
+          { name: "Ethereum", symbol: "ETH", price: "3,421.20", change: "-0.8%", isUp: false, history: [60, 58, 55, 57, 54, 52, 50, 53], type: 'crypto', image: "https://assets.coingecko.com/coins/images/279/large/ethereum.png" },
+        ]);
+      } finally {
+        setIsLoadingAssets(false);
+      }
+    };
+
+    fetchAssets();
+  }, [marketStatus]);
 
   return (
     <MobileLayout>
@@ -194,12 +239,22 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {featuredAssets.length > 0 ? (
+          {isLoadingAssets ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+              ))}
+            </div>
+          ) : featuredAssets.length > 0 ? (
             featuredAssets.map((asset) => (
               <div key={asset.symbol} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-900 font-black text-sm border border-gray-100">
-                    {asset.symbol[0]}
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center overflow-hidden border border-gray-100 p-1">
+                    {asset.image ? (
+                      <img src={asset.image} alt={asset.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-gray-900 font-black text-sm">{asset.symbol[0]}</div>
+                    )}
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">{asset.name}</h4>
@@ -208,7 +263,7 @@ export default function Home() {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="hidden sm:block opacity-50">
+                  <div className="hidden sm:block opacity-50 w-16">
                      <Sparkline data={asset.history} color={asset.isUp ? '#22c55e' : '#ef4444'} />
                   </div>
                   <div className="text-right">
