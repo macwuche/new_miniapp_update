@@ -118,8 +118,8 @@ export default function Home() {
                 <h1 className="text-lg font-bold">{user?.first_name || "Trader"}</h1>
               </div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium border border-white/20 shadow-sm">
-              Verified
+            <div className={`backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium border shadow-sm ${tgUser ? 'bg-green-500/20 border-green-200/30 text-green-50' : 'bg-white/20 border-white/20'}`}>
+              {tgUser ? "Verified" : "Unverified"}
             </div>
           </div>
 
