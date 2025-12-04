@@ -35,11 +35,28 @@ export default function ApiConfiguration() {
     }, 800);
   };
 
+  const handleSync = () => {
+    // Dispatch a custom event that the markets page listens to
+    // In a real app this would likely trigger a server-side job, 
+    // but for this client-side prototype we use events
+    window.dispatchEvent(new Event('sync-api-data'));
+    toast({
+      title: "Sync Started",
+      description: "Fetching latest market data from API...",
+    });
+  };
+
   return (
     <AdminLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">API Configuration</h1>
-        <p className="text-gray-500 mt-2">Manage external integrations and API keys for the platform.</p>
+      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">API Configuration</h1>
+          <p className="text-gray-500 mt-2">Manage external integrations and API keys for the platform.</p>
+        </div>
+        <Button onClick={handleSync} variant="outline" className="gap-2">
+          <RefreshCw size={16} />
+          Sync API Data
+        </Button>
       </div>
 
       <div className="space-y-6">

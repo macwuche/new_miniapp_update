@@ -33,21 +33,70 @@ export default function Markets() {
     stocks: true
   });
   const [activeTab, setActiveTab] = useState("crypto");
+  const [cryptoAssets, setCryptoAssets] = useState<any[]>([]);
+  const [isLoadingCrypto, setIsLoadingCrypto] = useState(false);
+
+  // Function to fetch crypto data
+  const fetchCryptoData = async () => {
+    if (!marketStatus.crypto) return;
+
+    try {
+      setIsLoadingCrypto(true);
+      const apiUrl = localStorage.getItem("crypto_api_url") || "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_desc&per_page=250&page=1&x_cg_demo_api_key=CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) throw new Error('Failed to fetch');
+      
+      const data = await response.json();
+      
+      const transformed = data.map((coin: any) => ({
+        name: coin.name,
+        symbol: `${coin.symbol.toUpperCase()}/USDT`,
+        price: coin.current_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 }),
+        change: `${coin.price_change_percentage_24h > 0 ? '+' : ''}${coin.price_change_percentage_24h?.toFixed(2) || '0.00'}%`,
+        isUp: coin.price_change_percentage_24h > 0,
+        image: coin.image,
+        id: coin.id
+      }));
+
+      setCryptoAssets(transformed);
+      localStorage.setItem("cached_crypto_data", JSON.stringify(transformed));
+      localStorage.setItem("last_crypto_sync", new Date().toISOString());
+    } catch (error) {
+      console.error("Error fetching crypto assets:", error);
+      // Try to load from cache if fetch fails
+      const cached = localStorage.getItem("cached_crypto_data");
+      if (cached) {
+        setCryptoAssets(JSON.parse(cached));
+      } else {
+        // Fallback mock data
+        setCryptoAssets(MARKET_DATA.crypto);
+      }
+    } finally {
+      setIsLoadingCrypto(false);
+    }
+  };
 
   useEffect(() => {
-    const savedStatus = localStorage.getItem("market_status");
-    if (savedStatus) {
-      const parsed = JSON.parse(savedStatus);
-      setMarketStatus(parsed);
-      
-      // Set default active tab based on availability
-      if (!parsed.crypto) {
-        if (parsed.stocks) setActiveTab("stocks");
-        else if (parsed.forex) setActiveTab("forex");
-        else setActiveTab("");
-      }
-    }
-  }, []);
+    // Initial fetch
+    fetchCryptoData();
+
+    // Set up interval for every 30 minutes (30 * 60 * 1000 ms)
+    const intervalId = setInterval(fetchCryptoData, 30 * 60 * 1000);
+
+    // Listen for manual sync events from admin
+    const handleManualSync = () => {
+      console.log("Manual sync triggered");
+      fetchCryptoData();
+    };
+    
+    window.addEventListener('sync-api-data', handleManualSync);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('sync-api-data', handleManualSync);
+    };
+  }, [marketStatus.crypto]);
 
   const availableMarkets = Object.keys(MARKET_DATA).filter(key => 
     marketStatus[key as keyof typeof marketStatus]
@@ -117,7 +166,51 @@ export default function Markets() {
                 )}
               </TabsList>
 
-              {Object.entries(MARKET_DATA).map(([category, items]) => (
+                {marketStatus.crypto && (
+                  <TabsContent key="crypto" value="crypto" className="space-y-3 mt-0 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+                    {isLoadingCrypto ? (
+                      <div className="space-y-3 py-4">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div key={i} className="h-20 bg-gray-50 rounded-2xl animate-pulse" />
+                        ))}
+                      </div>
+                    ) : (
+                      (cryptoAssets.length > 0 ? cryptoAssets : MARKET_DATA.crypto).map((asset) => (
+                        <Link key={asset.id || asset.symbol} href={`/asset/${encodeURIComponent(asset.symbol)}`}>
+                          <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors overflow-hidden p-1">
+                                {asset.image ? (
+                                  <img src={asset.image} alt={asset.name} className="w-full h-full object-contain" />
+                                ) : (
+                                  asset.symbol.slice(0, 2)
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-gray-900 text-base">{asset.name}</h4>
+                                <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="font-bold text-gray-900 text-base">${asset.price}</p>
+                                <p className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${asset.isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                  {asset.change}
+                                </p>
+                              </div>
+                              <button className="text-gray-300 hover:text-yellow-400 transition-colors" onClick={(e) => e.preventDefault()}>
+                                <Star size={20} />
+                              </button>
+                            </div>
+                          </div>
+                        </Link>
+                      ))
+                    )}
+                  </TabsContent>
+                )}
+
+              {/* Render other categories manually or loop if needed, but crypto is special now */}
+              {Object.entries(MARKET_DATA).filter(([key]) => key !== 'crypto').map(([category, items]) => (
                 marketStatus[category as keyof typeof marketStatus] && (
                   <TabsContent key={category} value={category} className="space-y-3 mt-0 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
                     {items.map((asset) => (
