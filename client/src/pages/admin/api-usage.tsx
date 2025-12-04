@@ -10,7 +10,6 @@ import { Save, RefreshCw, Coins } from "lucide-react";
 export default function ApiConfiguration() {
   const { toast } = useToast();
   const [cryptoApiUrl, setCryptoApiUrl] = useState("");
-  const [chartApiUrl, setChartApiUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -21,13 +20,6 @@ export default function ApiConfiguration() {
       // Default URL provided by user
       setCryptoApiUrl("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_desc&per_page=250&page=1&x_cg_demo_api_key=CG-7Rc5Jh3xjgp1MT5J9vG5BsSk");
     }
-
-    const savedChartUrl = localStorage.getItem("chart_api_url");
-    if (savedChartUrl) {
-      setChartApiUrl(savedChartUrl);
-    } else {
-      setChartApiUrl("https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=30&x_cg_demo_api_key=CG-7Rc5Jh3xjgp1MT5J9vG5BsSk");
-    }
   }, []);
 
   const handleSave = () => {
@@ -35,11 +27,10 @@ export default function ApiConfiguration() {
     // Simulate API validation/saving
     setTimeout(() => {
       localStorage.setItem("crypto_api_url", cryptoApiUrl);
-      localStorage.setItem("chart_api_url", chartApiUrl);
       setIsSaving(false);
       toast({
         title: "API Configuration Saved",
-        description: "The market data sources have been updated.",
+        description: "The cryptocurrency market data source has been updated.",
       });
     }, 800);
   };
@@ -93,22 +84,6 @@ export default function ApiConfiguration() {
               />
               <p className="text-xs text-gray-500">
                 This endpoint will be used to fetch real-time data for the "Popular Assets" section on the user dashboard.
-              </p>
-            </div>
-
-            <div className="h-px bg-gray-100 my-4" />
-
-            <div className="space-y-2">
-              <Label htmlFor="chart-api">Chart Data API Endpoint</Label>
-              <Input 
-                id="chart-api" 
-                placeholder="https://api.example.com/v3/coins/{id}/market_chart..." 
-                value={chartApiUrl}
-                onChange={(e) => setChartApiUrl(e.target.value)}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500">
-                Endpoint for historical price data. Use <code>{`{id}`}</code> as a placeholder for the coin ID.
               </p>
             </div>
 
