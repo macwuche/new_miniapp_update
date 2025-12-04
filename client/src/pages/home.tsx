@@ -37,7 +37,11 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 };
 
 export default function Home() {
-  const { user } = useTelegram();
+  // Use user data from hook, but prioritize actual Telegram WebApp data if available
+  const { user: mockUser } = useTelegram();
+  const [tgUser, setTgUser] = useState<any>(null);
+  const user = tgUser || mockUser;
+
   const [isBotActive, setIsBotActive] = useState(false);
   const [marketStatus, setMarketStatus] = useState({
     crypto: true,
@@ -52,6 +56,32 @@ export default function Home() {
     const savedStatus = localStorage.getItem("market_status");
     if (savedStatus) {
       setMarketStatus(JSON.parse(savedStatus));
+    }
+
+    // Initialize Telegram Web App
+    // @ts-ignore
+    if (window.Telegram?.WebApp) {
+      // @ts-ignore
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+
+      // Extract user data if available
+      if (tg.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        console.log("Telegram User:", userData);
+        
+        // Map Telegram user data to our app's user format
+        setTgUser({
+          id: userData.id,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          username: userData.username,
+          language_code: userData.language_code,
+          photo_url: userData.photo_url,
+          is_premium: userData.is_premium
+        });
+      }
     }
   }, []);
 
