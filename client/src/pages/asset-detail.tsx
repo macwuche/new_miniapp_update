@@ -57,6 +57,32 @@ export default function AssetDetail() {
         };
         
         const coinId = symbolToId[displaySymbol.toUpperCase()] || displaySymbol.toLowerCase();
+        
+        // Fetch basic asset details separately (image, market cap, etc)
+        // This is needed because market_chart doesn't return image or rank
+        const detailsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinId}&order=market_cap_desc&per_page=1&page=1&sparkline=false&x_cg_demo_api_key=${apiKey}`;
+        
+        const detailsResponse = await fetch(detailsUrl);
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          if (detailsData && detailsData.length > 0) {
+            const coinDetails = detailsData[0];
+            setAssetInfo((prev: any) => ({
+              ...prev,
+              image: coinDetails.image,
+              marketCap: coinDetails.market_cap,
+              volume: coinDetails.total_volume,
+              rank: coinDetails.market_cap_rank,
+              high24h: coinDetails.high_24h,
+              low24h: coinDetails.low_24h,
+              price: coinDetails.current_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 }),
+              change: `${coinDetails.price_change_percentage_24h > 0 ? '+' : ''}${coinDetails.price_change_percentage_24h?.toFixed(2) || '0.00'}%`,
+              isUp: coinDetails.price_change_percentage_24h > 0,
+              name: coinDetails.name
+            }));
+          }
+        }
+
         const apiUrl = apiUrlTemplate.replace('{id}', coinId);
         
         console.log(`Fetching chart data for ${displaySymbol} (${coinId}) from: ${apiUrl}`);
@@ -87,17 +113,24 @@ export default function AssetDetail() {
         
         setChartData(downsampled);
         
-        // Update asset info with latest price details
+        // Update asset info with chart data as fallback or supplementary
         if (prices.length > 0) {
           const latestPrice = prices[prices.length - 1][1];
           const firstPrice = prices[0][1];
           const change = ((latestPrice - firstPrice) / firstPrice) * 100;
           
-          setAssetInfo({
-            price: latestPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-            change: `${change > 0 ? '+' : ''}${change.toFixed(2)}%`,
-            isUp: change > 0,
-            name: displaySymbol === "BTC" ? "Bitcoin" : displaySymbol === "ETH" ? "Ethereum" : displaySymbol
+          setAssetInfo((prev: any) => {
+             // If we already have details from the markets endpoint, prefer that for current price/change
+             // But ensure we have something set
+             if (prev && prev.image) return prev;
+
+             return {
+              ...prev,
+              price: latestPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+              change: `${change > 0 ? '+' : ''}${change.toFixed(2)}%`,
+              isUp: change > 0,
+              name: displaySymbol === "BTC" ? "Bitcoin" : displaySymbol === "ETH" ? "Ethereum" : displaySymbol
+            };
           });
         }
         
@@ -158,8 +191,12 @@ export default function AssetDetail() {
 
         <div className="flex flex-col items-center pt-2 px-6">
           {/* Asset Icon */}
-          <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-orange-200 rotate-3">
-             <span className="text-white font-bold text-2xl">{displaySymbol[0]}</span>
+          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-gray-100 overflow-hidden p-2">
+             {currentAsset.image ? (
+               <img src={currentAsset.image} alt={currentAsset.name} className="w-full h-full object-contain" />
+             ) : (
+               <span className="text-gray-900 font-bold text-2xl">{displaySymbol[0]}</span>
+             )}
           </div>
 
           {/* Price Info */}
@@ -239,6 +276,32 @@ export default function AssetDetail() {
             ))}
           </div>
         </div>
+
+        {/* Market Stats Section */}
+        {currentAsset.marketCap && (
+          <div className="px-6 mb-6 grid grid-cols-2 gap-4">
+            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 mb-1">Market Cap</p>
+              <p className="text-sm font-bold text-gray-900">
+                ${(currentAsset.marketCap / 1e9).toLocaleString(undefined, { maximumFractionDigits: 2 })}B
+              </p>
+            </Card>
+            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 mb-1">Volume (24h)</p>
+              <p className="text-sm font-bold text-gray-900">
+                ${(currentAsset.volume / 1e9).toLocaleString(undefined, { maximumFractionDigits: 2 })}B
+              </p>
+            </Card>
+            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 mb-1">High (24h)</p>
+              <p className="text-sm font-bold text-gray-900">${currentAsset.high24h?.toLocaleString()}</p>
+            </Card>
+            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 mb-1">Low (24h)</p>
+              <p className="text-sm font-bold text-gray-900">${currentAsset.low24h?.toLocaleString()}</p>
+            </Card>
+          </div>
+        )}
 
         {/* Holdings Card */}
         <div className="px-6">
