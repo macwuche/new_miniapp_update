@@ -37,10 +37,20 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 };
 
 export default function Home() {
-  // Use user data from hook, but prioritize actual Telegram WebApp data if available
-  const { user: mockUser } = useTelegram();
   const [tgUser, setTgUser] = useState<any>(null);
-  const user = tgUser || mockUser;
+  
+  // Default/Browser user state
+  const defaultUser = {
+    id: 0,
+    first_name: "demo1",
+    last_name: "demo2",
+    username: "unknown user",
+    language_code: "English",
+    is_premium: false,
+    photo_url: "" 
+  };
+
+  const user = tgUser || defaultUser;
 
   const [isBotActive, setIsBotActive] = useState(false);
   const [marketStatus, setMarketStatus] = useState({
