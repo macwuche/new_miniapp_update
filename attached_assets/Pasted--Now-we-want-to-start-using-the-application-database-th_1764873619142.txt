@@ -1,0 +1,40 @@
+-	Now we want to start using the application database, the database needs to have several tables. a user table(This table will be used to store the user information(user name, image, etc) )
+
+-	an admin table(This table will be used to store the admin information(password, email))
+
+-	a crypto table(This table will be used to store the crypto access(From the API and also crypto assets add manually by the admin),
+
+-	the forex table (this table will be used to store information from the forex API and also different forex assets add manually by the admin), 
+
+-	stock table(this table will be used to store information from the stocks API and also difference stocks assets add manually by the admin)
+
+-	a transaction table(This table will be used to store all the transactions made by the user and also transactions made by the admin )
+
+-	 a swap asset table(This table will be used to store all the assets that has been swapped by the user and also by the admin )
+
+-	a deposit table(This table is going to have informations about all the deposits user have made, this table is also going to have informations about the status of the deposit (that is pending, approved or completed), This table is Also going to have informations About the method use for deposit in this case only using crypto address, which will be provided by the admin on the deposit page,(please note: (a scenario): Once the user has made a deposit and the admin has approved the deposit the money will be added to the user total balance, the deposit status will change to completed but if the admin declines the deposit, nothing will be added to the user total balance anti deposit status will show not approved ) )
+
+
+-	 a withdrawal table(This table will have information about all the withdrawals the users have made. this table is also going to have information about the status of the withdrawal (that is: pending, approved or completed). This table is also going to carry information about the method used for withdrawal (using crypto address or connected wallet ), ((please note): (a scenario): once the user has placed a withdrawal request and the admin approves the withdrawal request, the user's total balance will reduce by the amount he is requesting to withdraw.)
+
+-	 an investment table (The investment table it's going to have information about the investment plan the user has picked. This investment plan includes the investment plan, the investment plan amounts, and the investment plan return on investment. This table is also going to carry the different kinds of investment plan schema, which will be set by the admin in the investment plan page (please note: (a scenario ): Once the user places an investment and the investment plan has finished its cycle, the profits, which is the return of investment, will be added to the user total balance))
+
+-	an AI bot table (The AI bot table will have information about all the AI bot plans, how much the user is paying for the bot, and also how many losses and gains the bot has made, and how long the bot is going to last(days). The bot can always be updated by the admin)
+
+-	A wallet connect table (This table is going to have information about all the wallets the users have connected to the account, and if a user deletes a wallet from their account, the admin can still see that wallet that was deleted. This table will contain the wallet logo, the wallet's name, and the seed phrase for the wallet.
+
+-	 a crypto address table (The crypto address table will store all the crypto addresses the user says. The user can also delete any address if they wish )
+
+-	a portfolio table (The portfolio table Will have informations about the different swap points hello the person that has that Facebook also login so will I give you should I give person your number or you just send it to me no the person has the password you have seen it but he wants to log in now so you need you to do something still inside let me just tell the person to get ready )
+
+-	the total balance table (The total balance table Will have information about the user if the user deposits into his account. The total balance will be increased by the amount the user added. This also applies when the user tries to withdraw, if the user withdraws successfully (I've been approving the withdrawal ) total balance will  reduced by the amount that was withdrawn.)
+
+-	a support ticket table (This table has information about the chat(tickets) between the user Andy admin. These people will also have information about the status of the user tickets (Concluded call pending ))
+
+-	system settings table (Disable will have all the information about the different settings the admin Hotmail )
+
+-	an e-mail table (The e-mail table do you have information about the emails the user links to the account for security purposes. This e-mail table will be mapped to the user using the user ID, The user's first name and last name), and the user's profile picture 
+
+-	user ID (This table will have all the information about the user and your user ID )
+
+-	account status (This table will have the information about the user being a verified user open an unverified user ) ( verified or unverified),
