@@ -91,6 +91,13 @@ export default function Home() {
           photo_url: userData.photo_url,
           is_premium: userData.is_premium
         });
+
+        // Apply Telegram theme if available
+        if (tg.colorScheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
     }
   }, []);
