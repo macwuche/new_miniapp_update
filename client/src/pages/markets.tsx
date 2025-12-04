@@ -42,7 +42,11 @@ export default function Markets() {
 
     try {
       setIsLoadingCrypto(true);
-      const apiUrl = localStorage.getItem("crypto_api_url") || "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_desc&per_page=250&page=1&x_cg_demo_api_key=CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+      // Use environment variable for API key if available, otherwise fallback to demo key
+      const apiKey = import.meta.env.VITE_COINGECKO_API_KEY || "CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+      const defaultUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_desc&per_page=250&page=1&x_cg_demo_api_key=${apiKey}`;
+      
+      const apiUrl = localStorage.getItem("crypto_api_url") || defaultUrl;
       
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error('Failed to fetch');

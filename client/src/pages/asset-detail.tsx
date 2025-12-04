@@ -30,7 +30,10 @@ export default function AssetDetail() {
       setIsLoading(true);
       try {
         // Get API URL from settings or default (using the 1-day default as requested)
-        const defaultApiUrl = "https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=1&x_cg_demo_api_key=CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+        // Use environment variable for API key if available, otherwise fallback to demo key
+        const apiKey = import.meta.env.VITE_COINGECKO_API_KEY || "CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+        const defaultApiUrl = `https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=1&x_cg_demo_api_key=${apiKey}`;
+        
         const apiUrlTemplate = localStorage.getItem("chart_api_url") || defaultApiUrl;
         
         // Map symbol to CoinGecko ID
