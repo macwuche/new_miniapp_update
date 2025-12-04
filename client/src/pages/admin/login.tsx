@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LockKeyhole, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { adminAPI } from "@/lib/api";
 
 export default function AdminLogin() {
   const [_, setLocation] = useLocation();
@@ -13,20 +14,18 @@ export default function AdminLogin() {
   const { toast } = useToast();
 
   const onSubmit = async (data: any) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (data.email === "admin@admin.com" && data.password === "123456789") {
+    try {
+      await adminAPI.login(data.email, data.password);
       toast({
         title: "Login Successful",
         description: "Welcome back, Admin.",
       });
       setLocation("/admin/dashboard");
-    } else {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Access Denied",
-        description: "Invalid credentials provided.",
+        description: error.message || "Invalid credentials provided.",
       });
     }
   };

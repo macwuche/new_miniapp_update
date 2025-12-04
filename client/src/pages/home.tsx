@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import generatedImage from "@assets/generated_images/Abstract_trading_chart_background_with_blue_waves_f608156d.png";
 import aiLogo from "@assets/ai (1)_1764071986101.png";
+import { usersAPI, balanceAPI } from "@/lib/api";
 
 // Simple Sparkline Component
 const Sparkline = ({ data, color }: { data: number[], color: string }) => {
@@ -38,6 +39,8 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 
 export default function Home() {
   const [tgUser, setTgUser] = useState<any>(null);
+  const [dbUser, setDbUser] = useState<any>(null);
+  const [userBalance, setUserBalance] = useState<any>(null);
   
   // Default/Browser user state
   const defaultUser = {
@@ -68,38 +71,78 @@ export default function Home() {
       setMarketStatus(JSON.parse(savedStatus));
     }
 
-    // Initialize Telegram Web App
-    // @ts-ignore
-    if (window.Telegram?.WebApp) {
+    // Initialize Telegram Web App and register/fetch user
+    const initUser = async () => {
       // @ts-ignore
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
+      if (window.Telegram?.WebApp) {
+        // @ts-ignore
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-      // Extract user data if available
-      if (tg.initDataUnsafe?.user) {
-        const userData = tg.initDataUnsafe.user;
-        console.log("Telegram User:", userData);
-        
-        // Map Telegram user data to our app's user format
-        setTgUser({
-          id: userData.id,
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          username: userData.username,
-          language_code: userData.language_code,
-          photo_url: userData.photo_url,
-          is_premium: userData.is_premium
-        });
+        // Extract user data if available
+        if (tg.initDataUnsafe?.user) {
+          const userData = tg.initDataUnsafe.user;
+          console.log("Telegram User:", userData);
+          
+          // Map Telegram user data to our app's user format
+          setTgUser({
+            id: userData.id,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            username: userData.username,
+            language_code: userData.language_code,
+            photo_url: userData.photo_url,
+            is_premium: userData.is_premium
+          });
 
-        // Apply Telegram theme if available
-        if (tg.colorScheme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
+          // Register/fetch user from backend
+          try {
+            const registeredUser = await usersAPI.register({
+              telegramId: userData.id.toString(),
+              username: userData.username || userData.first_name,
+              firstName: userData.first_name,
+              lastName: userData.last_name,
+              profilePicture: userData.photo_url
+            });
+            setDbUser(registeredUser);
+
+            // Fetch user balance
+            const balance = await balanceAPI.getUser(registeredUser.id);
+            setUserBalance(balance);
+          } catch (error) {
+            console.error("User registration error:", error);
+          }
+
+          // Apply Telegram theme if available
+          if (tg.colorScheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      } else {
+        // Browser fallback - register demo user
+        try {
+          const registeredUser = await usersAPI.register({
+            telegramId: null,
+            username: "demo_user",
+            firstName: "Demo",
+            lastName: "User",
+            profilePicture: null
+          });
+          setDbUser(registeredUser);
+
+          // Fetch user balance
+          const balance = await balanceAPI.getUser(registeredUser.id);
+          setUserBalance(balance);
+        } catch (error) {
+          console.error("User registration error:", error);
         }
       }
-    }
+    };
+
+    initUser();
   }, []);
 
   // Fetch popular assets from API
