@@ -2,9 +2,10 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { useTelegram } from "@/lib/telegram-mock";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Award, Zap, Send, MessageSquare, Sun, Moon, Smartphone } from "lucide-react";
+import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Zap, Send, MessageSquare, Sun, Moon, Smartphone } from "lucide-react";
 import { Link } from "wouter";
 import { useTheme } from "@/lib/theme";
+import premiumStarIcon from "@assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922.png";
 
 export default function Profile() {
   const { user } = useTelegram();
@@ -24,8 +25,12 @@ export default function Profile() {
             )}
           </div>
           {user?.is_premium && (
-            <div className="absolute bottom-0 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white p-1.5 rounded-full border-2 border-white dark:border-slate-800 shadow-sm">
-              <Award size={16} />
+            <div className="absolute -bottom-1 -right-1 w-8 h-8">
+              <img 
+                src={premiumStarIcon} 
+                alt="Premium" 
+                className="w-full h-full object-contain drop-shadow-lg"
+              />
             </div>
           )}
         </div>
