@@ -232,7 +232,9 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center mb-8">
               <p className="text-blue-100 text-sm mb-1 font-medium">Total Balance</p>
               <div className="flex items-center gap-4">
-                <h2 className="text-4xl font-black tracking-tight drop-shadow-sm">$12,450.00</h2>
+                <h2 className="text-4xl font-black tracking-tight drop-shadow-sm">
+                  ${userBalance ? parseFloat(userBalance.totalBalanceUsd || "0").toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}
+                </h2>
                 <Link href="/markets">
                   <div className="flex flex-col items-center cursor-pointer group">
                     <div className={`w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg transition-all duration-300 group-hover:scale-105 ${!isBotActive ? 'grayscale opacity-80' : ''}`}>
