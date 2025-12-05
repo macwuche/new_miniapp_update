@@ -6,6 +6,7 @@ import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Zap, Se
 import { Link } from "wouter";
 import { useTheme } from "@/lib/theme";
 import premiumStarIcon from "@assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922.png";
+import regularUserIcon from "@assets/image-mJpsijxGqz7FlGXguHAG8f1zAYsu25_1764962504673.png";
 
 export default function Profile() {
   const { user } = useTelegram();
@@ -24,15 +25,13 @@ export default function Profile() {
               </div>
             )}
           </div>
-          {user?.is_premium && (
-            <div className="absolute -bottom-1 -right-1 w-8 h-8">
-              <img 
-                src={premiumStarIcon} 
-                alt="Premium" 
-                className="w-full h-full object-contain drop-shadow-lg"
-              />
-            </div>
-          )}
+          <div className="absolute -bottom-1 -right-1 w-8 h-8">
+            <img 
+              src={user?.is_premium ? premiumStarIcon : regularUserIcon} 
+              alt={user?.is_premium ? "Premium User" : "User"} 
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
+          </div>
         </div>
         
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
