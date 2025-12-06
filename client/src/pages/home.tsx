@@ -1,10 +1,9 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { useTelegram } from "@/lib/telegram-mock";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Wallet, TrendingUp, ArrowUpRight, DollarSign, Bitcoin } from "lucide-react";
+import { Wallet, TrendingUp, ArrowUpRight } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import generatedImage from "@assets/generated_images/Abstract_trading_chart_background_with_blue_waves_f608156d.png";
 import aiLogo from "@assets/ai (1)_1764071986101.png";
 import { usersAPI, balanceAPI } from "@/lib/api";
@@ -39,8 +38,6 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 
 export default function Home() {
   const [tgUser, setTgUser] = useState<any>(null);
-  const [dbUser, setDbUser] = useState<any>(null);
-  const [userBalance, setUserBalance] = useState<any>(null);
   
   // Default/Browser user state
   const defaultUser = {
@@ -62,6 +59,7 @@ export default function Home() {
     stocks: true
   });
 
+  // Initialize Telegram WebApp
   useEffect(() => {
     const active = localStorage.getItem("is_bot_active") === "true";
     setIsBotActive(active);
@@ -71,79 +69,75 @@ export default function Home() {
       setMarketStatus(JSON.parse(savedStatus));
     }
 
-    // Initialize Telegram Web App and register/fetch user
-    const initUser = async () => {
+    // @ts-ignore
+    if (window.Telegram?.WebApp) {
       // @ts-ignore
-      if (window.Telegram?.WebApp) {
-        // @ts-ignore
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
 
-        // Extract user data if available
-        if (tg.initDataUnsafe?.user) {
-          const userData = tg.initDataUnsafe.user;
-          console.log("Telegram User:", userData);
-          
-          // Map Telegram user data to our app's user format
-          setTgUser({
-            id: userData.id,
-            first_name: userData.first_name,
-            last_name: userData.last_name,
-            username: userData.username,
-            language_code: userData.language_code,
-            photo_url: userData.photo_url,
-            is_premium: userData.is_premium
-          });
+      if (tg.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        setTgUser({
+          id: userData.id,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          username: userData.username,
+          language_code: userData.language_code,
+          photo_url: userData.photo_url,
+          is_premium: userData.is_premium
+        });
 
-          // Register/fetch user from backend
-          try {
-            const registeredUser = await usersAPI.register({
-              telegramId: userData.id.toString(),
-              username: userData.username || userData.first_name,
-              firstName: userData.first_name,
-              lastName: userData.last_name,
-              profilePicture: userData.photo_url
-            });
-            setDbUser(registeredUser);
-
-            // Fetch user balance
-            const balance = await balanceAPI.getUser(registeredUser.id);
-            setUserBalance(balance);
-          } catch (error) {
-            console.error("User registration error:", error);
-          }
-
-          // Apply Telegram theme if available
-          if (tg.colorScheme === 'dark') {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        }
-      } else {
-        // Browser fallback - register demo user
-        try {
-          const registeredUser = await usersAPI.register({
-            telegramId: null,
-            username: "demo_user",
-            firstName: "Demo",
-            lastName: "User",
-            profilePicture: null
-          });
-          setDbUser(registeredUser);
-
-          // Fetch user balance
-          const balance = await balanceAPI.getUser(registeredUser.id);
-          setUserBalance(balance);
-        } catch (error) {
-          console.error("User registration error:", error);
+        if (tg.colorScheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
         }
       }
-    };
-
-    initUser();
+    }
   }, []);
+
+  // Register/fetch user from backend using React Query - refreshes on window focus
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', tgUser?.id],
+    queryFn: async (): Promise<{ id: number } | null> => {
+      // @ts-ignore
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        return usersAPI.register({
+          telegramId: userData.id.toString(),
+          username: userData.username || userData.first_name,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          profilePicture: userData.photo_url
+        }) as Promise<{ id: number }>;
+      } else {
+        return usersAPI.register({
+          telegramId: null,
+          username: "demo_user",
+          firstName: "Demo",
+          lastName: "User",
+          profilePicture: null
+        }) as Promise<{ id: number }>;
+      }
+    },
+    staleTime: 1000 * 60, // Consider fresh for 1 minute
+    refetchOnWindowFocus: true,
+  });
+
+  // Fetch user balance using React Query - auto refreshes on navigation/focus
+  const { data: userBalance } = useQuery({
+    queryKey: ['/api/balances', dbUser?.id],
+    queryFn: async (): Promise<{ totalBalanceUsd?: string; availableBalanceUsd?: string } | null> => {
+      if (!dbUser?.id) return null;
+      return balanceAPI.getUser(dbUser.id) as Promise<{ totalBalanceUsd?: string; availableBalanceUsd?: string }>;
+    },
+    enabled: !!dbUser?.id,
+    staleTime: 0, // Always refetch when query becomes active
+    refetchOnWindowFocus: true,
+    refetchOnMount: true, // Refetch when component mounts
+  });
 
   // Fetch popular assets from API
   const [featuredAssets, setFeaturedAssets] = useState<any[]>([]);
