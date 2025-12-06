@@ -84,20 +84,24 @@ The schema includes comprehensive tables for a trading platform:
    - `transactions`: All financial transactions (deposits, withdrawals, trades, swaps)
    - `swaps`: Asset swap history between different currencies
    - `deposits`: Deposit requests with status tracking (pending/approved/rejected)
-   - `withdrawals`: Withdrawal requests with status tracking
-   - `crypto_addresses`: User's saved cryptocurrency addresses
+   - `withdrawals`: Withdrawal requests with gatewayId, cryptoAddressId, charges, amountAfterCharges
+   - `crypto_addresses`: User's saved cryptocurrency addresses linked to withdrawal gateways
 
-4. **Investment & Bot Tables**
+4. **Payment Gateway Tables**
+   - `payment_gateways`: Admin-configured deposit methods (crypto addresses, QR codes, fees)
+   - `withdrawal_gateways`: Admin-configured withdrawal methods (name, min/max amounts, fees, network type)
+
+5. **Investment & Bot Tables**
    - `investment_plans`: Available investment plans with ROI and risk levels
    - `user_investments`: User's active/completed investments
    - `ai_bots`: AI trading bot configurations
    - `user_bots`: User subscriptions to AI bots with P&L tracking
 
-5. **Wallet & Security Tables**
+6. **Wallet & Security Tables**
    - `connected_wallets`: External wallet connections (WalletConnect, MetaMask, etc.)
    - Session storage via `connect-pg-simple` for Express sessions
 
-6. **Support & Settings Tables**
+7. **Support & Settings Tables**
    - `support_tickets`: User-admin communication with priority/status
    - `system_settings`: Platform-wide configuration and feature toggles
 
