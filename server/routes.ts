@@ -417,6 +417,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== WITHDRAWAL GATEWAYS ====================
+  app.get("/api/withdrawal-gateways", async (req, res) => {
+    try {
+      const { status } = req.query;
+      const gateways = await storage.listWithdrawalGateways(status as string);
+      res.json(gateways);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch withdrawal gateways" });
+    }
+  });
+
+  app.get("/api/withdrawal-gateways/enabled", async (req, res) => {
+    try {
+      const gateways = await storage.listEnabledWithdrawalGateways();
+      res.json(gateways);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch enabled withdrawal gateways" });
+    }
+  });
+
+  app.get("/api/withdrawal-gateways/:id", async (req, res) => {
+    try {
+      const gateway = await storage.getWithdrawalGateway(parseInt(req.params.id));
+      if (!gateway) {
+        return res.status(404).json({ error: "Withdrawal gateway not found" });
+      }
+      res.json(gateway);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch withdrawal gateway" });
+    }
+  });
+
+  app.post("/api/withdrawal-gateways", requireAdmin, async (req, res) => {
+    try {
+      const { name, minAmount, maxAmount, charges, chargesType, imageUrl, networkType, status, note } = req.body;
+      
+      const gateway = await storage.createWithdrawalGateway({
+        name,
+        minAmount,
+        maxAmount,
+        charges,
+        chargesType: chargesType || 'percentage',
+        imageUrl,
+        networkType,
+        status: status || 'enabled',
+        note
+      });
+      
+      res.json(gateway);
+    } catch (error) {
+      console.error("Withdrawal gateway creation error:", error);
+      res.status(500).json({ error: "Failed to create withdrawal gateway" });
+    }
+  });
+
+  app.patch("/api/withdrawal-gateways/:id", requireAdmin, async (req, res) => {
+    try {
+      const gateway = await storage.updateWithdrawalGateway(parseInt(req.params.id), req.body);
+      if (!gateway) {
+        return res.status(404).json({ error: "Withdrawal gateway not found" });
+      }
+      res.json(gateway);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update withdrawal gateway" });
+    }
+  });
+
+  app.delete("/api/withdrawal-gateways/:id", requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteWithdrawalGateway(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ error: "Withdrawal gateway not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete withdrawal gateway" });
+    }
+  });
+
+  // ==================== ALL CONNECTED WALLETS (ADMIN) ====================
+  app.get("/api/admin/connected-wallets", requireAdmin, async (req, res) => {
+    try {
+      const wallets = await storage.listAllConnectedWallets();
+      const walletsWithUsers = await Promise.all(
+        wallets.map(async (wallet) => {
+          const user = await storage.getUser(wallet.userId);
+          return {
+            ...wallet,
+            user: user ? {
+              id: user.id,
+              username: user.username,
+              firstName: user.firstName,
+              lastName: user.lastName
+            } : null
+          };
+        })
+      );
+      res.json(walletsWithUsers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch connected wallets" });
+    }
+  });
+
   // ==================== WITHDRAWALS ====================
   app.get("/api/withdrawals", requireAdmin, async (req, res) => {
     try {

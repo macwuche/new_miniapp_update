@@ -21,6 +21,7 @@ import {
   userEmails,
   kycVerifications,
   paymentGateways,
+  withdrawalGateways,
   type User,
   type InsertUser,
   type Admin,
@@ -65,6 +66,8 @@ import {
   type InsertKycVerification,
   type PaymentGateway,
   type InsertPaymentGateway,
+  type WithdrawalGateway,
+  type InsertWithdrawalGateway,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql as drizzleSql } from "drizzle-orm";
@@ -200,6 +203,17 @@ export interface IStorage {
   listEnabledPaymentGateways(): Promise<PaymentGateway[]>;
   updatePaymentGateway(id: number, gateway: Partial<InsertPaymentGateway>): Promise<PaymentGateway | undefined>;
   deletePaymentGateway(id: number): Promise<boolean>;
+  
+  // Withdrawal Gateways
+  createWithdrawalGateway(gateway: InsertWithdrawalGateway): Promise<WithdrawalGateway>;
+  getWithdrawalGateway(id: number): Promise<WithdrawalGateway | undefined>;
+  listWithdrawalGateways(status?: string): Promise<WithdrawalGateway[]>;
+  listEnabledWithdrawalGateways(): Promise<WithdrawalGateway[]>;
+  updateWithdrawalGateway(id: number, gateway: Partial<InsertWithdrawalGateway>): Promise<WithdrawalGateway | undefined>;
+  deleteWithdrawalGateway(id: number): Promise<boolean>;
+  
+  // All Connected Wallets (admin)
+  listAllConnectedWallets(): Promise<ConnectedWallet[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -692,6 +706,43 @@ export class DatabaseStorage implements IStorage {
   async deletePaymentGateway(id: number): Promise<boolean> {
     const [deleted] = await db.delete(paymentGateways).where(eq(paymentGateways.id, id)).returning();
     return !!deleted;
+  }
+
+  // Withdrawal Gateways
+  async createWithdrawalGateway(gateway: InsertWithdrawalGateway): Promise<WithdrawalGateway> {
+    const [created] = await db.insert(withdrawalGateways).values(gateway).returning();
+    return created;
+  }
+
+  async getWithdrawalGateway(id: number): Promise<WithdrawalGateway | undefined> {
+    const [gateway] = await db.select().from(withdrawalGateways).where(eq(withdrawalGateways.id, id));
+    return gateway || undefined;
+  }
+
+  async listWithdrawalGateways(status?: string): Promise<WithdrawalGateway[]> {
+    if (status) {
+      return await db.select().from(withdrawalGateways).where(eq(withdrawalGateways.status, status as any)).orderBy(desc(withdrawalGateways.createdAt));
+    }
+    return await db.select().from(withdrawalGateways).orderBy(desc(withdrawalGateways.createdAt));
+  }
+
+  async listEnabledWithdrawalGateways(): Promise<WithdrawalGateway[]> {
+    return await db.select().from(withdrawalGateways).where(eq(withdrawalGateways.status, 'enabled')).orderBy(desc(withdrawalGateways.createdAt));
+  }
+
+  async updateWithdrawalGateway(id: number, gateway: Partial<InsertWithdrawalGateway>): Promise<WithdrawalGateway | undefined> {
+    const [updated] = await db.update(withdrawalGateways).set({ ...gateway, updatedAt: new Date() }).where(eq(withdrawalGateways.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteWithdrawalGateway(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(withdrawalGateways).where(eq(withdrawalGateways.id, id)).returning();
+    return !!deleted;
+  }
+
+  // All Connected Wallets (admin)
+  async listAllConnectedWallets(): Promise<ConnectedWallet[]> {
+    return await db.select().from(connectedWallets).where(eq(connectedWallets.isDeleted, false)).orderBy(desc(connectedWallets.connectedAt));
   }
 }
 

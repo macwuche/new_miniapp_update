@@ -306,6 +306,22 @@ export const paymentGateways = pgTable("payment_gateways", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Withdrawal Gateways table (Manual withdrawal methods created by admin)
+export const withdrawalGateways = pgTable("withdrawal_gateways", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  minAmount: decimal("min_amount", { precision: 18, scale: 8 }).notNull(),
+  maxAmount: decimal("max_amount", { precision: 18, scale: 8 }).notNull(),
+  charges: decimal("charges", { precision: 10, scale: 2 }).notNull(),
+  chargesType: varchar("charges_type", { length: 20 }).default('percentage').notNull(),
+  imageUrl: text("image_url"),
+  networkType: varchar("network_type", { length: 50 }).notNull(),
+  status: gatewayStatusEnum("status").default('enabled').notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // KYC Verification table
 export const kycVerifications = pgTable("kyc_verifications", {
   id: serial("id").primaryKey(),
@@ -428,6 +444,7 @@ export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omi
 export const insertUserEmailSchema = createInsertSchema(userEmails).omit({ id: true, linkedAt: true });
 export const insertKycVerificationSchema = createInsertSchema(kycVerifications).omit({ id: true, submittedAt: true, reviewedAt: true });
 export const insertPaymentGatewaySchema = createInsertSchema(paymentGateways).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertWithdrawalGatewaySchema = createInsertSchema(withdrawalGateways).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Type exports
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -474,3 +491,5 @@ export type InsertKycVerification = z.infer<typeof insertKycVerificationSchema>;
 export type KycVerification = typeof kycVerifications.$inferSelect;
 export type InsertPaymentGateway = z.infer<typeof insertPaymentGatewaySchema>;
 export type PaymentGateway = typeof paymentGateways.$inferSelect;
+export type InsertWithdrawalGateway = z.infer<typeof insertWithdrawalGatewaySchema>;
+export type WithdrawalGateway = typeof withdrawalGateways.$inferSelect;
