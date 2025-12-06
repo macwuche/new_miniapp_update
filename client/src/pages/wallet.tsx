@@ -6,40 +6,39 @@ import { useState } from "react";
 import { Link } from "wouter";
 
 export default function WalletPage() {
-  // In a real app, this state would come from a global store or context
   const [isConnected, setIsConnected] = useState(false);
 
   return (
     <MobileLayout>
-      <div className="px-6 pt-8 pb-4">
+      <div className="min-h-screen bg-white dark:bg-slate-900 px-6 pt-8 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold">Wallet</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Wallet</h1>
           <Link href="/linked-wallets">
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
+            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <MoreHorizontal size={24} />
             </Button>
           </Link>
         </div>
-        <p className="text-gray-500 mb-8">Manage your crypto assets and connections.</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">Manage your crypto assets and connections.</p>
 
         {!isConnected ? (
           <div className="space-y-4">
-            <Card className="p-6 border-none shadow-lg bg-gradient-to-br from-blue-600 to-blue-500 text-white overflow-hidden relative min-h-[300px] flex flex-col justify-center">
-               <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-               <div className="absolute -left-10 -bottom-10 w-30 h-30 bg-black/10 rounded-full blur-2xl" />
+            <Card className="p-6 border-none shadow-lg bg-white dark:bg-slate-800 overflow-hidden relative min-h-[300px] flex flex-col justify-center">
+               <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-3xl" />
+               <div className="absolute -left-10 -bottom-10 w-30 h-30 bg-purple-500/10 dark:bg-purple-400/10 rounded-full blur-2xl" />
                
                <div className="relative z-10 flex flex-col items-center text-center py-4">
-                 <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center mb-6 backdrop-blur-sm shadow-inner border border-white/10">
-                   <Wallet size={40} className="text-white" />
+                 <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/50 rounded-3xl flex items-center justify-center mb-6 shadow-inner border border-blue-200 dark:border-blue-700">
+                   <Wallet size={40} className="text-blue-600 dark:text-blue-400" />
                  </div>
-                 <h3 className="text-2xl font-bold mb-3">Connect Wallet</h3>
-                 <p className="text-blue-100 text-base mb-8 max-w-[240px] leading-relaxed">
+                 <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Connect Wallet</h3>
+                 <p className="text-gray-500 dark:text-gray-400 text-base mb-8 max-w-[240px] leading-relaxed">
                    Link your secure crypto wallet to start trading instantly.
                  </p>
                  
                  <Link href="/connect-wallet" className="w-full">
                    <Button 
-                     className="bg-white text-blue-600 hover:bg-blue-50 font-bold w-full shadow-xl shadow-blue-900/20 h-14 text-lg rounded-xl transition-transform active:scale-95"
+                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold w-full shadow-xl shadow-blue-600/20 h-14 text-lg rounded-xl transition-transform active:scale-95"
                    >
                      Connect Now
                    </Button>
@@ -47,12 +46,12 @@ export default function WalletPage() {
                </div>
             </Card>
 
-            <div className="flex justify-center gap-6 pt-4 opacity-60">
-              <div className="text-center">
+            <div className="flex justify-center gap-6 pt-4">
+              <div className="text-center text-gray-500 dark:text-gray-400">
                 <ShieldCheck className="mx-auto mb-1" size={24} />
                 <span className="text-xs font-medium">Secure</span>
               </div>
-              <div className="text-center">
+              <div className="text-center text-gray-500 dark:text-gray-400">
                 <CheckCircle2 className="mx-auto mb-1" size={24} />
                 <span className="text-xs font-medium">Verified</span>
               </div>
@@ -82,15 +81,15 @@ export default function WalletPage() {
              </Card>
 
              <div className="grid grid-cols-2 gap-4">
-               <Card className="p-4 bg-white border-none shadow-sm">
-                 <p className="text-gray-500 text-xs mb-1">TON Balance</p>
-                 <p className="text-xl font-bold text-gray-900">450.5 TON</p>
-                 <p className="text-xs text-gray-400">≈ $2,340.50</p>
+               <Card className="p-4 bg-white dark:bg-slate-800 border-none shadow-sm">
+                 <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">TON Balance</p>
+                 <p className="text-xl font-bold text-gray-900 dark:text-white">450.5 TON</p>
+                 <p className="text-xs text-gray-400 dark:text-gray-500">≈ $2,340.50</p>
                </Card>
-               <Card className="p-4 bg-white border-none shadow-sm">
-                 <p className="text-gray-500 text-xs mb-1">USDT Balance</p>
-                 <p className="text-xl font-bold text-gray-900">1,200.00</p>
-                 <p className="text-xs text-gray-400">USDT</p>
+               <Card className="p-4 bg-white dark:bg-slate-800 border-none shadow-sm">
+                 <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">USDT Balance</p>
+                 <p className="text-xl font-bold text-gray-900 dark:text-white">1,200.00</p>
+                 <p className="text-xs text-gray-400 dark:text-gray-500">USDT</p>
                </Card>
              </div>
           </div>
