@@ -2,7 +2,7 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { useTelegram } from "@/lib/telegram-mock";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Zap, Send, MessageSquare, Sun, Moon, Smartphone } from "lucide-react";
+import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Zap, Send, MessageSquare, Sun, Moon, Smartphone, ArrowUpDown } from "lucide-react";
 import { Link } from "wouter";
 import { useTheme } from "@/lib/theme";
 import premiumStarIcon from "@assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922.png";
@@ -71,6 +71,7 @@ export default function Profile() {
           <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2">Account</p>
           
           {[
+            { icon: ArrowUpDown, label: "Transactions", to: "/transactions" },
             { icon: Shield, label: "Security", to: "/security" },
             { icon: CreditCard, label: "Payment Methods", to: "/withdraw/accounts" },
           ].map((item) => (

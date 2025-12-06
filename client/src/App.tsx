@@ -48,6 +48,7 @@ import ManageAssets from "@/pages/markets/manage";
 import BotMarket from "@/pages/bot-market";
 import BotDetails from "@/pages/bot-details";
 import BotInvestments from "@/pages/bot-investments";
+import Transactions from "@/pages/transactions";
 
 function Router() {
   return (
@@ -73,6 +74,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/support" component={UserSupport} />
       <Route path="/security" component={Security} />
+      <Route path="/transactions" component={Transactions} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/users" component={UserManagement} />
