@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
   SelectContent, 
@@ -22,421 +23,723 @@ import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle 
 } from "@/components/ui/dialog";
-import { Plus, Upload } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Edit, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
 import { Badge } from "@/components/ui/badge";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 
-// Mock data based on the reference image
-const MOCK_GATEWAYS = [
-  {
-    id: 1,
-    name: "X",
-    initiatedAt: "2024-11-10 01:27 PM",
-    limit: "$100 - $1000000",
-    charge: "0%",
-    currency: "$1 = 1 USD",
-    status: "Inactive",
-    
-    // Additional fields for edit form
-    minAmount: "100",
-    maxAmount: "1000000",
-    charges: "0",
-    chargesType: "percentage",
-    type: "fiat",
-    imageUrl: "",
-    walletAddress: "",
-    networkType: "",
-    typeFor: "deposit",
-    note: ""
-  },
-  {
-    id: 2,
-    name: "X",
-    initiatedAt: "2024-11-10 01:27 PM",
-    limit: "$100 - $100000",
-    charge: "3%",
-    currency: "$1 = 1 USD",
-    status: "Inactive",
-
-    minAmount: "100",
-    maxAmount: "100000",
-    charges: "3",
-    chargesType: "percentage",
-    type: "fiat",
-    imageUrl: "",
-    walletAddress: "",
-    networkType: "",
-    typeFor: "deposit",
-    note: ""
-  },
-  {
-    id: 3,
-    name: "USDT (TRC20)",
-    initiatedAt: "2024-11-10 02:46 PM",
-    limit: "$400 - $10000000",
-    charge: "0%",
-    currency: "$1 = 1 ₮",
-    status: "Active",
-
-    minAmount: "400",
-    maxAmount: "10000000",
-    charges: "0",
-    chargesType: "percentage",
-    type: "crypto",
-    imageUrl: "",
-    walletAddress: "T9yD14Nj9j7xAB4dbGeiX9h8zzf52",
-    networkType: "TRC20",
-    typeFor: "deposit",
-    note: ""
-  },
-  {
-    id: 4,
-    name: "Bitcoin",
-    initiatedAt: "2024-11-12 05:54 AM",
-    limit: "$250 - $1000000",
-    charge: "0%",
-    currency: "$1 = 0 ₿",
-    status: "Active",
-
-    minAmount: "250",
-    maxAmount: "1000000",
-    charges: "0",
-    chargesType: "percentage",
-    type: "crypto",
-    imageUrl: "",
-    walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    networkType: "BTC",
-    typeFor: "deposit",
-    note: ""
-  },
-  {
-    id: 5,
-    name: "Ethereum",
-    initiatedAt: "2024-11-12 05:58 AM",
-    limit: "$500 - $1000000",
-    charge: "0%",
-    currency: "$1 = 0 Ξ",
-    status: "Active",
-
-    minAmount: "500",
-    maxAmount: "1000000",
-    charges: "0",
-    chargesType: "percentage",
-    type: "crypto",
-    imageUrl: "",
-    walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    networkType: "ERC20",
-    typeFor: "deposit",
-    note: ""
-  },
-  {
-    id: 6,
-    name: "Tether (ERC 20)",
-    initiatedAt: "2024-11-12 06:02 AM",
-    limit: "$500 - $1000000",
-    charge: "0%",
-    currency: "$1 = 1 ₮",
-    status: "Active",
-
-    minAmount: "500",
-    maxAmount: "1000000",
-    charges: "0",
-    chargesType: "percentage",
-    type: "crypto",
-    imageUrl: "",
-    walletAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    networkType: "ERC20",
-    typeFor: "deposit",
-    note: ""
-  }
-];
+interface PaymentGateway {
+  id: number;
+  name: string;
+  minAmount: string;
+  maxAmount: string;
+  charges: string;
+  chargesType: string;
+  imageUrl: string | null;
+  walletAddress: string;
+  barcodeImage: string | null;
+  networkType: string;
+  status: 'enabled' | 'disabled';
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AdminDeposits() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingGateway, setEditingGateway] = useState<any>(null);
+  const [editingGateway, setEditingGateway] = useState<PaymentGateway | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    minAmount: '',
+    maxAmount: '',
+    charges: '',
+    chargesType: 'percentage',
+    imageUrl: '',
+    walletAddress: '',
+    barcodeImage: '',
+    networkType: '',
+    status: 'enabled',
+    note: ''
+  });
 
-  const handleOpen = (gateway: any = null) => {
-    setEditingGateway(gateway);
+  const { data: gateways = [], isLoading } = useQuery<PaymentGateway[]>({
+    queryKey: ['/api/payment-gateways'],
+    queryFn: async () => {
+      const res = await fetch('/api/payment-gateways');
+      if (!res.ok) throw new Error('Failed to fetch gateways');
+      return res.json();
+    }
+  });
+
+  const createGatewayMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const res = await fetch('/api/payment-gateways', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to create gateway');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payment-gateways'] });
+      toast({ title: "Gateway Added", description: "New payment method has been successfully added." });
+      handleClose();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create payment gateway.", variant: "destructive" });
+    }
+  });
+
+  const updateGatewayMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: typeof formData }) => {
+      const res = await fetch(`/api/payment-gateways/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update gateway');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payment-gateways'] });
+      toast({ title: "Gateway Updated", description: "Payment method has been successfully updated." });
+      handleClose();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update payment gateway.", variant: "destructive" });
+    }
+  });
+
+  const deleteGatewayMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/payment-gateways/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete gateway');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payment-gateways'] });
+      toast({ title: "Gateway Deleted", description: "Payment method has been deleted." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete payment gateway.", variant: "destructive" });
+    }
+  });
+
+  const handleOpen = (gateway: PaymentGateway | null = null) => {
+    if (gateway) {
+      setEditingGateway(gateway);
+      setFormData({
+        name: gateway.name,
+        minAmount: gateway.minAmount,
+        maxAmount: gateway.maxAmount,
+        charges: gateway.charges,
+        chargesType: gateway.chargesType,
+        imageUrl: gateway.imageUrl || '',
+        walletAddress: gateway.walletAddress,
+        barcodeImage: gateway.barcodeImage || '',
+        networkType: gateway.networkType,
+        status: gateway.status,
+        note: gateway.note || ''
+      });
+    } else {
+      setEditingGateway(null);
+      setFormData({
+        name: '',
+        minAmount: '',
+        maxAmount: '',
+        charges: '',
+        chargesType: 'percentage',
+        imageUrl: '',
+        walletAddress: '',
+        barcodeImage: '',
+        networkType: '',
+        status: 'enabled',
+        note: ''
+      });
+    }
     setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditingGateway(null);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: editingGateway ? "Gateway Updated" : "Gateway Added",
-      description: editingGateway 
-        ? "Payment method has been successfully updated." 
-        : "New payment method has been successfully added.",
+    if (editingGateway) {
+      updateGatewayMutation.mutate({ id: editingGateway.id, data: formData });
+    } else {
+      createGatewayMutation.mutate(formData);
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm('Are you sure you want to delete this payment gateway?')) {
+      deleteGatewayMutation.mutate(id);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-    
-    setIsSubmitting(false);
-    setOpen(false);
-    setEditingGateway(null);
   };
 
   return (
     <AdminLayout>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Traditional Gateways</h1>
+        <h1 className="text-xl font-bold text-gray-900">Deposit Management</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage payment gateways and view deposit requests</p>
       </div>
 
-      <div className="mb-6">
-        <Button 
-          onClick={() => handleOpen(null)}
-          className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium px-6 py-2 h-auto rounded-md text-sm"
-        >
-          <Plus size={16} className="mr-2" />
-          Add Manual Gateway
-        </Button>
+      <Tabs defaultValue="gateways" className="w-full">
+        <TabsList className="mb-6 bg-white border border-gray-200">
+          <TabsTrigger value="gateways" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            Manual Gateways
+          </TabsTrigger>
+          <TabsTrigger value="pending" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            <Clock size={14} className="mr-1" /> Pending
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            <CheckCircle2 size={14} className="mr-1" /> Approved
+          </TabsTrigger>
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            <XCircle size={14} className="mr-1" /> Rejected
+          </TabsTrigger>
+        </TabsList>
 
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="border-b pb-4 mb-4">
-              <DialogTitle className="text-lg font-normal text-gray-700">
-                {editingGateway ? "Edit Payment Method" : "Add New payment Method"}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <form onSubmit={handleSave} className="space-y-6" key={editingGateway?.id || 'new'}>
-              {/* Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-600 font-normal">Name</Label>
-                <Input 
-                  id="name" 
-                  defaultValue={editingGateway?.name}
-                  placeholder="Payment method name" 
-                  className="bg-white border-gray-200" 
-                  required 
-                />
-              </div>
+        <TabsContent value="gateways">
+          <div className="mb-6">
+            <Button 
+              onClick={() => handleOpen(null)}
+              className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium px-6 py-2 h-auto rounded-md text-sm"
+            >
+              <Plus size={16} className="mr-2" />
+              Add Manual Gateway
+            </Button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Minimum Amount */}
-                <div className="space-y-2">
-                  <Label htmlFor="minAmount" className="text-gray-600 font-normal">Minimum Amount</Label>
-                  <Input 
-                    id="minAmount" 
-                    defaultValue={editingGateway?.minAmount}
-                    className="bg-white border-gray-200" 
-                    required 
-                  />
-                  <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
-                </div>
-
-                {/* Maximum Amount */}
-                <div className="space-y-2">
-                  <Label htmlFor="maxAmount" className="text-gray-600 font-normal">Maximum Amount</Label>
-                  <Input 
-                    id="maxAmount" 
-                    defaultValue={editingGateway?.maxAmount}
-                    className="bg-white border-gray-200" 
-                    required 
-                  />
-                  <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
-                </div>
-
-                {/* Charges */}
-                <div className="space-y-2">
-                  <Label htmlFor="charges" className="text-gray-600 font-normal">Charges</Label>
-                  <Input 
-                    id="charges" 
-                    defaultValue={editingGateway?.charges}
-                    className="bg-white border-gray-200" 
-                    required 
-                  />
-                  <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
-                </div>
-
-                {/* Charges Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="chargesType" className="text-gray-600 font-normal">Charges Type</Label>
-                  <Select defaultValue={editingGateway?.chargesType || "percentage"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage(%)</SelectItem>
-                      <SelectItem value="fixed">Fixed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Required but only applies to withdrawal</p>
-                </div>
-
-                {/* Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="type" className="text-gray-600 font-normal">Type</Label>
-                  <Select defaultValue={editingGateway?.type || "crypto"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="crypto">Crypto</SelectItem>
-                      <SelectItem value="fiat">Fiat</SelectItem>
-                      <SelectItem value="bank">Bank Transfer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Image URL */}
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl" className="text-gray-600 font-normal">Image url (Logo)</Label>
-                  <Input 
-                    id="imageUrl" 
-                    defaultValue={editingGateway?.imageUrl}
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
-
-                {/* Wallet Address */}
-                <div className="space-y-2">
-                  <Label htmlFor="walletAddress" className="text-gray-600 font-normal">Wallet Address</Label>
-                  <Input 
-                    id="walletAddress" 
-                    defaultValue={editingGateway?.walletAddress}
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
-
-                {/* Barcode Image */}
-                <div className="space-y-2">
-                  <Label htmlFor="barcode" className="text-gray-600 font-normal">Barcode Image (Optional)</Label>
-                  <div className="flex items-center gap-2 border border-gray-200 rounded-md p-1 bg-white">
-                    <Button type="button" variant="secondary" size="sm" className="h-8 text-xs font-normal">
-                      Choose File
-                    </Button>
-                    <span className="text-xs text-gray-500">No file chosen</span>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="border-b pb-4 mb-4">
+                  <DialogTitle className="text-lg font-normal text-gray-700">
+                    {editingGateway ? "Edit Payment Method" : "Add New Payment Method"}
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <form onSubmit={handleSave} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-gray-600 font-normal">Payment Method Name *</Label>
+                    <Input 
+                      id="name" 
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., Bitcoin, USDT, Ethereum" 
+                      className="bg-white border-gray-200" 
+                      required 
+                    />
                   </div>
-                  <p className="text-xs text-gray-500">Recommended Size: 575px both width and height</p>
-                </div>
 
-                {/* Wallet Address Network Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="networkType" className="text-gray-600 font-normal">Wallet Address Network Type</Label>
-                  <Input 
-                    id="networkType" 
-                    defaultValue={editingGateway?.networkType}
-                    placeholder="eq ERC" 
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="minAmount" className="text-gray-600 font-normal">Minimum Amount *</Label>
+                      <Input 
+                        id="minAmount" 
+                        type="number"
+                        step="0.01"
+                        value={formData.minAmount}
+                        onChange={(e) => setFormData({ ...formData, minAmount: e.target.value })}
+                        placeholder="100"
+                        className="bg-white border-gray-200" 
+                        required 
+                      />
+                    </div>
 
-                {/* Status */}
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="text-gray-600 font-normal">Status</Label>
-                  <Select defaultValue={editingGateway?.status === "Active" ? "enable" : editingGateway?.status === "Inactive" ? "disable" : "enable"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="enable">Enable</SelectItem>
-                      <SelectItem value="disable">Disable</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxAmount" className="text-gray-600 font-normal">Maximum Amount *</Label>
+                      <Input 
+                        id="maxAmount"
+                        type="number"
+                        step="0.01"
+                        value={formData.maxAmount}
+                        onChange={(e) => setFormData({ ...formData, maxAmount: e.target.value })}
+                        placeholder="1000000"
+                        className="bg-white border-gray-200" 
+                        required 
+                      />
+                    </div>
 
-                {/* Type for */}
-                <div className="space-y-2">
-                  <Label htmlFor="typeFor" className="text-gray-600 font-normal">Type for</Label>
-                  <Select defaultValue={editingGateway?.typeFor || "deposit"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="deposit">Deposit</SelectItem>
-                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="charges" className="text-gray-600 font-normal">Charges *</Label>
+                      <Input 
+                        id="charges"
+                        type="number"
+                        step="0.01"
+                        value={formData.charges}
+                        onChange={(e) => setFormData({ ...formData, charges: e.target.value })}
+                        placeholder="0"
+                        className="bg-white border-gray-200" 
+                        required 
+                      />
+                    </div>
 
-                {/* Optional Note */}
-                <div className="space-y-2">
-                  <Label htmlFor="note" className="text-gray-600 font-normal">Optional Note</Label>
-                  <Input 
-                    id="note" 
-                    defaultValue={editingGateway?.note}
-                    placeholder="Payment may take up to 24 hours" 
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
-              </div>
-
-              {/* Save Button */}
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="bg-[#1a1f36] hover:bg-[#2c324c] text-white font-medium px-6 py-2 h-10 rounded-md"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : (editingGateway ? "Update Method" : "Save Method")}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card className="border-none shadow-sm bg-white">
-        <CardContent className="p-0">
-          <div className="rounded-sm border border-gray-100 overflow-x-auto min-h-[400px] bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
-                  <TableHead className="font-bold text-gray-700 py-4 w-[200px]">Name</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Initiated At</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Payment Limit</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Percent Charge</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Method Currency</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {MOCK_GATEWAYS.map((gateway) => (
-                  <TableRow key={gateway.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <TableCell className="font-medium text-gray-700 py-4">{gateway.name}</TableCell>
-                    <TableCell className="text-gray-600 py-4">{gateway.initiatedAt}</TableCell>
-                    <TableCell className="text-gray-600 py-4 font-medium">{gateway.limit}</TableCell>
-                    <TableCell className="text-gray-600 py-4">{gateway.charge}</TableCell>
-                    <TableCell className="text-gray-600 py-4 font-mono text-xs">{gateway.currency}</TableCell>
-                    <TableCell className="py-4">
-                      <Badge 
-                        className={`rounded-md px-2 py-1 text-xs font-normal ${
-                          gateway.status === "Active" 
-                            ? "bg-[#10b981] hover:bg-[#059669] text-white" 
-                            : "bg-[#ef4444] hover:bg-[#dc2626] text-white"
-                        }`}
+                    <div className="space-y-2">
+                      <Label htmlFor="chargesType" className="text-gray-600 font-normal">Charges Type *</Label>
+                      <Select 
+                        value={formData.chargesType} 
+                        onValueChange={(value) => setFormData({ ...formData, chargesType: value })}
                       >
-                        {gateway.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right py-4">
-                      <Button 
-                        onClick={() => handleOpen(gateway)}
-                        variant="ghost" 
-                        className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 h-8 px-3 text-sm font-medium"
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">Percentage (%)</SelectItem>
+                          <SelectItem value="fixed">Fixed Amount</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="imageUrl" className="text-gray-600 font-normal">Image URL (Logo)</Label>
+                      <Input 
+                        id="imageUrl" 
+                        value={formData.imageUrl}
+                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                        placeholder="https://example.com/logo.png"
+                        className="bg-white border-gray-200" 
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="networkType" className="text-gray-600 font-normal">Network Type *</Label>
+                      <Input 
+                        id="networkType" 
+                        value={formData.networkType}
+                        onChange={(e) => setFormData({ ...formData, networkType: e.target.value })}
+                        placeholder="e.g., ERC20, TRC20, BTC Network" 
+                        className="bg-white border-gray-200"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="walletAddress" className="text-gray-600 font-normal">Wallet Address *</Label>
+                      <Input 
+                        id="walletAddress" 
+                        value={formData.walletAddress}
+                        onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
+                        placeholder="Enter the wallet address for deposits"
+                        className="bg-white border-gray-200"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="barcodeImage" className="text-gray-600 font-normal">Barcode/QR Image URL (Optional)</Label>
+                      <Input 
+                        id="barcodeImage" 
+                        value={formData.barcodeImage}
+                        onChange={(e) => setFormData({ ...formData, barcodeImage: e.target.value })}
+                        placeholder="https://example.com/qr-code.png"
+                        className="bg-white border-gray-200" 
+                      />
+                      <p className="text-xs text-gray-500">Leave empty to auto-generate QR code from wallet address</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status" className="text-gray-600 font-normal">Status *</Label>
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value) => setFormData({ ...formData, status: value })}
                       >
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="enabled">Enabled</SelectItem>
+                          <SelectItem value="disabled">Disabled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="note" className="text-gray-600 font-normal">Optional Note</Label>
+                      <Textarea 
+                        id="note" 
+                        value={formData.note}
+                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                        placeholder="Additional instructions for users (e.g., 'Payment may take up to 24 hours to process')" 
+                        className="bg-white border-gray-200 min-h-[80px]" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex gap-3">
+                    <Button 
+                      type="submit" 
+                      className="bg-[#1a1f36] hover:bg-[#2c324c] text-white font-medium px-6 py-2 h-10 rounded-md"
+                      disabled={createGatewayMutation.isPending || updateGatewayMutation.isPending}
+                    >
+                      {(createGatewayMutation.isPending || updateGatewayMutation.isPending) 
+                        ? "Saving..." 
+                        : (editingGateway ? "Update Method" : "Save Method")}
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={handleClose}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
+
+          <Card className="border-none shadow-sm bg-white">
+            <CardContent className="p-0">
+              <div className="rounded-sm border border-gray-100 overflow-x-auto min-h-[400px] bg-white">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-gray-500">Loading gateways...</div>
+                  </div>
+                ) : gateways.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                    <p>No payment gateways found</p>
+                    <p className="text-sm mt-1">Click "Add Manual Gateway" to create one</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
+                        <TableHead className="font-bold text-gray-700 py-4 w-[180px]">Name</TableHead>
+                        <TableHead className="font-bold text-gray-700 py-4">Network</TableHead>
+                        <TableHead className="font-bold text-gray-700 py-4">Deposit Limit</TableHead>
+                        <TableHead className="font-bold text-gray-700 py-4">Charges</TableHead>
+                        <TableHead className="font-bold text-gray-700 py-4">Created At</TableHead>
+                        <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>
+                        <TableHead className="font-bold text-gray-700 py-4 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {gateways.map((gateway) => (
+                        <TableRow key={gateway.id} className="border-b border-gray-50 hover:bg-gray-50">
+                          <TableCell className="font-medium text-gray-700 py-4">
+                            <div className="flex items-center gap-2">
+                              {gateway.imageUrl && (
+                                <img src={gateway.imageUrl} alt={gateway.name} className="w-6 h-6 rounded" />
+                              )}
+                              {gateway.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-600 py-4">{gateway.networkType}</TableCell>
+                          <TableCell className="text-gray-600 py-4 font-medium">
+                            ${parseFloat(gateway.minAmount).toLocaleString()} - ${parseFloat(gateway.maxAmount).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-gray-600 py-4">
+                            {gateway.charges}{gateway.chargesType === 'percentage' ? '%' : ' USD'}
+                          </TableCell>
+                          <TableCell className="text-gray-600 py-4 text-sm">
+                            {formatDate(gateway.createdAt)}
+                          </TableCell>
+                          <TableCell className="py-4">
+                            <Badge 
+                              className={`rounded-md px-2 py-1 text-xs font-normal ${
+                                gateway.status === "enabled" 
+                                  ? "bg-[#10b981] hover:bg-[#059669] text-white" 
+                                  : "bg-[#ef4444] hover:bg-[#dc2626] text-white"
+                              }`}
+                            >
+                              {gateway.status === 'enabled' ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button 
+                                onClick={() => handleOpen(gateway)}
+                                variant="ghost" 
+                                size="sm"
+                                className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 h-8 px-2"
+                              >
+                                <Edit size={14} />
+                              </Button>
+                              <Button 
+                                onClick={() => handleDelete(gateway.id)}
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 h-8 px-2"
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pending">
+          <PendingDeposits />
+        </TabsContent>
+
+        <TabsContent value="approved">
+          <ApprovedDeposits />
+        </TabsContent>
+
+        <TabsContent value="rejected">
+          <RejectedDeposits />
+        </TabsContent>
+      </Tabs>
+    </AdminLayout>
+  );
+}
+
+function PendingDeposits() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: deposits = [], isLoading } = useQuery({
+    queryKey: ['/api/deposits', 'pending'],
+    queryFn: async () => {
+      const res = await fetch('/api/deposits?status=pending');
+      if (!res.ok) throw new Error('Failed to fetch deposits');
+      return res.json();
+    }
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/deposits/${id}/approve`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed to approve deposit');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/deposits'] });
+      toast({ title: "Deposit Approved", description: "User balance has been updated." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to approve deposit.", variant: "destructive" });
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/deposits/${id}/reject`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Rejected by admin' })
+      });
+      if (!res.ok) throw new Error('Failed to reject deposit');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/deposits'] });
+      toast({ title: "Deposit Rejected", description: "The deposit has been rejected." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to reject deposit.", variant: "destructive" });
+    }
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-gray-500">Loading pending deposits...</div>;
+  }
+
+  if (deposits.length === 0) {
+    return (
+      <Card className="border-none shadow-sm bg-white">
+        <CardContent className="py-12 text-center text-gray-500">
+          <Clock size={48} className="mx-auto mb-4 text-gray-300" />
+          <p>No pending deposits</p>
         </CardContent>
       </Card>
-    </AdminLayout>
+    );
+  }
+
+  return (
+    <Card className="border-none shadow-sm bg-white">
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+              <TableHead className="font-bold text-gray-700">User ID</TableHead>
+              <TableHead className="font-bold text-gray-700">Amount</TableHead>
+              <TableHead className="font-bold text-gray-700">Currency</TableHead>
+              <TableHead className="font-bold text-gray-700">Network</TableHead>
+              <TableHead className="font-bold text-gray-700">Date</TableHead>
+              <TableHead className="font-bold text-gray-700 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {deposits.map((deposit: any) => (
+              <TableRow key={deposit.id}>
+                <TableCell>{deposit.userId}</TableCell>
+                <TableCell className="font-medium">${parseFloat(deposit.amount).toLocaleString()}</TableCell>
+                <TableCell>{deposit.currency}</TableCell>
+                <TableCell>{deposit.network || 'N/A'}</TableCell>
+                <TableCell>{new Date(deposit.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => approveMutation.mutate(deposit.id)}
+                      disabled={approveMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <CheckCircle2 size={14} className="mr-1" /> Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => rejectMutation.mutate(deposit.id)}
+                      disabled={rejectMutation.isPending}
+                    >
+                      <XCircle size={14} className="mr-1" /> Reject
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ApprovedDeposits() {
+  const { data: deposits = [], isLoading } = useQuery({
+    queryKey: ['/api/deposits', 'approved'],
+    queryFn: async () => {
+      const res = await fetch('/api/deposits?status=approved');
+      if (!res.ok) throw new Error('Failed to fetch deposits');
+      return res.json();
+    }
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-gray-500">Loading approved deposits...</div>;
+  }
+
+  if (deposits.length === 0) {
+    return (
+      <Card className="border-none shadow-sm bg-white">
+        <CardContent className="py-12 text-center text-gray-500">
+          <CheckCircle2 size={48} className="mx-auto mb-4 text-gray-300" />
+          <p>No approved deposits yet</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-none shadow-sm bg-white">
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+              <TableHead className="font-bold text-gray-700">User ID</TableHead>
+              <TableHead className="font-bold text-gray-700">Amount</TableHead>
+              <TableHead className="font-bold text-gray-700">Currency</TableHead>
+              <TableHead className="font-bold text-gray-700">Date</TableHead>
+              <TableHead className="font-bold text-gray-700">Approved At</TableHead>
+              <TableHead className="font-bold text-gray-700">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {deposits.map((deposit: any) => (
+              <TableRow key={deposit.id}>
+                <TableCell>{deposit.userId}</TableCell>
+                <TableCell className="font-medium">${parseFloat(deposit.amount).toLocaleString()}</TableCell>
+                <TableCell>{deposit.currency}</TableCell>
+                <TableCell>{new Date(deposit.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>{deposit.approvedAt ? new Date(deposit.approvedAt).toLocaleDateString() : 'N/A'}</TableCell>
+                <TableCell>
+                  <Badge className="bg-green-600 text-white">Approved</Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RejectedDeposits() {
+  const { data: deposits = [], isLoading } = useQuery({
+    queryKey: ['/api/deposits', 'rejected'],
+    queryFn: async () => {
+      const res = await fetch('/api/deposits?status=rejected');
+      if (!res.ok) throw new Error('Failed to fetch deposits');
+      return res.json();
+    }
+  });
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-gray-500">Loading rejected deposits...</div>;
+  }
+
+  if (deposits.length === 0) {
+    return (
+      <Card className="border-none shadow-sm bg-white">
+        <CardContent className="py-12 text-center text-gray-500">
+          <XCircle size={48} className="mx-auto mb-4 text-gray-300" />
+          <p>No rejected deposits</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-none shadow-sm bg-white">
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+              <TableHead className="font-bold text-gray-700">User ID</TableHead>
+              <TableHead className="font-bold text-gray-700">Amount</TableHead>
+              <TableHead className="font-bold text-gray-700">Currency</TableHead>
+              <TableHead className="font-bold text-gray-700">Date</TableHead>
+              <TableHead className="font-bold text-gray-700">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {deposits.map((deposit: any) => (
+              <TableRow key={deposit.id}>
+                <TableCell>{deposit.userId}</TableCell>
+                <TableCell className="font-medium">${parseFloat(deposit.amount).toLocaleString()}</TableCell>
+                <TableCell>{deposit.currency}</TableCell>
+                <TableCell>{new Date(deposit.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Badge className="bg-red-600 text-white">Rejected</Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

@@ -190,27 +190,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/deposits", async (req, res) => {
     try {
-      const { userId, amount, currency, network, address, proofImage } = req.body;
+      const { userId, gatewayId, amount, currency, method, network, address, proofImage } = req.body;
+
+      if (!userId || !amount || !currency) {
+        return res.status(400).json({ error: "Missing required fields: userId, amount, currency" });
+      }
+
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      let amountAfterCharges = numAmount;
+      let gateway = null;
+
+      if (gatewayId) {
+        gateway = await storage.getPaymentGateway(gatewayId);
+        if (!gateway) {
+          return res.status(400).json({ error: "Invalid payment gateway" });
+        }
+        if (gateway.status !== 'enabled') {
+          return res.status(400).json({ error: "Payment gateway is not available" });
+        }
+
+        const minAmount = parseFloat(gateway.minAmount);
+        const maxAmount = parseFloat(gateway.maxAmount);
+        if (numAmount < minAmount || numAmount > maxAmount) {
+          return res.status(400).json({ 
+            error: `Amount must be between $${minAmount.toLocaleString()} and $${maxAmount.toLocaleString()}` 
+          });
+        }
+
+        const chargeRate = parseFloat(gateway.charges) || 0;
+        const chargeAmount = gateway.chargesType === 'percentage' 
+          ? numAmount * (chargeRate / 100) 
+          : chargeRate;
+        amountAfterCharges = numAmount - chargeAmount;
+      }
 
       // Create transaction
       const transaction = await storage.createTransaction({
         userId,
         type: 'deposit',
-        amount,
+        amount: amount.toString(),
         currency,
         status: 'pending',
-        description: `Deposit ${amount} ${currency}`
+        description: `Deposit ${amount} ${currency}${gateway ? ` via ${gateway.name}` : ''}`
       });
 
       // Create deposit
       const deposit = await storage.createDeposit({
         transactionId: transaction.id,
         userId,
-        amount,
+        gatewayId: gatewayId || null,
+        amount: amount.toString(),
+        amountAfterCharges: amountAfterCharges.toString(),
         currency,
-        method: 'crypto_address',
-        network,
-        address,
+        method: method || 'crypto_address',
+        network: network || (gateway?.networkType || null),
+        address: address || (gateway?.walletAddress || null),
         proofImage,
         status: 'pending',
         approvedBy: null
@@ -232,14 +270,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Deposit not found" });
       }
 
+      if (deposit.status !== 'pending') {
+        return res.status(400).json({ error: `Deposit is already ${deposit.status}` });
+      }
+
+      // Use amountAfterCharges if available, otherwise use original amount
+      const creditAmount = deposit.amountAfterCharges || deposit.amount;
+      const creditAmountNum = parseFloat(creditAmount);
+
       // Update deposit status
       const approved = await storage.approveDeposit(depositId, req.session.adminId!);
 
       // Update user balance
       const balance = await storage.getUserBalance(deposit.userId);
       if (balance) {
-        const newTotal = parseFloat(balance.totalBalanceUsd) + parseFloat(deposit.amount);
-        const newAvailable = parseFloat(balance.availableBalanceUsd) + parseFloat(deposit.amount);
+        const newTotal = parseFloat(balance.totalBalanceUsd) + creditAmountNum;
+        const newAvailable = parseFloat(balance.availableBalanceUsd) + creditAmountNum;
 
         await storage.updateUserBalance(deposit.userId, {
           totalBalanceUsd: newTotal.toString(),
@@ -248,19 +294,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         await storage.createUserBalance({
           userId: deposit.userId,
-          totalBalanceUsd: deposit.amount,
-          availableBalanceUsd: deposit.amount,
+          totalBalanceUsd: creditAmount,
+          availableBalanceUsd: creditAmount,
           lockedBalanceUsd: "0"
         });
       }
 
-      // Update transaction
+      // Update transaction status
       await storage.updateDepositStatus(depositId, 'approved');
 
       res.json(approved);
     } catch (error) {
       console.error("Deposit approval error:", error);
       res.status(500).json({ error: "Failed to approve deposit" });
+    }
+  });
+
+  app.post("/api/deposits/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const depositId = parseInt(req.params.id);
+      const { reason } = req.body;
+      const deposit = await storage.getDeposit(depositId);
+
+      if (!deposit) {
+        return res.status(404).json({ error: "Deposit not found" });
+      }
+
+      if (deposit.status !== 'pending') {
+        return res.status(400).json({ error: `Deposit is already ${deposit.status}` });
+      }
+
+      const updated = await storage.updateDepositStatus(depositId, 'rejected');
+      res.json(updated);
+    } catch (error) {
+      console.error("Deposit rejection error:", error);
+      res.status(500).json({ error: "Failed to reject deposit" });
+    }
+  });
+
+  // ==================== PAYMENT GATEWAYS ====================
+  app.get("/api/payment-gateways", async (req, res) => {
+    try {
+      const { status } = req.query;
+      const gateways = await storage.listPaymentGateways(status as string);
+      res.json(gateways);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch payment gateways" });
+    }
+  });
+
+  app.get("/api/payment-gateways/enabled", async (req, res) => {
+    try {
+      const gateways = await storage.listEnabledPaymentGateways();
+      res.json(gateways);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch enabled payment gateways" });
+    }
+  });
+
+  app.get("/api/payment-gateways/:id", async (req, res) => {
+    try {
+      const gateway = await storage.getPaymentGateway(parseInt(req.params.id));
+      if (!gateway) {
+        return res.status(404).json({ error: "Payment gateway not found" });
+      }
+      res.json(gateway);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch payment gateway" });
+    }
+  });
+
+  app.post("/api/payment-gateways", requireAdmin, async (req, res) => {
+    try {
+      const { name, minAmount, maxAmount, charges, chargesType, imageUrl, walletAddress, barcodeImage, networkType, status, note } = req.body;
+      
+      const gateway = await storage.createPaymentGateway({
+        name,
+        minAmount,
+        maxAmount,
+        charges,
+        chargesType: chargesType || 'percentage',
+        imageUrl,
+        walletAddress,
+        barcodeImage,
+        networkType,
+        status: status || 'enabled',
+        note
+      });
+      
+      res.json(gateway);
+    } catch (error) {
+      console.error("Payment gateway creation error:", error);
+      res.status(500).json({ error: "Failed to create payment gateway" });
+    }
+  });
+
+  app.patch("/api/payment-gateways/:id", requireAdmin, async (req, res) => {
+    try {
+      const gateway = await storage.updatePaymentGateway(parseInt(req.params.id), req.body);
+      if (!gateway) {
+        return res.status(404).json({ error: "Payment gateway not found" });
+      }
+      res.json(gateway);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update payment gateway" });
+    }
+  });
+
+  app.delete("/api/payment-gateways/:id", requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deletePaymentGateway(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ error: "Payment gateway not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete payment gateway" });
     }
   });
 

@@ -20,6 +20,7 @@ import {
   systemSettings,
   userEmails,
   kycVerifications,
+  paymentGateways,
   type User,
   type InsertUser,
   type Admin,
@@ -62,6 +63,8 @@ import {
   type InsertUserEmail,
   type KycVerification,
   type InsertKycVerification,
+  type PaymentGateway,
+  type InsertPaymentGateway,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql as drizzleSql } from "drizzle-orm";
@@ -187,6 +190,14 @@ export interface IStorage {
   getKycVerification(userId: number): Promise<KycVerification | undefined>;
   updateKycVerification(id: number, kyc: Partial<InsertKycVerification>): Promise<KycVerification | undefined>;
   listPendingKyc(): Promise<KycVerification[]>;
+  
+  // Payment Gateways
+  createPaymentGateway(gateway: InsertPaymentGateway): Promise<PaymentGateway>;
+  getPaymentGateway(id: number): Promise<PaymentGateway | undefined>;
+  listPaymentGateways(status?: string): Promise<PaymentGateway[]>;
+  listEnabledPaymentGateways(): Promise<PaymentGateway[]>;
+  updatePaymentGateway(id: number, gateway: Partial<InsertPaymentGateway>): Promise<PaymentGateway | undefined>;
+  deletePaymentGateway(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -632,6 +643,38 @@ export class DatabaseStorage implements IStorage {
 
   async listPendingKyc(): Promise<KycVerification[]> {
     return await db.select().from(kycVerifications).where(eq(kycVerifications.status, 'pending'));
+  }
+
+  // Payment Gateways
+  async createPaymentGateway(gateway: InsertPaymentGateway): Promise<PaymentGateway> {
+    const [created] = await db.insert(paymentGateways).values(gateway).returning();
+    return created;
+  }
+
+  async getPaymentGateway(id: number): Promise<PaymentGateway | undefined> {
+    const [gateway] = await db.select().from(paymentGateways).where(eq(paymentGateways.id, id));
+    return gateway || undefined;
+  }
+
+  async listPaymentGateways(status?: string): Promise<PaymentGateway[]> {
+    if (status) {
+      return await db.select().from(paymentGateways).where(eq(paymentGateways.status, status as any)).orderBy(desc(paymentGateways.createdAt));
+    }
+    return await db.select().from(paymentGateways).orderBy(desc(paymentGateways.createdAt));
+  }
+
+  async listEnabledPaymentGateways(): Promise<PaymentGateway[]> {
+    return await db.select().from(paymentGateways).where(eq(paymentGateways.status, 'enabled')).orderBy(desc(paymentGateways.createdAt));
+  }
+
+  async updatePaymentGateway(id: number, gateway: Partial<InsertPaymentGateway>): Promise<PaymentGateway | undefined> {
+    const [updated] = await db.update(paymentGateways).set({ ...gateway, updatedAt: new Date() }).where(eq(paymentGateways.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deletePaymentGateway(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(paymentGateways).where(eq(paymentGateways.id, id)).returning();
+    return !!deleted;
   }
 }
 

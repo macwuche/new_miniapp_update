@@ -26,6 +26,7 @@ export const riskLevelEnum = pgEnum('risk_level', ['low', 'medium', 'high']);
 export const botStatusEnum = pgEnum('bot_status', ['active', 'expired']);
 export const ticketStatusEnum = pgEnum('ticket_status', ['pending', 'open', 'resolved', 'closed']);
 export const ticketPriorityEnum = pgEnum('ticket_priority', ['low', 'medium', 'high']);
+export const gatewayStatusEnum = pgEnum('gateway_status', ['enabled', 'disabled']);
 
 // Users table
 export const users = pgTable("users", {
@@ -107,7 +108,9 @@ export const deposits = pgTable("deposits", {
   id: serial("id").primaryKey(),
   transactionId: integer("transaction_id").references(() => transactions.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  gatewayId: integer("gateway_id").references(() => paymentGateways.id),
   amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  amountAfterCharges: decimal("amount_after_charges", { precision: 18, scale: 8 }),
   currency: varchar("currency", { length: 20 }).notNull(),
   method: depositMethodEnum("method").notNull(),
   network: varchar("network", { length: 50 }),
@@ -116,6 +119,7 @@ export const deposits = pgTable("deposits", {
   status: transactionStatusEnum("status").default('pending').notNull(),
   approvedBy: integer("approved_by").references(() => admins.id),
   approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -284,6 +288,24 @@ export const userEmails = pgTable("user_emails", {
   linkedAt: timestamp("linked_at").defaultNow().notNull(),
 });
 
+// Payment Gateways table (Manual deposit methods created by admin)
+export const paymentGateways = pgTable("payment_gateways", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  minAmount: decimal("min_amount", { precision: 18, scale: 8 }).notNull(),
+  maxAmount: decimal("max_amount", { precision: 18, scale: 8 }).notNull(),
+  charges: decimal("charges", { precision: 10, scale: 2 }).notNull(),
+  chargesType: varchar("charges_type", { length: 20 }).default('percentage').notNull(),
+  imageUrl: text("image_url"),
+  walletAddress: text("wallet_address").notNull(),
+  barcodeImage: text("barcode_image"),
+  networkType: varchar("network_type", { length: 50 }).notNull(),
+  status: gatewayStatusEnum("status").default('enabled').notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // KYC Verification table
 export const kycVerifications = pgTable("kyc_verifications", {
   id: serial("id").primaryKey(),
@@ -405,6 +427,7 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit
 export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omit({ id: true, updatedAt: true });
 export const insertUserEmailSchema = createInsertSchema(userEmails).omit({ id: true, linkedAt: true });
 export const insertKycVerificationSchema = createInsertSchema(kycVerifications).omit({ id: true, submittedAt: true, reviewedAt: true });
+export const insertPaymentGatewaySchema = createInsertSchema(paymentGateways).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Type exports
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -449,3 +472,5 @@ export type InsertUserEmail = z.infer<typeof insertUserEmailSchema>;
 export type UserEmail = typeof userEmails.$inferSelect;
 export type InsertKycVerification = z.infer<typeof insertKycVerificationSchema>;
 export type KycVerification = typeof kycVerifications.$inferSelect;
+export type InsertPaymentGateway = z.infer<typeof insertPaymentGatewaySchema>;
+export type PaymentGateway = typeof paymentGateways.$inferSelect;
