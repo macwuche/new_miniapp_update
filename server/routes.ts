@@ -496,6 +496,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== USER CRYPTO ADDRESSES ====================
+  app.get("/api/users/:userId/crypto-addresses", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const addresses = await storage.listUserCryptoAddresses(userId);
+      res.json(addresses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch crypto addresses" });
+    }
+  });
+
+  app.get("/api/users/:userId/crypto-addresses/gateway/:gatewayId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const gatewayId = parseInt(req.params.gatewayId);
+      const addresses = await storage.listUserCryptoAddressesByGateway(userId, gatewayId);
+      res.json(addresses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch crypto addresses" });
+    }
+  });
+
+  app.post("/api/users/:userId/crypto-addresses", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { gatewayId, label, address, network, currency } = req.body;
+      
+      if (!label || !address || !network) {
+        return res.status(400).json({ error: "Label, address, and network are required" });
+      }
+
+      const cryptoAddress = await storage.createCryptoAddress({
+        userId,
+        gatewayId: gatewayId || null,
+        label,
+        address,
+        network,
+        currency: currency || null,
+        isDeleted: false
+      });
+      res.json(cryptoAddress);
+    } catch (error) {
+      console.error("Create crypto address error:", error);
+      res.status(500).json({ error: "Failed to create crypto address" });
+    }
+  });
+
+  app.delete("/api/crypto-addresses/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteCryptoAddress(id);
+      if (!success) {
+        return res.status(404).json({ error: "Address not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete crypto address" });
+    }
+  });
+
   // ==================== ALL CONNECTED WALLETS (ADMIN) ====================
   app.get("/api/admin/connected-wallets", requireAdmin, async (req, res) => {
     try {
@@ -542,11 +602,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/withdrawals", async (req, res) => {
     try {
-      const { userId, amount, currency, method, destinationAddress, walletId } = req.body;
+      const { userId, amount, currency, method, destinationAddress, walletId, gatewayId, cryptoAddressId } = req.body;
 
-      // Check balance
+      const withdrawAmount = parseFloat(amount);
+      let charges = 0;
+      let amountAfterCharges = withdrawAmount;
+
+      // If gatewayId is provided, validate against gateway settings and calculate fees
+      if (gatewayId) {
+        const gateway = await storage.getWithdrawalGateway(gatewayId);
+        if (!gateway) {
+          return res.status(400).json({ error: "Invalid withdrawal gateway" });
+        }
+        if (gateway.status !== 'enabled') {
+          return res.status(400).json({ error: "This withdrawal method is currently disabled" });
+        }
+        
+        const minAmount = parseFloat(gateway.minAmount);
+        const maxAmount = parseFloat(gateway.maxAmount);
+        
+        if (withdrawAmount < minAmount) {
+          return res.status(400).json({ error: `Minimum withdrawal amount is $${minAmount}` });
+        }
+        if (withdrawAmount > maxAmount) {
+          return res.status(400).json({ error: `Maximum withdrawal amount is $${maxAmount}` });
+        }
+
+        // Calculate charges
+        const chargeRate = parseFloat(gateway.charges);
+        if (gateway.chargesType === 'percentage') {
+          charges = (withdrawAmount * chargeRate) / 100;
+        } else {
+          charges = chargeRate;
+        }
+        amountAfterCharges = withdrawAmount - charges;
+      }
+
+      // Check balance (must cover full amount including charges deducted from user)
       const balance = await storage.getUserBalance(userId);
-      if (!balance || parseFloat(balance.availableBalanceUsd) < parseFloat(amount)) {
+      if (!balance || parseFloat(balance.availableBalanceUsd) < withdrawAmount) {
         return res.status(400).json({ error: "Insufficient balance" });
       }
 
@@ -554,17 +648,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transaction = await storage.createTransaction({
         userId,
         type: 'withdrawal',
-        amount,
+        amount: amount.toString(),
         currency,
         status: 'pending',
-        description: `Withdrawal ${amount} ${currency}`
+        description: `Withdrawal ${amount} ${currency} (Fee: $${charges.toFixed(2)})`
       });
 
       // Create withdrawal
       const withdrawal = await storage.createWithdrawal({
         transactionId: transaction.id,
         userId,
-        amount,
+        gatewayId: gatewayId || null,
+        cryptoAddressId: cryptoAddressId || null,
+        amount: amount.toString(),
+        amountAfterCharges: amountAfterCharges.toString(),
+        charges: charges.toString(),
         currency,
         method: method as any,
         destinationAddress,

@@ -162,7 +162,9 @@ export interface IStorage {
   
   // Crypto Addresses
   createCryptoAddress(address: InsertCryptoAddress): Promise<CryptoAddress>;
+  getCryptoAddress(id: number): Promise<CryptoAddress | undefined>;
   listUserCryptoAddresses(userId: number): Promise<CryptoAddress[]>;
+  listUserCryptoAddressesByGateway(userId: number, gatewayId: number): Promise<CryptoAddress[]>;
   deleteCryptoAddress(id: number): Promise<boolean>;
   
   // Portfolio
@@ -556,10 +558,25 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
+  async getCryptoAddress(id: number): Promise<CryptoAddress | undefined> {
+    const [address] = await db.select().from(cryptoAddresses).where(eq(cryptoAddresses.id, id));
+    return address || undefined;
+  }
+
   async listUserCryptoAddresses(userId: number): Promise<CryptoAddress[]> {
     return await db.select().from(cryptoAddresses).where(
       and(
         eq(cryptoAddresses.userId, userId),
+        eq(cryptoAddresses.isDeleted, false)
+      )
+    );
+  }
+
+  async listUserCryptoAddressesByGateway(userId: number, gatewayId: number): Promise<CryptoAddress[]> {
+    return await db.select().from(cryptoAddresses).where(
+      and(
+        eq(cryptoAddresses.userId, userId),
+        eq(cryptoAddresses.gatewayId, gatewayId),
         eq(cryptoAddresses.isDeleted, false)
       )
     );

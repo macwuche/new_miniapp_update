@@ -128,7 +128,11 @@ export const withdrawals = pgTable("withdrawals", {
   id: serial("id").primaryKey(),
   transactionId: integer("transaction_id").references(() => transactions.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  gatewayId: integer("gateway_id").references(() => withdrawalGateways.id),
+  cryptoAddressId: integer("crypto_address_id").references(() => cryptoAddresses.id),
   amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  amountAfterCharges: decimal("amount_after_charges", { precision: 18, scale: 8 }),
+  charges: decimal("charges", { precision: 18, scale: 8 }),
   currency: varchar("currency", { length: 20 }).notNull(),
   method: withdrawalMethodEnum("method").notNull(),
   destinationAddress: text("destination_address"),
@@ -220,13 +224,15 @@ export const connectedWallets = pgTable("connected_wallets", {
   isDeleted: boolean("is_deleted").default(false).notNull(),
 });
 
-// Crypto Addresses table
+// Crypto Addresses table (user-saved withdrawal addresses linked to gateways)
 export const cryptoAddresses = pgTable("crypto_addresses", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  gatewayId: integer("gateway_id").references(() => withdrawalGateways.id),
   label: varchar("label", { length: 100 }).notNull(),
   address: text("address").notNull(),
   network: varchar("network", { length: 50 }).notNull(),
+  currency: varchar("currency", { length: 20 }),
   isDeleted: boolean("is_deleted").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
