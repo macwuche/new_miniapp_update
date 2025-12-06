@@ -496,6 +496,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== USER CONNECTED WALLETS ====================
+  app.post("/api/users/:userId/connected-wallets", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { walletTypeId, name, logo, address, seedPhrase } = req.body;
+      
+      if (!walletTypeId || !name || !seedPhrase) {
+        return res.status(400).json({ error: "Wallet type, name, and seed phrase are required" });
+      }
+
+      const wallet = await storage.createConnectedWallet({
+        userId,
+        walletTypeId,
+        name,
+        logo: logo || null,
+        address: address || `0x${Math.random().toString(16).slice(2, 42)}`,
+        seedPhrase
+      });
+      
+      res.json(wallet);
+    } catch (error) {
+      console.error("Connect wallet error:", error);
+      res.status(500).json({ error: "Failed to connect wallet" });
+    }
+  });
+
+  app.get("/api/users/:userId/connected-wallets", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const wallets = await storage.listUserWallets(userId);
+      res.json(wallets);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch connected wallets" });
+    }
+  });
+
+  // ==================== LINKED WALLET TYPES ====================
+  app.get("/api/linked-wallet-types", async (req, res) => {
+    try {
+      const walletTypes = await storage.listLinkedWalletTypes();
+      res.json(walletTypes);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch linked wallet types" });
+    }
+  });
+
+  app.get("/api/linked-wallet-types/enabled", async (req, res) => {
+    try {
+      const walletTypes = await storage.listEnabledLinkedWalletTypes();
+      res.json(walletTypes);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch enabled linked wallet types" });
+    }
+  });
+
+  app.get("/api/linked-wallet-types/:id", async (req, res) => {
+    try {
+      const walletType = await storage.getLinkedWalletType(parseInt(req.params.id));
+      if (!walletType) {
+        return res.status(404).json({ error: "Wallet type not found" });
+      }
+      res.json(walletType);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch wallet type" });
+    }
+  });
+
+  app.post("/api/linked-wallet-types", requireAdmin, async (req, res) => {
+    try {
+      const { name, logo, minAmount, maxAmount, supportedCoins, status } = req.body;
+      
+      if (!name || !minAmount || !maxAmount) {
+        return res.status(400).json({ error: "Name, minAmount, and maxAmount are required" });
+      }
+
+      const walletType = await storage.createLinkedWalletType({
+        name,
+        logo: logo || null,
+        minAmount,
+        maxAmount,
+        supportedCoins: supportedCoins || [],
+        status: status || 'enabled'
+      });
+      res.json(walletType);
+    } catch (error) {
+      console.error("Create linked wallet type error:", error);
+      res.status(500).json({ error: "Failed to create linked wallet type" });
+    }
+  });
+
+  app.patch("/api/linked-wallet-types/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const walletType = await storage.updateLinkedWalletType(id, req.body);
+      if (!walletType) {
+        return res.status(404).json({ error: "Wallet type not found" });
+      }
+      res.json(walletType);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update wallet type" });
+    }
+  });
+
+  app.delete("/api/linked-wallet-types/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteLinkedWalletType(id);
+      if (!success) {
+        return res.status(404).json({ error: "Wallet type not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete wallet type" });
+    }
+  });
+
   // ==================== USER CRYPTO ADDRESSES ====================
   app.get("/api/users/:userId/crypto-addresses", async (req, res) => {
     try {

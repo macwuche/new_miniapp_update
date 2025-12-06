@@ -212,10 +212,24 @@ export const userBots = pgTable("user_bots", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Connected Wallets table
+// Linked Wallet Types table (admin-defined wallet options like Trust Wallet, MetaMask, etc.)
+export const linkedWalletTypes = pgTable("linked_wallet_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  logo: text("logo"),
+  minAmount: decimal("min_amount", { precision: 18, scale: 8 }).notNull(),
+  maxAmount: decimal("max_amount", { precision: 18, scale: 8 }).notNull(),
+  supportedCoins: text("supported_coins").array().default([]).notNull(),
+  status: gatewayStatusEnum("status").default('enabled').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Connected Wallets table (user's connected wallet beneficiaries)
 export const connectedWallets = pgTable("connected_wallets", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  walletTypeId: integer("wallet_type_id").references(() => linkedWalletTypes.id),
   name: varchar("name", { length: 100 }).notNull(),
   logo: text("logo"),
   address: text("address").notNull(),
@@ -441,6 +455,7 @@ export const insertInvestmentPlanSchema = createInsertSchema(investmentPlans).om
 export const insertUserInvestmentSchema = createInsertSchema(userInvestments).omit({ id: true, createdAt: true });
 export const insertAiBotSchema = createInsertSchema(aiBots).omit({ id: true, createdAt: true });
 export const insertUserBotSchema = createInsertSchema(userBots).omit({ id: true, createdAt: true });
+export const insertLinkedWalletTypeSchema = createInsertSchema(linkedWalletTypes).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertConnectedWalletSchema = createInsertSchema(connectedWallets).omit({ id: true, connectedAt: true });
 export const insertCryptoAddressSchema = createInsertSchema(cryptoAddresses).omit({ id: true, createdAt: true });
 export const insertPortfolioSchema = createInsertSchema(portfolios).omit({ id: true, updatedAt: true });
@@ -479,6 +494,8 @@ export type InsertAiBot = z.infer<typeof insertAiBotSchema>;
 export type AiBot = typeof aiBots.$inferSelect;
 export type InsertUserBot = z.infer<typeof insertUserBotSchema>;
 export type UserBot = typeof userBots.$inferSelect;
+export type InsertLinkedWalletType = z.infer<typeof insertLinkedWalletTypeSchema>;
+export type LinkedWalletType = typeof linkedWalletTypes.$inferSelect;
 export type InsertConnectedWallet = z.infer<typeof insertConnectedWalletSchema>;
 export type ConnectedWallet = typeof connectedWallets.$inferSelect;
 export type InsertCryptoAddress = z.infer<typeof insertCryptoAddressSchema>;

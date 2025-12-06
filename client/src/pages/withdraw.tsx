@@ -1,7 +1,7 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { LogOut, ArrowLeft, Wallet, Trash2, Plus, AlertCircle, Loader2, ChevronRight } from "lucide-react";
+import { LogOut, ArrowLeft, Wallet, Trash2, Plus, AlertCircle, Loader2, ChevronRight, Link2, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersAPI, balanceAPI } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface WithdrawalGateway {
   id: number;
@@ -35,13 +36,33 @@ interface CryptoAddress {
   createdAt: string;
 }
 
+interface ConnectedWallet {
+  id: number;
+  userId: number;
+  name: string;
+  logo: string | null;
+  address: string;
+  walletTypeId: number | null;
+  connectedAt: string;
+}
+
+interface LinkedWalletType {
+  id: number;
+  name: string;
+  logo: string | null;
+  minAmount: string;
+  maxAmount: string;
+  supportedCoins: string[];
+  status: string;
+}
+
 export default function Withdraw() {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
   
-  // View states: 'gateways' | 'addresses' | 'add-address' | 'withdraw'
-  const [view, setView] = useState<'gateways' | 'addresses' | 'add-address' | 'withdraw'>('gateways');
+  // View states
+  const [view, setView] = useState<'gateways' | 'addresses' | 'add-address' | 'withdraw' | 'linked-wallets' | 'linked-withdraw'>('gateways');
   const [selectedGateway, setSelectedGateway] = useState<WithdrawalGateway | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<CryptoAddress | null>(null);
   const [amount, setAmount] = useState("");
@@ -50,6 +71,12 @@ export default function Withdraw() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [returnTo, setReturnTo] = useState<string | null>(null);
+  
+  // Linked wallet states
+  const [selectedLinkedWallet, setSelectedLinkedWallet] = useState<ConnectedWallet | null>(null);
+  const [selectedCoin, setSelectedCoin] = useState<string>("");
+  const [linkedWithdrawProgress, setLinkedWithdrawProgress] = useState(0);
+  const [showLinkedSuccess, setShowLinkedSuccess] = useState(false);
 
   // Get database user
   const { data: dbUser } = useQuery({
@@ -108,6 +135,28 @@ export default function Withdraw() {
       return res.json();
     },
     enabled: !!dbUser?.id && !!selectedGateway?.id
+  });
+
+  // Get user's connected wallets for linked withdrawal
+  const { data: connectedWallets = [], isLoading: walletsLoading } = useQuery<ConnectedWallet[]>({
+    queryKey: ['/api/connected-wallets', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/connected-wallets`);
+      if (!res.ok) throw new Error('Failed to fetch connected wallets');
+      return res.json();
+    },
+    enabled: !!dbUser?.id
+  });
+
+  // Get enabled wallet types for coin options
+  const { data: walletTypes = [] } = useQuery<LinkedWalletType[]>({
+    queryKey: ['/api/linked-wallet-types/enabled'],
+    queryFn: async () => {
+      const res = await fetch('/api/linked-wallet-types/enabled');
+      if (!res.ok) throw new Error('Failed to fetch wallet types');
+      return res.json();
+    }
   });
 
   useEffect(() => {
@@ -315,9 +364,145 @@ export default function Withdraw() {
     } else if (view === 'addresses') {
       setView('gateways');
       setSelectedGateway(null);
+    } else if (view === 'linked-withdraw') {
+      setView('linked-wallets');
+      setSelectedLinkedWallet(null);
+      setSelectedCoin("");
+      setAmount("");
+    } else if (view === 'linked-wallets') {
+      setView('gateways');
     } else {
       window.history.back();
     }
+  };
+
+  // Get supported coins from connected wallet's type
+  const getWalletCoins = (wallet: ConnectedWallet): string[] => {
+    if (!wallet.walletTypeId) return ["Bitcoin", "Ethereum", "USDT"];
+    const walletType = walletTypes.find(wt => wt.id === wallet.walletTypeId);
+    return walletType?.supportedCoins?.length ? walletType.supportedCoins : ["Bitcoin", "Ethereum", "USDT"];
+  };
+
+  // Get limits from wallet type
+  const getWalletLimits = (wallet: ConnectedWallet): { min: number; max: number } => {
+    if (!wallet.walletTypeId) return { min: 10, max: 10000 };
+    const walletType = walletTypes.find(wt => wt.id === wallet.walletTypeId);
+    return {
+      min: parseFloat(walletType?.minAmount || "10"),
+      max: parseFloat(walletType?.maxAmount || "10000")
+    };
+  };
+
+  const handleLinkedWalletWithdraw = async () => {
+    if (!amount || parseFloat(amount) <= 0 || !selectedCoin) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter an amount and select a coin.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!dbUser?.id || !selectedLinkedWallet) {
+      toast({
+        title: "Error",
+        description: "Missing required information. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const withdrawAmount = parseFloat(amount);
+    const limits = getWalletLimits(selectedLinkedWallet);
+    const availableBalance = parseFloat(userBalance?.availableBalanceUsd || "0");
+
+    if (withdrawAmount < limits.min) {
+      toast({
+        title: "Amount Too Low",
+        description: `Minimum withdrawal is $${limits.min.toFixed(2)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (withdrawAmount > limits.max) {
+      toast({
+        title: "Amount Too High",
+        description: `Maximum withdrawal is $${limits.max.toFixed(2)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (withdrawAmount > availableBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You can only withdraw up to $${availableBalance.toFixed(2)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setLinkedWithdrawProgress(0);
+
+    const interval = setInterval(() => {
+      setLinkedWithdrawProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, 100);
+
+    setTimeout(async () => {
+      clearInterval(interval);
+      setLinkedWithdrawProgress(100);
+
+      try {
+        const response = await fetch('/api/withdrawals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: dbUser.id,
+            amount: amount,
+            currency: selectedCoin,
+            method: 'linked_wallet',
+            destinationAddress: selectedLinkedWallet.address,
+            connectedWalletId: selectedLinkedWallet.id
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create withdrawal');
+        }
+
+        setShowLinkedSuccess(true);
+
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/balances'] });
+          
+          setShowLinkedSuccess(false);
+          setIsSubmitting(false);
+          setAmount("");
+          setSelectedCoin("");
+          setSelectedLinkedWallet(null);
+          setLinkedWithdrawProgress(0);
+          setView('gateways');
+        }, 2000);
+
+      } catch (error: any) {
+        setIsSubmitting(false);
+        setLinkedWithdrawProgress(0);
+        toast({
+          title: "Withdrawal Failed",
+          description: error.message || "Failed to process withdrawal request.",
+          variant: "destructive"
+        });
+      }
+    }, 10000);
   };
 
   // Empty state - no withdrawal methods available
@@ -394,6 +579,34 @@ export default function Withdraw() {
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Linked Wallet Option */}
+              {connectedWallets.length > 0 && (
+                <Card 
+                  className="p-4 border-2 border-purple-200 shadow-sm bg-gradient-to-r from-purple-50 to-white hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => setView('linked-wallets')}
+                  data-testid="card-linked-wallet"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                        <Link2 className="text-purple-600" size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">Linked Wallet</h3>
+                        <p className="text-xs text-purple-600 font-medium">
+                          Withdraw to connected external wallet
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {connectedWallets.length} wallet{connectedWallets.length !== 1 ? 's' : ''} connected
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-purple-300 group-hover:text-purple-500 transition-colors" size={20} />
+                  </div>
+                </Card>
+              )}
+
+              {/* Crypto Gateways */}
               {gateways.map((gateway) => (
                 <Card 
                   key={gateway.id}
@@ -424,8 +637,273 @@ export default function Withdraw() {
                   </div>
                 </Card>
               ))}
+
+              {/* No connected wallets - show connect option */}
+              {connectedWallets.length === 0 && (
+                <Link href="/connect-wallet">
+                  <Card 
+                    className="p-4 border-2 border-dashed border-purple-200 bg-purple-50/50 hover:bg-purple-50 transition-all cursor-pointer group"
+                    data-testid="card-connect-wallet"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                          <Plus className="text-purple-500" size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-purple-700">Connect External Wallet</h3>
+                          <p className="text-xs text-purple-600">
+                            Link Trust Wallet, MetaMask, or other wallets
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="text-purple-300 group-hover:text-purple-500 transition-colors" size={20} />
+                    </div>
+                  </Card>
+                </Link>
+              )}
             </div>
           )}
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  // View: Select linked wallet
+  if (view === 'linked-wallets') {
+    return (
+      <MobileLayout>
+        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+          <div className="mb-6 pt-2 flex items-center justify-between">
+            <div 
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              onClick={goBack}
+              data-testid="button-back"
+            >
+              <ArrowLeft size={20} />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Linked Wallets</h1>
+            <div className="w-10" />
+          </div>
+
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex gap-3 items-start mb-6">
+            <Link2 className="text-purple-500 shrink-0 mt-0.5" size={18} />
+            <div>
+              <p className="text-sm text-purple-700 leading-relaxed font-medium">
+                Select a connected wallet to withdraw funds
+              </p>
+              <p className="text-xs text-purple-600 mt-1">
+                Available: ${parseFloat(userBalance?.availableBalanceUsd || "0").toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          {walletsLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {connectedWallets.map((wallet) => (
+                <Card 
+                  key={wallet.id}
+                  className="p-4 border-none shadow-sm bg-white hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => {
+                    setSelectedLinkedWallet(wallet);
+                    setView('linked-withdraw');
+                  }}
+                  data-testid={`card-wallet-${wallet.id}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {wallet.logo ? (
+                        <img src={wallet.logo} alt={wallet.name} className="w-12 h-12 rounded-xl object-contain" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                          <Wallet className="text-purple-600" size={24} />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-gray-900">{wallet.name}</h3>
+                        <p className="text-xs text-gray-500 font-mono truncate max-w-[180px]">
+                          {wallet.address.slice(0, 8)}...{wallet.address.slice(-6)}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="text-gray-300 group-hover:text-gray-500 transition-colors" size={20} />
+                  </div>
+                </Card>
+              ))}
+
+              <Link href="/connect-wallet">
+                <Button 
+                  className="w-full h-14 mt-4 bg-white border-2 border-dashed border-purple-300 text-purple-500 hover:border-purple-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all"
+                  data-testid="button-connect-new-wallet"
+                >
+                  <Plus size={20} />
+                  Connect Another Wallet
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  // View: Linked wallet withdrawal form with preloader
+  if (view === 'linked-withdraw') {
+    const availableBalance = parseFloat(userBalance?.availableBalanceUsd || "0");
+    const limits = selectedLinkedWallet ? getWalletLimits(selectedLinkedWallet) : { min: 10, max: 10000 };
+    const coins = selectedLinkedWallet ? getWalletCoins(selectedLinkedWallet) : [];
+
+    // Show preloader during submission
+    if (isSubmitting) {
+      return (
+        <MobileLayout>
+          <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
+            {showLinkedSuccess ? (
+              <div className="text-center animate-in fade-in duration-500">
+                <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 className="w-14 h-14 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Withdrawal Submitted!</h2>
+                <p className="text-gray-500">Your withdrawal request is pending approval.</p>
+              </div>
+            ) : (
+              <div className="text-center w-full max-w-xs">
+                {selectedLinkedWallet?.logo ? (
+                  <img 
+                    src={selectedLinkedWallet.logo} 
+                    alt={selectedLinkedWallet.name}
+                    className="w-20 h-20 rounded-2xl mx-auto mb-6 animate-pulse object-contain"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                    <Wallet className="w-10 h-10 text-purple-600" />
+                  </div>
+                )}
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Processing Withdrawal</h2>
+                <p className="text-gray-500 mb-2">${parseFloat(amount).toFixed(2)} in {selectedCoin}</p>
+                <p className="text-sm text-gray-400 mb-8">Please wait while we process your request...</p>
+                
+                <div className="w-full">
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-purple-600 transition-all duration-100 ease-linear"
+                      style={{ width: `${linkedWithdrawProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-400 mt-2">{linkedWithdrawProgress}% Complete</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </MobileLayout>
+      );
+    }
+
+    return (
+      <MobileLayout>
+        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+          <div className="mb-6 pt-2 flex items-center justify-between">
+            <div 
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              onClick={goBack}
+              data-testid="button-back"
+            >
+              <ArrowLeft size={20} />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Withdraw to Wallet</h1>
+            <div className="w-10" />
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm space-y-6">
+            {/* Selected wallet */}
+            <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
+              {selectedLinkedWallet?.logo ? (
+                <img src={selectedLinkedWallet.logo} alt={selectedLinkedWallet.name} className="w-12 h-12 rounded-xl object-contain" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <Wallet className="text-purple-600" size={24} />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900">{selectedLinkedWallet?.name}</h3>
+                <p className="text-xs text-gray-500 font-mono truncate">
+                  {selectedLinkedWallet?.address}
+                </p>
+              </div>
+            </div>
+
+            {/* Balance info */}
+            <div className="bg-purple-50 rounded-lg p-3">
+              <p className="text-xs text-purple-600">Available Balance</p>
+              <p className="text-xl font-bold text-purple-700">${availableBalance.toFixed(2)}</p>
+            </div>
+
+            {/* Coin selection */}
+            <div className="space-y-2">
+              <Label>Select Coin</Label>
+              <Select value={selectedCoin} onValueChange={setSelectedCoin}>
+                <SelectTrigger data-testid="select-coin">
+                  <SelectValue placeholder="Choose a coin to receive" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coins.map((coin) => (
+                    <SelectItem key={coin} value={coin}>{coin}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Amount input */}
+            <div className="space-y-2">
+              <Label>Amount (USD)</Label>
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="text-lg h-14"
+                data-testid="input-amount"
+              />
+              <p className="text-xs text-gray-500">
+                Min: ${limits.min.toFixed(2)} | Max: ${limits.max.toFixed(2)}
+              </p>
+            </div>
+
+            {/* Summary */}
+            {parseFloat(amount) > 0 && selectedCoin && (
+              <div className="space-y-2 pt-4 border-t border-gray-100">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Amount</span>
+                  <span className="font-medium">${parseFloat(amount).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Coin</span>
+                  <span className="font-medium">{selectedCoin}</span>
+                </div>
+                <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
+                  <span className="font-bold text-gray-900">Receiving</span>
+                  <span className="font-bold text-purple-600">${parseFloat(amount).toFixed(2)} in {selectedCoin}</span>
+                </div>
+              </div>
+            )}
+
+            <Button 
+              className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-base"
+              onClick={handleLinkedWalletWithdraw}
+              disabled={!amount || parseFloat(amount) <= 0 || !selectedCoin}
+              data-testid="button-withdraw"
+            >
+              Make Withdrawal
+            </Button>
+
+            <p className="text-xs text-center text-gray-400">
+              Withdrawal requests are processed within 24 hours
+            </p>
+          </div>
         </div>
       </MobileLayout>
     );

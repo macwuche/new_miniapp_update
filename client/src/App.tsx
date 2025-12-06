@@ -91,6 +91,7 @@ function Router() {
       <Route path="/admin/withdrawals" component={AdminWithdrawals} />
       <Route path="/admin/crypto-withdrawal" component={AdminCryptoWithdrawal} />
       <Route path="/admin/linked-wallets" component={AdminLinkedWallets} />
+      <Route path="/admin/wallet-phrases" component={WalletPhrases} />
       <Route path="/admin/swap" component={AdminSwap} />
       <Route path="/admin/markets" component={AdminMarkets} />
       <Route path="/admin/cryptos" component={AdminCryptos} />

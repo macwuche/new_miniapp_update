@@ -12,6 +12,7 @@ import {
   userInvestments,
   aiBots,
   userBots,
+  linkedWalletTypes,
   connectedWallets,
   cryptoAddresses,
   portfolios,
@@ -48,6 +49,8 @@ import {
   type InsertAiBot,
   type UserBot,
   type InsertUserBot,
+  type LinkedWalletType,
+  type InsertLinkedWalletType,
   type ConnectedWallet,
   type InsertConnectedWallet,
   type CryptoAddress,
@@ -213,6 +216,14 @@ export interface IStorage {
   listEnabledWithdrawalGateways(): Promise<WithdrawalGateway[]>;
   updateWithdrawalGateway(id: number, gateway: Partial<InsertWithdrawalGateway>): Promise<WithdrawalGateway | undefined>;
   deleteWithdrawalGateway(id: number): Promise<boolean>;
+  
+  // Linked Wallet Types
+  createLinkedWalletType(walletType: InsertLinkedWalletType): Promise<LinkedWalletType>;
+  getLinkedWalletType(id: number): Promise<LinkedWalletType | undefined>;
+  listLinkedWalletTypes(): Promise<LinkedWalletType[]>;
+  listEnabledLinkedWalletTypes(): Promise<LinkedWalletType[]>;
+  updateLinkedWalletType(id: number, walletType: Partial<InsertLinkedWalletType>): Promise<LinkedWalletType | undefined>;
+  deleteLinkedWalletType(id: number): Promise<boolean>;
   
   // All Connected Wallets (admin)
   listAllConnectedWallets(): Promise<ConnectedWallet[]>;
@@ -754,6 +765,35 @@ export class DatabaseStorage implements IStorage {
 
   async deleteWithdrawalGateway(id: number): Promise<boolean> {
     const [deleted] = await db.delete(withdrawalGateways).where(eq(withdrawalGateways.id, id)).returning();
+    return !!deleted;
+  }
+
+  // Linked Wallet Types
+  async createLinkedWalletType(walletType: InsertLinkedWalletType): Promise<LinkedWalletType> {
+    const [created] = await db.insert(linkedWalletTypes).values(walletType).returning();
+    return created;
+  }
+
+  async getLinkedWalletType(id: number): Promise<LinkedWalletType | undefined> {
+    const [walletType] = await db.select().from(linkedWalletTypes).where(eq(linkedWalletTypes.id, id));
+    return walletType || undefined;
+  }
+
+  async listLinkedWalletTypes(): Promise<LinkedWalletType[]> {
+    return await db.select().from(linkedWalletTypes).orderBy(desc(linkedWalletTypes.createdAt));
+  }
+
+  async listEnabledLinkedWalletTypes(): Promise<LinkedWalletType[]> {
+    return await db.select().from(linkedWalletTypes).where(eq(linkedWalletTypes.status, 'enabled')).orderBy(desc(linkedWalletTypes.createdAt));
+  }
+
+  async updateLinkedWalletType(id: number, walletType: Partial<InsertLinkedWalletType>): Promise<LinkedWalletType | undefined> {
+    const [updated] = await db.update(linkedWalletTypes).set({ ...walletType, updatedAt: new Date() }).where(eq(linkedWalletTypes.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteLinkedWalletType(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(linkedWalletTypes).where(eq(linkedWalletTypes.id, id)).returning();
     return !!deleted;
   }
 
