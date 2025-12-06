@@ -10,7 +10,8 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Loader2, Wallet, Link2 } from "lucide-react";
+import { Link } from "wouter";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -286,9 +287,32 @@ export default function AdminWithdrawals() {
 
   return (
     <AdminLayout>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Withdrawal Management</h1>
-        <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Review and process user withdrawal requests</p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Withdrawal Management</h1>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Review and process user withdrawal requests</p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link href="/admin/crypto-withdrawal">
+            <Button 
+              style={{ backgroundColor: '#6f42c1', color: 'white' }}
+              data-testid="button-crypto-withdrawal"
+            >
+              <Wallet size={16} style={{ marginRight: '8px' }} />
+              Crypto Withdrawal
+            </Button>
+          </Link>
+          <Link href="/admin/linked-wallets">
+            <Button 
+              variant="outline"
+              style={{ borderColor: '#6f42c1', color: '#6f42c1' }}
+              data-testid="button-linked-wallets"
+            >
+              <Link2 size={16} style={{ marginRight: '8px' }} />
+              Linked Wallets
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
