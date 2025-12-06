@@ -1,15 +1,6 @@
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -18,363 +9,391 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
-import { Plus, Upload } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Mock data for withdrawals
-const MOCK_WITHDRAWALS = [
-  {
-    id: 1,
-    name: "Bank Transfer",
-    initiatedAt: "2024-11-10 01:27 PM",
-    limit: "$100 - $1000000",
-    charge: "1%",
-    currency: "$1 = 1 USD",
-    status: "Active",
-    
-    // Additional fields for edit form
-    minAmount: "100",
-    maxAmount: "1000000",
-    charges: "1",
-    chargesType: "percentage",
-    type: "bank",
-    imageUrl: "",
-    walletAddress: "",
-    networkType: "",
-    typeFor: "withdrawal",
-    note: "Processing time: 1-3 business days"
-  },
-  {
-    id: 2,
-    name: "USDT (TRC20)",
-    initiatedAt: "2024-11-10 02:46 PM",
-    limit: "$50 - $1000000",
-    charge: "1 USDT",
-    currency: "$1 = 1 ₮",
-    status: "Active",
-
-    minAmount: "50",
-    maxAmount: "1000000",
-    charges: "1",
-    chargesType: "fixed",
-    type: "crypto",
-    imageUrl: "",
-    walletAddress: "",
-    networkType: "TRC20",
-    typeFor: "withdrawal",
-    note: "Instant withdrawal"
-  },
-  {
-    id: 3,
-    name: "Bitcoin",
-    initiatedAt: "2024-11-12 05:54 AM",
-    limit: "$100 - $1000000",
-    charge: "0.0005 BTC",
-    currency: "$1 = 0.000015 ₿",
-    status: "Active",
-
-    minAmount: "100",
-    maxAmount: "1000000",
-    charges: "0.0005",
-    chargesType: "fixed",
-    type: "crypto",
-    imageUrl: "",
-    walletAddress: "",
-    networkType: "BTC",
-    typeFor: "withdrawal",
-    note: "Network confirmation required"
-  }
-];
+interface Withdrawal {
+  id: number;
+  transactionId: number;
+  userId: number;
+  amount: string;
+  currency: string;
+  method: string;
+  destinationAddress: string | null;
+  status: string;
+  approvedBy: number | null;
+  approvedAt: string | null;
+  createdAt: string;
+  user?: {
+    id: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+  };
+}
 
 export default function AdminWithdrawals() {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingGateway, setEditingGateway] = useState<any>(null);
+  const queryClient = useQueryClient();
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
-  const handleOpen = (gateway: any = null) => {
-    setEditingGateway(gateway);
-    setOpen(true);
+  const { data: pendingWithdrawals = [], isLoading: pendingLoading } = useQuery<Withdrawal[]>({
+    queryKey: ['/api/withdrawals', 'pending'],
+    queryFn: async () => {
+      const res = await fetch('/api/withdrawals?status=pending');
+      if (!res.ok) throw new Error('Failed to fetch withdrawals');
+      const withdrawals = await res.json();
+      const withdrawalsWithUsers = await Promise.all(
+        withdrawals.map(async (w: Withdrawal) => {
+          try {
+            const userRes = await fetch(`/api/users/${w.userId}`);
+            if (userRes.ok) {
+              const user = await userRes.json();
+              return { ...w, user };
+            }
+          } catch (e) {}
+          return w;
+        })
+      );
+      return withdrawalsWithUsers;
+    }
+  });
+
+  const { data: approvedWithdrawals = [], isLoading: approvedLoading } = useQuery<Withdrawal[]>({
+    queryKey: ['/api/withdrawals', 'approved'],
+    queryFn: async () => {
+      const res = await fetch('/api/withdrawals?status=approved');
+      if (!res.ok) throw new Error('Failed to fetch withdrawals');
+      const withdrawals = await res.json();
+      const withdrawalsWithUsers = await Promise.all(
+        withdrawals.map(async (w: Withdrawal) => {
+          try {
+            const userRes = await fetch(`/api/users/${w.userId}`);
+            if (userRes.ok) {
+              const user = await userRes.json();
+              return { ...w, user };
+            }
+          } catch (e) {}
+          return w;
+        })
+      );
+      return withdrawalsWithUsers;
+    }
+  });
+
+  const { data: rejectedWithdrawals = [], isLoading: rejectedLoading } = useQuery<Withdrawal[]>({
+    queryKey: ['/api/withdrawals', 'rejected'],
+    queryFn: async () => {
+      const res = await fetch('/api/withdrawals?status=rejected');
+      if (!res.ok) throw new Error('Failed to fetch withdrawals');
+      const withdrawals = await res.json();
+      const withdrawalsWithUsers = await Promise.all(
+        withdrawals.map(async (w: Withdrawal) => {
+          try {
+            const userRes = await fetch(`/api/users/${w.userId}`);
+            if (userRes.ok) {
+              const user = await userRes.json();
+              return { ...w, user };
+            }
+          } catch (e) {}
+          return w;
+        })
+      );
+      return withdrawalsWithUsers;
+    }
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: number) => {
+      setProcessingId(id);
+      const res = await fetch(`/api/withdrawals/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to approve withdrawal');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/withdrawals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      toast({ title: "Withdrawal Approved", description: "The withdrawal has been approved and user balance updated." });
+      setProcessingId(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setProcessingId(null);
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: number) => {
+      setProcessingId(id);
+      const res = await fetch(`/api/withdrawals/${id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Rejected by admin' })
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to reject withdrawal');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/withdrawals'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      toast({ title: "Withdrawal Rejected", description: "The withdrawal request has been rejected." });
+      setProcessingId(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setProcessingId(null);
+    }
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: editingGateway ? "Method Updated" : "Method Added",
-      description: editingGateway 
-        ? "Withdrawal method has been successfully updated." 
-        : "New withdrawal method has been successfully added.",
-    });
-    
-    setIsSubmitting(false);
-    setOpen(false);
-    setEditingGateway(null);
+  const totalPending = pendingWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+  const totalApproved = approvedWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+  const totalRejected = rejectedWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+
+  const renderWithdrawalsTable = (withdrawals: Withdrawal[], showActions: boolean) => {
+    if (withdrawals.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '48px 24px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px dashed #e5e7eb' }}>
+          <p style={{ color: '#6b7280', fontSize: '14px' }}>No withdrawals found</p>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ overflowX: 'auto' }}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Destination</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
+              {showActions && <TableHead>Actions</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {withdrawals.map((withdrawal) => (
+              <TableRow key={withdrawal.id}>
+                <TableCell style={{ fontFamily: 'monospace', fontSize: '12px' }}>#{withdrawal.id}</TableCell>
+                <TableCell>
+                  <div>
+                    <p style={{ fontWeight: 500, fontSize: '14px' }}>
+                      {withdrawal.user?.firstName || 'User'} {withdrawal.user?.lastName || ''}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                      @{withdrawal.user?.username || `user_${withdrawal.userId}`}
+                    </p>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span style={{ fontWeight: 700, color: '#dc2626' }}>
+                    -${parseFloat(withdrawal.amount).toFixed(2)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6b7280' }}>
+                    {withdrawal.destinationAddress 
+                      ? `${withdrawal.destinationAddress.slice(0, 12)}...${withdrawal.destinationAddress.slice(-6)}`
+                      : 'N/A'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                    {withdrawal.method || 'crypto'}
+                  </Badge>
+                </TableCell>
+                <TableCell style={{ fontSize: '12px', color: '#6b7280' }}>
+                  {formatDate(withdrawal.createdAt)}
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    style={{
+                      backgroundColor: withdrawal.status === 'approved' ? '#dcfce7' : 
+                                       withdrawal.status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                      color: withdrawal.status === 'approved' ? '#166534' : 
+                             withdrawal.status === 'rejected' ? '#991b1b' : '#92400e',
+                      border: 'none'
+                    }}
+                  >
+                    {withdrawal.status}
+                  </Badge>
+                </TableCell>
+                {showActions && (
+                  <TableCell>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button
+                        size="sm"
+                        onClick={() => approveMutation.mutate(withdrawal.id)}
+                        disabled={processingId === withdrawal.id}
+                        style={{ backgroundColor: '#22c55e', color: 'white', fontSize: '12px', padding: '4px 12px' }}
+                        data-testid={`button-approve-withdrawal-${withdrawal.id}`}
+                      >
+                        {processingId === withdrawal.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle2 size={14} style={{ marginRight: '4px' }} />
+                            Approve
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => rejectMutation.mutate(withdrawal.id)}
+                        disabled={processingId === withdrawal.id}
+                        style={{ borderColor: '#ef4444', color: '#ef4444', fontSize: '12px', padding: '4px 12px' }}
+                        data-testid={`button-reject-withdrawal-${withdrawal.id}`}
+                      >
+                        <XCircle size={14} style={{ marginRight: '4px' }} />
+                        Reject
+                      </Button>
+                    </div>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
   };
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Withdrawal Methods</h1>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Withdrawal Management</h1>
+        <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Review and process user withdrawal requests</p>
       </div>
 
-      <div className="mb-6">
-        <Button 
-          onClick={() => handleOpen(null)}
-          className="bg-[#6f42c1] hover:bg-[#5a32a3] text-white font-medium px-6 py-2 h-auto rounded-md text-sm"
-        >
-          <Plus size={16} className="mr-2" />
-          Add Manual Method
-        </Button>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="border-b pb-4 mb-4">
-              <DialogTitle className="text-lg font-normal text-gray-700">
-                {editingGateway ? "Edit Withdrawal Method" : "Add New Withdrawal Method"}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <form onSubmit={handleSave} className="space-y-6" key={editingGateway?.id || 'new'}>
-              {/* Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-600 font-normal">Name</Label>
-                <Input 
-                  id="name" 
-                  defaultValue={editingGateway?.name}
-                  placeholder="Withdrawal method name" 
-                  className="bg-white border-gray-200" 
-                  required 
-                />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <Card>
+          <CardContent style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>Pending</p>
+                <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>{pendingWithdrawals.length}</p>
+                <p style={{ fontSize: '12px', color: '#6b7280' }}>${totalPending.toFixed(2)}</p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Minimum Amount */}
-                <div className="space-y-2">
-                  <Label htmlFor="minAmount" className="text-gray-600 font-normal">Minimum Amount</Label>
-                  <Input 
-                    id="minAmount" 
-                    defaultValue={editingGateway?.minAmount}
-                    className="bg-white border-gray-200" 
-                    required 
-                  />
-                  <p className="text-xs text-gray-500">Required for withdrawal limits</p>
-                </div>
-
-                {/* Maximum Amount */}
-                <div className="space-y-2">
-                  <Label htmlFor="maxAmount" className="text-gray-600 font-normal">Maximum Amount</Label>
-                  <Input 
-                    id="maxAmount" 
-                    defaultValue={editingGateway?.maxAmount}
-                    className="bg-white border-gray-200" 
-                    required 
-                  />
-                  <p className="text-xs text-gray-500">Required for withdrawal limits</p>
-                </div>
-
-                {/* Charges */}
-                <div className="space-y-2">
-                  <Label htmlFor="charges" className="text-gray-600 font-normal">Charges</Label>
-                  <Input 
-                    id="charges" 
-                    defaultValue={editingGateway?.charges}
-                    className="bg-white border-gray-200" 
-                    required 
-                  />
-                  <p className="text-xs text-gray-500">Processing fee per withdrawal</p>
-                </div>
-
-                {/* Charges Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="chargesType" className="text-gray-600 font-normal">Charges Type</Label>
-                  <Select defaultValue={editingGateway?.chargesType || "percentage"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage(%)</SelectItem>
-                      <SelectItem value="fixed">Fixed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="type" className="text-gray-600 font-normal">Type</Label>
-                  <Select defaultValue={editingGateway?.type || "crypto"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="crypto">Crypto</SelectItem>
-                      <SelectItem value="fiat">Fiat</SelectItem>
-                      <SelectItem value="bank">Bank Transfer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Image URL */}
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl" className="text-gray-600 font-normal">Image url (Logo)</Label>
-                  <Input 
-                    id="imageUrl" 
-                    defaultValue={editingGateway?.imageUrl}
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
-
-                {/* Wallet Address (Optional for Withdrawal) */}
-                <div className="space-y-2">
-                  <Label htmlFor="walletAddress" className="text-gray-600 font-normal">Sender Wallet Address (Optional)</Label>
-                  <Input 
-                    id="walletAddress" 
-                    defaultValue={editingGateway?.walletAddress}
-                    className="bg-white border-gray-200" 
-                    placeholder="Address funds will be sent from"
-                  />
-                </div>
-
-                {/* Barcode Image (Optional) */}
-                <div className="space-y-2">
-                  <Label htmlFor="barcode" className="text-gray-600 font-normal">Barcode Image (Optional)</Label>
-                  <div className="flex items-center gap-2 border border-gray-200 rounded-md p-1 bg-white">
-                    <Button type="button" variant="secondary" size="sm" className="h-8 text-xs font-normal">
-                      Choose File
-                    </Button>
-                    <span className="text-xs text-gray-500">No file chosen</span>
-                  </div>
-                </div>
-
-                {/* Wallet Address Network Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="networkType" className="text-gray-600 font-normal">Network Type</Label>
-                  <Input 
-                    id="networkType" 
-                    defaultValue={editingGateway?.networkType}
-                    placeholder="e.g. ERC20, TRC20, SEPA" 
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
-
-                {/* Status */}
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="text-gray-600 font-normal">Status</Label>
-                  <Select defaultValue={editingGateway?.status === "Active" ? "enable" : editingGateway?.status === "Inactive" ? "disable" : "enable"}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="enable">Enable</SelectItem>
-                      <SelectItem value="disable">Disable</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Type for - Fixed to Withdrawal */}
-                <div className="space-y-2">
-                  <Label htmlFor="typeFor" className="text-gray-600 font-normal">Type for</Label>
-                  <Select defaultValue="withdrawal" disabled>
-                    <SelectTrigger className="bg-gray-100 border-gray-200">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="deposit">Deposit</SelectItem>
-                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Optional Note */}
-                <div className="space-y-2">
-                  <Label htmlFor="note" className="text-gray-600 font-normal">Optional Note</Label>
-                  <Input 
-                    id="note" 
-                    defaultValue={editingGateway?.note}
-                    placeholder="Processing time, restrictions, etc." 
-                    className="bg-white border-gray-200" 
-                  />
-                </div>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={24} style={{ color: '#f59e0b' }} />
               </div>
-
-              {/* Save Button */}
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="bg-[#1a1f36] hover:bg-[#2c324c] text-white font-medium px-6 py-2 h-10 rounded-md"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : (editingGateway ? "Update Method" : "Save Method")}
-                </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>Approved</p>
+                <p style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e' }}>{approvedWithdrawals.length}</p>
+                <p style={{ fontSize: '12px', color: '#6b7280' }}>${totalApproved.toFixed(2)}</p>
               </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={24} style={{ color: '#22c55e' }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>Rejected</p>
+                <p style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444' }}>{rejectedWithdrawals.length}</p>
+                <p style={{ fontSize: '12px', color: '#6b7280' }}>${totalRejected.toFixed(2)}</p>
+              </div>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <XCircle size={24} style={{ color: '#ef4444' }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card className="border-none shadow-sm bg-white">
-        <CardContent className="p-0">
-          <div className="rounded-sm border border-gray-100 overflow-x-auto min-h-[400px] bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b border-gray-100">
-                  <TableHead className="font-bold text-gray-700 py-4 w-[200px]">Name</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Initiated At</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Limit</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Charge</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Currency</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4">Status</TableHead>
-                  <TableHead className="font-bold text-gray-700 py-4 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {MOCK_WITHDRAWALS.map((gateway) => (
-                  <TableRow key={gateway.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <TableCell className="font-medium text-gray-700 py-4">{gateway.name}</TableCell>
-                    <TableCell className="text-gray-600 py-4">{gateway.initiatedAt}</TableCell>
-                    <TableCell className="text-gray-600 py-4 font-medium">{gateway.limit}</TableCell>
-                    <TableCell className="text-gray-600 py-4">{gateway.charge}</TableCell>
-                    <TableCell className="text-gray-600 py-4 font-mono text-xs">{gateway.currency}</TableCell>
-                    <TableCell className="py-4">
-                      <Badge 
-                        className={`rounded-md px-2 py-1 text-xs font-normal ${
-                          gateway.status === "Active" 
-                            ? "bg-[#10b981] hover:bg-[#059669] text-white" 
-                            : "bg-[#ef4444] hover:bg-[#dc2626] text-white"
-                        }`}
-                      >
-                        {gateway.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right py-4">
-                      <Button 
-                        onClick={() => handleOpen(gateway)}
-                        variant="ghost" 
-                        className="text-[#3b82f6] hover:text-[#2563eb] hover:bg-blue-50 h-8 px-3 text-sm font-medium"
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="pending" style={{ width: '100%' }}>
+        <TabsList style={{ marginBottom: '24px', backgroundColor: 'white', border: '1px solid #e5e7eb' }}>
+          <TabsTrigger value="pending" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            <Clock size={14} style={{ marginRight: '4px' }} /> Pending ({pendingWithdrawals.length})
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            <CheckCircle2 size={14} style={{ marginRight: '4px' }} /> Approved
+          </TabsTrigger>
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-[#6f42c1] data-[state=active]:text-white">
+            <XCircle size={14} style={{ marginRight: '4px' }} /> Rejected
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending">
+          <Card>
+            <CardContent style={{ padding: '0' }}>
+              {pendingLoading ? (
+                <div style={{ textAlign: 'center', padding: '48px' }}>
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: '#6b7280' }} />
+                  <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading withdrawals...</p>
+                </div>
+              ) : (
+                renderWithdrawalsTable(pendingWithdrawals, true)
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="approved">
+          <Card>
+            <CardContent style={{ padding: '0' }}>
+              {approvedLoading ? (
+                <div style={{ textAlign: 'center', padding: '48px' }}>
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: '#6b7280' }} />
+                  <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading withdrawals...</p>
+                </div>
+              ) : (
+                renderWithdrawalsTable(approvedWithdrawals, false)
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="rejected">
+          <Card>
+            <CardContent style={{ padding: '0' }}>
+              {rejectedLoading ? (
+                <div style={{ textAlign: 'center', padding: '48px' }}>
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: '#6b7280' }} />
+                  <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading withdrawals...</p>
+                </div>
+              ) : (
+                renderWithdrawalsTable(rejectedWithdrawals, false)
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }

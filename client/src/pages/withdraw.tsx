@@ -1,13 +1,15 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { LogOut, ArrowLeft, Wallet, Trash2, Plus, AlertCircle } from "lucide-react";
+import { LogOut, ArrowLeft, Wallet, Trash2, Plus, AlertCircle, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usersAPI, balanceAPI } from "@/lib/api";
 import bitcoinLogo from "@/assets/bitcoin.png";
 
 interface WithdrawWallet {
@@ -27,15 +29,53 @@ export default function Withdraw() {
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<WithdrawWallet | null>(null);
   const [amount, setAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [location, setLocation] = useLocation();
   const [returnTo, setReturnTo] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Get database user
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register'],
+    queryFn: async (): Promise<{ id: number } | null> => {
+      // @ts-ignore
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        return usersAPI.register({
+          telegramId: userData.id.toString(),
+          username: userData.username || userData.first_name,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          profilePicture: userData.photo_url
+        }) as Promise<{ id: number }>;
+      } else {
+        return usersAPI.register({
+          telegramId: null,
+          username: "demo_user",
+          firstName: "Demo",
+          lastName: "User",
+          profilePicture: null
+        }) as Promise<{ id: number }>;
+      }
+    },
+  });
+
+  // Get user balance
+  const { data: userBalance } = useQuery({
+    queryKey: ['/api/balances', dbUser?.id],
+    queryFn: async (): Promise<{ totalBalanceUsd?: string; availableBalanceUsd?: string } | null> => {
+      if (!dbUser?.id) return null;
+      return balanceAPI.getUser(dbUser.id) as Promise<{ totalBalanceUsd?: string; availableBalanceUsd?: string }>;
+    },
+    enabled: !!dbUser?.id,
+  });
 
   useEffect(() => {
     const savedWallets = localStorage.getItem("withdraw_wallets");
     if (savedWallets) {
       const parsedWallets = JSON.parse(savedWallets);
-      // Inject bitcoin logo for BTC wallets
       const walletsWithImages = parsedWallets.map((w: any) => ({
         ...w,
         image: w.currency === 'BTC' ? bitcoinLogo : undefined,
@@ -68,10 +108,8 @@ export default function Withdraw() {
 
   const handleWalletClick = (wallet: WithdrawWallet) => {
     if (returnTo) {
-      // Save selection
       localStorage.setItem('selected_withdrawal_method', 'crypto');
       localStorage.setItem('selected_withdrawal_wallet', JSON.stringify(wallet));
-      // Return to origin
       setLocation(`${returnTo}?action=withdraw`);
       return;
     }
@@ -80,22 +118,77 @@ export default function Withdraw() {
     setWithdrawalOpen(true);
   };
 
-  const handleWithdraw = () => {
-    if (!amount) {
+  const handleWithdraw = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
       toast({
         title: "Enter Amount",
-        description: "Please enter the amount you wish to withdraw.",
+        description: "Please enter a valid amount to withdraw.",
         variant: "destructive"
       });
       return;
     }
-    
-    toast({
-      title: "Withdrawal Initiated",
-      description: `Withdrawal of ${amount} ${selectedWallet?.currency} to ${selectedWallet?.address.slice(0, 6)}... has been initiated.`
-    });
-    setWithdrawalOpen(false);
-    setAmount("");
+
+    if (!dbUser?.id) {
+      toast({
+        title: "Error",
+        description: "User not found. Please refresh and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const availableBalance = parseFloat(userBalance?.availableBalanceUsd || "0");
+    const withdrawAmount = parseFloat(amount);
+
+    if (withdrawAmount > availableBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You can only withdraw up to $${availableBalance.toFixed(2)}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: dbUser.id,
+          amount: amount,
+          currency: selectedWallet?.currency || 'USD',
+          method: 'crypto_address',
+          destinationAddress: selectedWallet?.address,
+          walletId: selectedWallet?.id
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create withdrawal');
+      }
+
+      toast({
+        title: "Withdrawal Request Submitted",
+        description: `Your withdrawal of $${amount} to ${selectedWallet?.address.slice(0, 8)}... is pending approval.`
+      });
+
+      // Invalidate balance query to refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/balances'] });
+      
+      setWithdrawalOpen(false);
+      setAmount("");
+    } catch (error: any) {
+      toast({
+        title: "Withdrawal Failed",
+        description: error.message || "Failed to process withdrawal request.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isLoaded) return null;
@@ -238,22 +331,43 @@ export default function Withdraw() {
             </DialogHeader>
             
             <div className="py-4 space-y-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500">Available Balance</p>
+                <p className="text-lg font-bold text-gray-900">
+                  ${parseFloat(userBalance?.availableBalanceUsd || "0").toFixed(2)}
+                </p>
+              </div>
               <div className="space-y-2">
-                <Label>Amount ({selectedWallet?.currency})</Label>
+                <Label>Amount (USD)</Label>
                 <Input 
                   type="number" 
                   placeholder="0.00" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="text-lg"
+                  data-testid="input-withdraw-amount"
                 />
               </div>
             </div>
             
             <DialogFooter className="flex-row gap-2 justify-end">
-              <Button variant="outline" onClick={() => setWithdrawalOpen(false)}>Cancel</Button>
-              <Button onClick={handleWithdraw} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Confirm Withdraw
+              <Button variant="outline" onClick={() => setWithdrawalOpen(false)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleWithdraw} 
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isSubmitting}
+                data-testid="button-confirm-withdraw"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Confirm Withdraw"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -486,10 +486,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Withdrawal not found" });
       }
 
+      if (withdrawal.status !== 'pending') {
+        return res.status(400).json({ error: `Withdrawal is already ${withdrawal.status}` });
+      }
+
       // Update withdrawal status
       const approved = await storage.approveWithdrawal(withdrawalId, req.session.adminId!);
 
-      // Update user balance
+      // Update the linked transaction status to approved
+      await storage.updateTransactionStatus(withdrawal.transactionId, 'approved');
+
+      // Update user balance - deduct the withdrawal amount
       const balance = await storage.getUserBalance(withdrawal.userId);
       if (balance) {
         const newTotal = parseFloat(balance.totalBalanceUsd) - parseFloat(withdrawal.amount);
@@ -501,13 +508,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Update transaction
-      await storage.updateWithdrawalStatus(withdrawalId, 'approved');
-
       res.json(approved);
     } catch (error) {
       console.error("Withdrawal approval error:", error);
       res.status(500).json({ error: "Failed to approve withdrawal" });
+    }
+  });
+
+  app.post("/api/withdrawals/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const withdrawalId = parseInt(req.params.id);
+      const { reason } = req.body;
+      const withdrawal = await storage.getWithdrawal(withdrawalId);
+
+      if (!withdrawal) {
+        return res.status(404).json({ error: "Withdrawal not found" });
+      }
+
+      if (withdrawal.status !== 'pending') {
+        return res.status(400).json({ error: `Withdrawal is already ${withdrawal.status}` });
+      }
+
+      const updated = await storage.updateWithdrawalStatus(withdrawalId, 'rejected');
+      
+      // Update the linked transaction status to rejected
+      await storage.updateTransactionStatus(withdrawal.transactionId, 'rejected');
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Withdrawal rejection error:", error);
+      res.status(500).json({ error: "Failed to reject withdrawal" });
     }
   });
 
