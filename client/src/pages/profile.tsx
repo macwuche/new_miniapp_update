@@ -57,9 +57,15 @@ export default function Profile() {
         )}
 
         <div className="grid grid-cols-2 gap-3 mb-8">
-          <Card className="p-4 border-none shadow-md bg-gradient-to-br from-primary to-blue-600 text-white">
-            <p className="text-xs opacity-80 mb-1">Total Assets</p>
-            <p className="text-lg font-bold">$12,450.00</p>
+          <Card 
+            className="p-4 border-none shadow-md"
+            style={{ 
+              background: 'linear-gradient(to bottom right, #2563eb, #1d4ed8)',
+              color: 'white'
+            }}
+          >
+            <p className="text-xs mb-1" style={{ opacity: 0.8, color: 'white' }}>Total Assets</p>
+            <p className="text-lg font-bold" style={{ color: 'white' }}>$12,450.00</p>
           </Card>
           <Card className="p-4 border-none shadow-sm bg-white dark:bg-slate-800">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Today's P&L</p>
@@ -96,38 +102,41 @@ export default function Profile() {
               <button
                 onClick={() => setTheme("light")}
                 data-testid="theme-light"
-                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  theme === "light"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-400"
-                }`}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all"
+                style={{
+                  borderColor: theme === "light" ? "#2563eb" : "#e5e7eb",
+                  backgroundColor: theme === "light" ? "rgba(37, 99, 235, 0.1)" : "transparent",
+                  color: theme === "light" ? "#2563eb" : "#6b7280"
+                }}
               >
-                <Sun size={22} />
-                <span className="text-xs font-medium">Light</span>
+                <Sun size={22} style={{ color: theme === "light" ? "#2563eb" : "#6b7280" }} />
+                <span className="text-xs font-medium" style={{ color: theme === "light" ? "#2563eb" : "#6b7280" }}>Light</span>
               </button>
               <button
                 onClick={() => setTheme("dark")}
                 data-testid="theme-dark"
-                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  theme === "dark"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-400"
-                }`}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all"
+                style={{
+                  borderColor: theme === "dark" ? "#2563eb" : "#e5e7eb",
+                  backgroundColor: theme === "dark" ? "rgba(37, 99, 235, 0.1)" : "transparent",
+                  color: theme === "dark" ? "#2563eb" : "#6b7280"
+                }}
               >
-                <Moon size={22} />
-                <span className="text-xs font-medium">Dark</span>
+                <Moon size={22} style={{ color: theme === "dark" ? "#2563eb" : "#6b7280" }} />
+                <span className="text-xs font-medium" style={{ color: theme === "dark" ? "#2563eb" : "#6b7280" }}>Dark</span>
               </button>
               <button
                 onClick={() => setTheme("system")}
                 data-testid="theme-auto"
-                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                  theme === "system"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-400"
-                }`}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all"
+                style={{
+                  borderColor: theme === "system" ? "#2563eb" : "#e5e7eb",
+                  backgroundColor: theme === "system" ? "rgba(37, 99, 235, 0.1)" : "transparent",
+                  color: theme === "system" ? "#2563eb" : "#6b7280"
+                }}
               >
-                <Smartphone size={22} />
-                <span className="text-xs font-medium">Auto</span>
+                <Smartphone size={22} style={{ color: theme === "system" ? "#2563eb" : "#6b7280" }} />
+                <span className="text-xs font-medium" style={{ color: theme === "system" ? "#2563eb" : "#6b7280" }}>Auto</span>
               </button>
             </div>
           </div>
