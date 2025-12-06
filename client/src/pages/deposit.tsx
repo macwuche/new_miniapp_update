@@ -145,11 +145,11 @@ export default function Deposit() {
                     placeholder="Enter amount"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
-                    className="h-12 text-lg font-medium pr-16 rounded-xl"
+                    className="h-12 text-lg font-medium pr-16 rounded-xl text-gray-900 bg-white border-gray-200"
                     data-testid="deposit-amount-input"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">
-                    {selectedOption?.symbol}
+                    USD
                   </span>
                 </div>
               </div>
@@ -218,7 +218,7 @@ export default function Deposit() {
               </h2>
               
               <p className="text-gray-500 mb-2">
-                Your deposit of <span className="font-bold text-gray-900">{depositAmount} {selectedOption?.symbol}</span> has been submitted for review.
+                Your deposit of <span className="font-bold text-gray-900">${depositAmount} USD</span> via {selectedOption?.symbol} has been submitted for review.
               </p>
               
               <p className="text-sm text-gray-400 mb-6">
