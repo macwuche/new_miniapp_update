@@ -27,26 +27,47 @@ export default function Transactions() {
   const { user } = useTelegram();
   const [activeTab, setActiveTab] = useState<'all' | 'deposits' | 'withdrawals'>('all');
 
-  const { data: deposits = [], isLoading: depositsLoading } = useQuery({
-    queryKey: ['user-deposits', user?.id],
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const res = await fetch(`/api/users/${user.id}/deposits`);
-      if (!res.ok) return [];
+      if (!user?.id) return null;
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user.id?.toString(),
+          username: user.username || 'user',
+          firstName: user.first_name,
+          lastName: user.last_name,
+          profilePicture: user.photo_url
+        })
+      });
+      if (!res.ok) return null;
       return res.json();
     },
     enabled: !!user?.id,
   });
 
-  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useQuery({
-    queryKey: ['user-withdrawals', user?.id],
+  const { data: deposits = [], isLoading: depositsLoading } = useQuery({
+    queryKey: ['user-deposits', dbUser?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const res = await fetch(`/api/users/${user.id}/withdrawals`);
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/deposits`);
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: !!dbUser?.id,
+  });
+
+  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useQuery({
+    queryKey: ['user-withdrawals', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/withdrawals`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
   });
 
   const allTransactions: Transaction[] = [

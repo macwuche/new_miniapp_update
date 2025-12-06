@@ -281,6 +281,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update deposit status
       const approved = await storage.approveDeposit(depositId, req.session.adminId!);
 
+      // Update the linked transaction status to approved
+      await storage.updateTransactionStatus(deposit.transactionId, 'approved');
+
       // Update user balance
       const balance = await storage.getUserBalance(deposit.userId);
       if (balance) {
@@ -299,9 +302,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lockedBalanceUsd: "0"
         });
       }
-
-      // Update transaction status
-      await storage.updateDepositStatus(depositId, 'approved');
 
       res.json(approved);
     } catch (error) {
@@ -325,6 +325,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updated = await storage.updateDepositStatus(depositId, 'rejected');
+      
+      // Update the linked transaction status to rejected
+      await storage.updateTransactionStatus(deposit.transactionId, 'rejected');
+      
       res.json(updated);
     } catch (error) {
       console.error("Deposit rejection error:", error);
@@ -912,6 +916,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== TRANSACTIONS ====================
+  app.get("/api/transactions", requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.query;
+      const transactionsList = await storage.listTransactions(status as string);
+      
+      // Get user info for each transaction
+      const transactionsWithUsers = await Promise.all(
+        transactionsList.map(async (tx) => {
+          const user = await storage.getUser(tx.userId);
+          return {
+            ...tx,
+            user: user ? {
+              id: user.id,
+              username: user.username,
+              firstName: user.firstName,
+              lastName: user.lastName
+            } : null
+          };
+        })
+      );
+      
+      res.json(transactionsWithUsers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch transactions" });
+    }
+  });
+
   app.get("/api/users/:userId/transactions", async (req, res) => {
     try {
       const transactions = await storage.listUserTransactions(parseInt(req.params.userId));
