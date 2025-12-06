@@ -2,7 +2,7 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ChevronRight, Copy, CheckCircle2, CheckCircle } from "lucide-react";
+import { ArrowLeft, ChevronRight, Copy, CheckCircle2, CheckCircle, Check } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -51,14 +51,13 @@ export default function Deposit() {
   const [selectedOption, setSelectedOption] = useState<typeof PAYMENT_OPTIONS[0] | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({
-      description: "Address copied to clipboard",
-      duration: 2000,
-    });
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handlePaymentSent = () => {
@@ -173,12 +172,19 @@ export default function Deposit() {
                 {selectedOption?.address}
                 <Button 
                   variant="ghost" 
-                  size="icon" 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-white shadow-sm hover:bg-gray-100"
+                  size="sm" 
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 h-8 px-2 shadow-sm transition-all ${copied ? 'bg-green-100 text-green-600 hover:bg-green-100' : 'bg-white hover:bg-gray-100'}`}
                   onClick={() => selectedOption && copyToClipboard(selectedOption.address)}
                   data-testid="copy-address-btn"
                 >
-                  <Copy size={14} />
+                  {copied ? (
+                    <span className="flex items-center gap-1">
+                      <Check size={14} />
+                      <span className="text-xs font-medium">Copied</span>
+                    </span>
+                  ) : (
+                    <Copy size={14} />
+                  )}
                 </Button>
               </div>
 
