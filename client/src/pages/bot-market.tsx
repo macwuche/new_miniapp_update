@@ -119,40 +119,60 @@ export default function BotMarket() {
     <MobileLayout>
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-24">
         {/* Hero Section - Blue background with white text for both light and dark modes */}
-        <div className="bg-gradient-to-b from-blue-600 to-blue-500 text-white pt-8 pb-12 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+        <div 
+          className="pt-8 pb-12 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden"
+          style={{ 
+            background: 'linear-gradient(to bottom, #2563eb, #3b82f6)',
+            color: 'white'
+          }}
+        >
           {/* Decorative Circles */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl pointer-events-none" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl pointer-events-none" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
 
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-8">
               <div 
-                className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 cursor-pointer transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
                 onClick={() => window.history.back()}
               >
                 <ArrowLeft size={20} />
               </div>
-              <div className="px-3 py-1 rounded-full bg-green-400/20 border border-green-400/30 text-green-100 text-xs font-bold flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+              <div 
+                className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5"
+                style={{ 
+                  backgroundColor: 'rgba(74, 222, 128, 0.2)', 
+                  border: '1px solid rgba(74, 222, 128, 0.3)',
+                  color: '#dcfce7'
+                }}
+              >
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#4ade80' }}></div>
                 AI-Powered Trading
               </div>
             </div>
 
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-black mb-3 tracking-tight text-white">Bot Trading Hub</h1>
-              <p className="text-blue-100 text-sm max-w-xs mx-auto leading-relaxed">
+              <h1 className="text-3xl font-black mb-3 tracking-tight" style={{ color: 'white' }}>Bot Trading Hub</h1>
+              <p className="text-sm max-w-xs mx-auto leading-relaxed" style={{ color: '#bfdbfe' }}>
                 Invest in AI-powered trading bots that work 24/7 to maximize your profits across multiple markets.
               </p>
             </div>
 
             <div className="flex gap-3 justify-center">
               <Link href="/">
-                <Button className="bg-white/20 hover:bg-white/30 text-white border-none rounded-xl backdrop-blur-md font-bold shadow-sm">
+                <Button 
+                  className="border-none rounded-xl font-bold shadow-sm"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                >
                   Back to Dashboard
                 </Button>
               </Link>
               <Link href="/bot-investments">
-                <Button className="bg-white text-blue-600 hover:bg-blue-50 border-none rounded-xl font-bold shadow-sm">
+                <Button 
+                  className="border-none rounded-xl font-bold shadow-sm"
+                  style={{ backgroundColor: 'white', color: '#2563eb' }}
+                >
                   <Activity size={16} className="mr-2" />
                   My Bot Investments
                 </Button>
