@@ -111,6 +111,45 @@ export default function AdminLinkedWallets() {
       return;
     }
 
+    const minAmt = parseFloat(formData.minAmount);
+    const maxAmt = parseFloat(formData.maxAmount);
+
+    if (isNaN(minAmt) || minAmt < 0) {
+      toast({
+        title: "Invalid Minimum Amount",
+        description: "Please enter a valid minimum amount (0 or greater).",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isNaN(maxAmt) || maxAmt <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Please enter a valid maximum amount (greater than 0).",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (minAmt >= maxAmt) {
+      toast({
+        title: "Invalid Amount Range",
+        description: "Maximum amount must be greater than minimum amount.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.supportedCoins.length === 0) {
+      toast({
+        title: "No Coins Selected",
+        description: "Please select at least one supported coin.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const url = editingWallet 

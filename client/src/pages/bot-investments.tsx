@@ -360,7 +360,7 @@ export default function BotInvestments() {
                 <Button 
                   variant="outline" 
                   className={`w-full justify-start h-14 px-4 rounded-xl border-2 ${selectedMethod === 'connected' ? 'border-blue-500 bg-blue-50/50 text-blue-700' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-600'}`}
-                  onClick={() => setLocation('/linked-wallets?returnTo=/bot-investments')}
+                  onClick={() => setLocation('/withdraw?method=linked&returnTo=/bot-investments')}
                 >
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 text-blue-600">
                     <Wallet size={16} />

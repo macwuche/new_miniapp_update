@@ -167,6 +167,14 @@ export default function Withdraw() {
     }
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const method = params.get('method');
+    if (method === 'linked' && !walletsLoading && connectedWallets.length > 0) {
+      setView('linked-wallets');
+    }
+  }, [connectedWallets, walletsLoading]);
+
   const handleSelectGateway = (gateway: WithdrawalGateway) => {
     setSelectedGateway(gateway);
     setView('addresses');
