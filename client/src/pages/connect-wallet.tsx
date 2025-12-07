@@ -17,6 +17,7 @@ interface LinkedWalletType {
   minAmount: string;
   maxAmount: string;
   supportedCoins: string[];
+  preloaderTime: number;
   status: string;
 }
 
@@ -70,13 +71,16 @@ export default function ConnectWallet() {
     setIsConnecting(true);
     setProgress(0);
     
+    const preloaderDuration = (selectedWallet.preloaderTime || 5) * 1000;
+    const progressIncrement = 100 / (preloaderDuration / 100);
+    
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        return prev + 2;
+        return Math.min(prev + progressIncrement, 100);
       });
     }, 100);
 
@@ -121,7 +125,7 @@ export default function ConnectWallet() {
         setIsConnecting(false);
         setProgress(0);
       }
-    }, 5000);
+    }, preloaderDuration);
   };
 
   if (isConnecting) {

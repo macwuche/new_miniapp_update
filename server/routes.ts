@@ -696,6 +696,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/connected-wallets/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteConnectedWallet(id);
+      if (!success) {
+        return res.status(404).json({ error: "Connected wallet not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete connected wallet" });
+    }
+  });
+
   // ==================== WITHDRAWALS ====================
   app.get("/api/withdrawals", requireAdmin, async (req, res) => {
     try {

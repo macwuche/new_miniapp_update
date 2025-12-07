@@ -40,6 +40,7 @@ interface LinkedWalletType {
   minAmount: string;
   maxAmount: string;
   supportedCoins: string[];
+  preloaderTime: number;
   status: string;
   createdAt: string;
 }
@@ -59,6 +60,7 @@ export default function AdminLinkedWallets() {
     minAmount: "",
     maxAmount: "",
     supportedCoins: [] as string[],
+    preloaderTime: "5",
     status: "enabled"
   });
 
@@ -78,6 +80,7 @@ export default function AdminLinkedWallets() {
       minAmount: "",
       maxAmount: "",
       supportedCoins: [],
+      preloaderTime: "5",
       status: "enabled"
     });
     setEditingWallet(null);
@@ -96,6 +99,7 @@ export default function AdminLinkedWallets() {
       minAmount: walletType.minAmount,
       maxAmount: walletType.maxAmount,
       supportedCoins: walletType.supportedCoins || [],
+      preloaderTime: (walletType.preloaderTime || 5).toString(),
       status: walletType.status
     });
     setIsDialogOpen(true);
@@ -273,6 +277,7 @@ export default function AdminLinkedWallets() {
                     <TableHead>Min Amount</TableHead>
                     <TableHead>Max Amount</TableHead>
                     <TableHead>Supported Coins</TableHead>
+                    <TableHead>Preloader</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -307,6 +312,9 @@ export default function AdminLinkedWallets() {
                             <Badge variant="outline" style={{ fontSize: '10px' }}>+{wallet.supportedCoins.length - 3}</Badge>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span style={{ fontSize: '13px', color: '#6b7280' }}>{wallet.preloaderTime || 5}s</span>
                       </TableCell>
                       <TableCell>
                         <Badge variant={wallet.status === 'enabled' ? 'default' : 'secondary'}>
@@ -415,6 +423,23 @@ export default function AdminLinkedWallets() {
                   </Badge>
                 ))}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="preloaderTime">Preloader Time (seconds)</Label>
+              <Input
+                id="preloaderTime"
+                type="number"
+                placeholder="5"
+                min="1"
+                max="60"
+                value={formData.preloaderTime}
+                onChange={(e) => setFormData({ ...formData, preloaderTime: e.target.value })}
+                data-testid="input-preloader-time"
+              />
+              <p className="text-xs text-gray-500">
+                Duration of loading animation when users connect this wallet (1-60 seconds)
+              </p>
             </div>
 
             <div className="space-y-2">

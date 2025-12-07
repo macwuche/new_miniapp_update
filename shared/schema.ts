@@ -220,6 +220,7 @@ export const linkedWalletTypes = pgTable("linked_wallet_types", {
   minAmount: decimal("min_amount", { precision: 18, scale: 8 }).notNull(),
   maxAmount: decimal("max_amount", { precision: 18, scale: 8 }).notNull(),
   supportedCoins: text("supported_coins").array().default([]).notNull(),
+  preloaderTime: integer("preloader_time").default(5).notNull(),
   status: gatewayStatusEnum("status").default('enabled').notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

