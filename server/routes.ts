@@ -130,12 +130,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { telegramId, username, firstName, lastName, profilePicture } = req.body;
       
-      // Check if user exists
+      // Check if user exists by telegramId
       if (telegramId) {
         const existing = await storage.getUserByTelegramId(telegramId);
         if (existing) {
           req.session.userId = existing.id;
           return res.json(existing);
+        }
+      } else {
+        // For development/demo mode without Telegram ID, look up by username
+        // This prevents creating duplicate demo users
+        const existingByUsername = await storage.getUserByUsername(username || 'demo_user');
+        if (existingByUsername && !existingByUsername.telegramId) {
+          req.session.userId = existingByUsername.id;
+          return res.json(existingByUsername);
         }
       }
 
