@@ -1,152 +1,221 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
+import { useTelegram } from "@/lib/telegram-mock";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, ChevronDown, Wallet, Settings, Percent } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Search, 
+  TrendingUp, 
+  TrendingDown, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Loader2,
+  ChevronRight
+} from "lucide-react";
+import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-const INVESTMENT_PLANS = [
-  {
-    id: "mercury",
-    name: "Mercury (Fixed Invest)",
-    duration: "7 days",
-    profit: "0.25%",
-    frequency: "hourly",
-    minAmount: 100
-  },
-  {
-    id: "venus",
-    name: "Venus (Standard)",
-    duration: "14 days",
-    profit: "0.50%",
-    frequency: "hourly",
-    minAmount: 500
-  },
-  {
-    id: "earth",
-    name: "Earth (Premium)",
-    duration: "30 days",
-    profit: "1.2%",
-    frequency: "daily",
-    minAmount: 1000
-  }
+interface MarketAsset {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  market_cap: number;
+  total_volume: number;
+  image: string;
+}
+
+const COINGECKO_API = "https://api.coingecko.com/api/v3";
+
+const POPULAR_CRYPTOS = [
+  'bitcoin', 'ethereum', 'tether', 'binancecoin', 'solana', 
+  'ripple', 'cardano', 'dogecoin', 'polkadot', 'avalanche-2'
 ];
 
 export default function Trade() {
-  const [_, setLocation] = useLocation();
-  const [selectedPlan, setSelectedPlan] = useState(INVESTMENT_PLANS[0]);
-  const [amount, setAmount] = useState("100");
+  const { user } = useTelegram();
+  const userId = user?.id || 4;
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleContinue = () => {
-    setLocation("/trade/confirm");
-  };
+  const { data: cryptoAssets = [], isLoading } = useQuery<MarketAsset[]>({
+    queryKey: ['crypto-markets'],
+    queryFn: async () => {
+      const response = await fetch(
+        `${COINGECKO_API}/coins/markets?vs_currency=usd&ids=${POPULAR_CRYPTOS.join(',')}&order=market_cap_desc&sparkline=false`
+      );
+      if (!response.ok) throw new Error("Failed to fetch markets");
+      return response.json();
+    },
+    staleTime: 30000,
+  });
+
+  const { data: balance } = useQuery({
+    queryKey: [`/api/users/${userId}/balance`],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${userId}/balance`);
+      if (!res.ok) throw new Error("Failed to fetch balance");
+      return res.json();
+    },
+  });
+
+  const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
+
+  const filteredAssets = searchQuery
+    ? cryptoAssets.filter(asset => 
+        asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : cryptoAssets;
+
+  const topGainers = [...cryptoAssets]
+    .sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h)
+    .slice(0, 5);
+
+  const topLosers = [...cryptoAssets]
+    .sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)
+    .slice(0, 5);
+
+  if (isLoading) {
+    return (
+      <MobileLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MobileLayout>
+    );
+  }
 
   return (
     <MobileLayout>
-      <div className="bg-gray-50 min-h-screen pb-24">
-        {/* Header */}
-        <div className="px-6 pt-8 pb-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors">
-                <ArrowLeft size={20} />
-              </div>
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <div className="bg-white px-6 pt-10 pb-6 border-b">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Trade</h1>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm text-gray-500">Available Balance</p>
+              <p className="text-xl font-bold text-primary" data-testid="text-available-balance">
+                ${availableBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <Link href="/deposit">
+              <Button size="sm" data-testid="button-deposit">
+                Add Funds
+              </Button>
             </Link>
-            <h1 className="text-xl font-bold text-gray-900">Invest & Earn</h1>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search cryptocurrencies..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="input-search"
+            />
           </div>
         </div>
 
-        <div className="p-6 max-w-lg mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Invest & Earn</h2>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              We have various investment plans for you.
-              <br />
-              You can invest daily, weekly or monthly and start earning now.
-            </p>
-          </div>
+        <div className="px-6 mt-6">
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="all" data-testid="tab-all">All</TabsTrigger>
+              <TabsTrigger value="gainers" data-testid="tab-gainers">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                Gainers
+              </TabsTrigger>
+              <TabsTrigger value="losers" data-testid="tab-losers">
+                <TrendingDown className="w-3 h-3 mr-1" />
+                Losers
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="space-y-6">
-            {/* Invested Plan Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm font-bold text-gray-700">Invested Plan</Label>
-              <Select 
-                value={selectedPlan.id} 
-                onValueChange={(val) => setSelectedPlan(INVESTMENT_PLANS.find(p => p.id === val) || INVESTMENT_PLANS[0])}
-              >
-                <SelectTrigger className="w-full h-auto p-4 bg-white border-gray-200 rounded-xl shadow-sm hover:border-blue-300 transition-colors [&>span]:w-full">
-                  <div className="flex items-center gap-4 w-full text-left">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
-                      <Settings size={20} />
+            <TabsContent value="all" className="space-y-3">
+              {filteredAssets.map((asset) => (
+                <Link key={asset.id} href={`/trade/${asset.symbol.toUpperCase()}`}>
+                  <Card className="p-4 hover:shadow-md transition-all cursor-pointer" data-testid={`card-asset-${asset.id}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img src={asset.image} alt={asset.name} className="w-10 h-10 rounded-full" />
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{asset.name}</h4>
+                          <p className="text-xs text-gray-500">{asset.symbol.toUpperCase()}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900">
+                            ${asset.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                          </p>
+                          <div className={`flex items-center justify-end gap-1 text-xs font-medium ${asset.price_change_percentage_24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {asset.price_change_percentage_24h >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                            {asset.price_change_percentage_24h >= 0 ? '+' : ''}{asset.price_change_percentage_24h.toFixed(2)}%
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 text-sm truncate">{selectedPlan.name}</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        Invest for {selectedPlan.duration} & earn {selectedPlan.frequency} {selectedPlan.profit} as profit.
-                      </p>
+                  </Card>
+                </Link>
+              ))}
+            </TabsContent>
+
+            <TabsContent value="gainers" className="space-y-3">
+              <p className="text-sm text-gray-500 mb-2">Top performing assets (24h)</p>
+              {topGainers.map((asset, index) => (
+                <Link key={asset.id} href={`/trade/${asset.symbol.toUpperCase()}`}>
+                  <Card className="p-4 hover:shadow-md transition-all cursor-pointer border-l-4 border-l-green-500" data-testid={`card-gainer-${asset.id}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <img src={asset.image} alt={asset.name} className="w-8 h-8 rounded-full" />
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{asset.symbol.toUpperCase()}</h4>
+                          <p className="text-xs text-gray-500">{asset.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">${asset.current_price.toLocaleString()}</p>
+                        <p className="text-sm font-bold text-green-600">+{asset.price_change_percentage_24h.toFixed(2)}%</p>
+                      </div>
                     </div>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {INVESTMENT_PLANS.map((plan) => (
-                    <SelectItem key={plan.id} value={plan.id} className="py-3">
-                      <span className="font-medium">{plan.name}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  </Card>
+                </Link>
+              ))}
+            </TabsContent>
 
-            {/* Investment Amount */}
-            <div className="space-y-2">
-              <Label className="text-sm font-bold text-gray-700">Fixed Investment Amount</Label>
-              <div className="relative">
-                <Input 
-                  type="number" 
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="h-14 bg-white border-gray-200 rounded-xl text-lg px-4 shadow-sm focus:border-blue-500 focus:ring-blue-500/20"
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold border-l border-gray-200 pl-3 h-6 flex items-center">
-                  USD
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 italic">
-                Note: The investment amount is a fixed amount for the selected plan.
-              </p>
-            </div>
-
-            {/* Payment Account */}
-            <div className="space-y-2">
-              <Label className="text-sm font-bold text-gray-700">Payment Account</Label>
-              <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4 shadow-sm">
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
-                  <Wallet size={20} />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">Main Balance</p>
-                  <p className="text-xs text-gray-500">
-                    Current Balance: 50,000.00 USD <span className="text-gray-400">( 50,000.00 USD )</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Button */}
-            <Button 
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-base shadow-lg shadow-blue-600/20 mt-4"
-              onClick={handleContinue}
-            >
-              Continue to Invest
-            </Button>
-
-            <p className="text-center text-xs text-gray-400 italic mt-4">
-              By continue this, you agree to our investment terms and conditions.
-            </p>
-          </div>
+            <TabsContent value="losers" className="space-y-3">
+              <p className="text-sm text-gray-500 mb-2">Worst performing assets (24h)</p>
+              {topLosers.map((asset, index) => (
+                <Link key={asset.id} href={`/trade/${asset.symbol.toUpperCase()}`}>
+                  <Card className="p-4 hover:shadow-md transition-all cursor-pointer border-l-4 border-l-red-500" data-testid={`card-loser-${asset.id}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <img src={asset.image} alt={asset.name} className="w-8 h-8 rounded-full" />
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{asset.symbol.toUpperCase()}</h4>
+                          <p className="text-xs text-gray-500">{asset.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">${asset.current_price.toLocaleString()}</p>
+                        <p className="text-sm font-bold text-red-600">{asset.price_change_percentage_24h.toFixed(2)}%</p>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </MobileLayout>

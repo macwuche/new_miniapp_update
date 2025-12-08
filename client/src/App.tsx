@@ -20,6 +20,7 @@ import Withdraw from "@/pages/withdraw";
 import PaymentAccounts from "@/pages/withdraw/accounts";
 import Trade from "@/pages/trade";
 import TradeConfirm from "@/pages/trade/confirm";
+import TradeAsset from "@/pages/trade/[symbol]";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminSettings from "@/pages/admin/settings";
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/withdraw/accounts" component={PaymentAccounts} />
       <Route path="/trade" component={Trade} />
       <Route path="/trade/confirm" component={TradeConfirm} />
+      <Route path="/trade/:symbol" component={TradeAsset} />
       <Route path="/portfolio" component={Portfolio} />
       <Route path="/portfolio/:symbol" component={PortfolioAssetAction} />
       <Route path="/profile" component={Profile} />

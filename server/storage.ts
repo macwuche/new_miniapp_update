@@ -176,7 +176,10 @@ export interface IStorage {
   // Portfolio
   createPortfolio(portfolio: InsertPortfolio): Promise<Portfolio>;
   getUserPortfolio(userId: number): Promise<Portfolio[]>;
+  getPortfolioBySymbol(userId: number, symbol: string): Promise<Portfolio | undefined>;
   updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined>;
+  deletePortfolio(id: number): Promise<boolean>;
+  upsertPortfolio(userId: number, symbol: string, data: Partial<InsertPortfolio>): Promise<Portfolio>;
   
   // User Balance
   getUserBalance(userId: number): Promise<UserBalance | undefined>;
@@ -618,8 +621,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePortfolio(id: number, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
-    const [updated] = await db.update(portfolios).set(portfolio).where(eq(portfolios.id, id)).returning();
+    const [updated] = await db.update(portfolios).set({ ...portfolio, updatedAt: new Date() }).where(eq(portfolios.id, id)).returning();
     return updated || undefined;
+  }
+
+  async getPortfolioBySymbol(userId: number, symbol: string): Promise<Portfolio | undefined> {
+    const [portfolio] = await db.select().from(portfolios).where(
+      and(eq(portfolios.userId, userId), eq(portfolios.symbol, symbol))
+    );
+    return portfolio || undefined;
+  }
+
+  async deletePortfolio(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(portfolios).where(eq(portfolios.id, id)).returning();
+    return !!deleted;
+  }
+
+  async upsertPortfolio(userId: number, symbol: string, data: Partial<InsertPortfolio>): Promise<Portfolio> {
+    const existing = await this.getPortfolioBySymbol(userId, symbol);
+    if (existing) {
+      const updated = await this.updatePortfolio(existing.id, data);
+      return updated!;
+    } else {
+      return await this.createPortfolio({
+        userId,
+        symbol,
+        assetId: data.assetId || symbol.toLowerCase(),
+        assetType: data.assetType || 'crypto',
+        name: data.name || symbol,
+        amount: data.amount || '0',
+        averageBuyPrice: data.averageBuyPrice || '0',
+        currentValue: data.currentValue || '0',
+      });
+    }
   }
 
   // User Balance

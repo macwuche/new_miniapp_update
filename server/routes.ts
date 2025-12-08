@@ -1142,6 +1142,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/portfolio", async (req, res) => {
+    try {
+      const portfolio = await storage.createPortfolio(req.body);
+      res.json(portfolio);
+    } catch (error) {
+      console.error("Failed to create portfolio item:", error);
+      res.status(500).json({ error: "Failed to create portfolio item" });
+    }
+  });
+
+  app.patch("/api/portfolio/:id", async (req, res) => {
+    try {
+      const portfolio = await storage.updatePortfolio(parseInt(req.params.id), req.body);
+      if (!portfolio) {
+        return res.status(404).json({ error: "Portfolio item not found" });
+      }
+      res.json(portfolio);
+    } catch (error) {
+      console.error("Failed to update portfolio item:", error);
+      res.status(500).json({ error: "Failed to update portfolio item" });
+    }
+  });
+
+  app.delete("/api/portfolio/:id", async (req, res) => {
+    try {
+      await storage.deletePortfolio(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete portfolio item" });
+    }
+  });
+
+  app.post("/api/users/:userId/trade", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { action, symbol, amount, price, assetType, name, assetId } = req.body;
+      
+      if (!action || !symbol || !amount || !price) {
+        return res.status(400).json({ error: "Missing required fields: action, symbol, amount, price" });
+      }
+
+      const existingPosition = await storage.getPortfolioBySymbol(userId, symbol);
+      const tradeAmount = parseFloat(amount);
+      const tradePrice = parseFloat(price);
+      const tradeValue = tradeAmount * tradePrice;
+
+      if (action === 'buy') {
+        const balance = await storage.getUserBalance(userId);
+        const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
+        
+        if (tradeValue > availableBalance) {
+          return res.status(400).json({ error: "Insufficient balance" });
+        }
+
+        if (existingPosition) {
+          const currentAmount = parseFloat(existingPosition.amount);
+          const currentAvgPrice = parseFloat(existingPosition.averageBuyPrice);
+          const newAmount = currentAmount + tradeAmount;
+          const newAvgPrice = ((currentAmount * currentAvgPrice) + (tradeAmount * tradePrice)) / newAmount;
+          
+          await storage.updatePortfolio(existingPosition.id, {
+            amount: newAmount.toString(),
+            averageBuyPrice: newAvgPrice.toString(),
+            currentValue: (newAmount * tradePrice).toString(),
+          });
+        } else {
+          await storage.createPortfolio({
+            userId,
+            assetId: assetId || symbol.toLowerCase(),
+            assetType: assetType || 'crypto',
+            name: name || symbol,
+            symbol,
+            amount: tradeAmount.toString(),
+            averageBuyPrice: tradePrice.toString(),
+            currentValue: tradeValue.toString(),
+          });
+        }
+
+        const newAvailable = availableBalance - tradeValue;
+        await storage.updateUserBalance(userId, {
+          availableBalanceUsd: newAvailable.toString(),
+        });
+
+        await storage.createTransaction({
+          userId,
+          type: 'trade',
+          amount: tradeValue.toString(),
+          currency: 'USD',
+          status: 'completed',
+          description: `Bought ${tradeAmount} ${symbol} at $${tradePrice}`,
+        });
+
+      } else if (action === 'sell') {
+        if (!existingPosition) {
+          return res.status(400).json({ error: "No position to sell" });
+        }
+
+        const currentAmount = parseFloat(existingPosition.amount);
+        if (tradeAmount > currentAmount) {
+          return res.status(400).json({ error: "Insufficient holdings" });
+        }
+
+        const newAmount = currentAmount - tradeAmount;
+        
+        if (newAmount <= 0) {
+          await storage.deletePortfolio(existingPosition.id);
+        } else {
+          await storage.updatePortfolio(existingPosition.id, {
+            amount: newAmount.toString(),
+            currentValue: (newAmount * tradePrice).toString(),
+          });
+        }
+
+        const balance = await storage.getUserBalance(userId);
+        const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
+        const newAvailable = availableBalance + tradeValue;
+        
+        await storage.updateUserBalance(userId, {
+          availableBalanceUsd: newAvailable.toString(),
+        });
+
+        await storage.createTransaction({
+          userId,
+          type: 'trade',
+          amount: tradeValue.toString(),
+          currency: 'USD',
+          status: 'completed',
+          description: `Sold ${tradeAmount} ${symbol} at $${tradePrice}`,
+        });
+      }
+
+      const updatedPortfolio = await storage.getUserPortfolio(userId);
+      const updatedBalance = await storage.getUserBalance(userId);
+      
+      res.json({ 
+        success: true, 
+        portfolio: updatedPortfolio,
+        balance: updatedBalance
+      });
+    } catch (error) {
+      console.error("Trade error:", error);
+      res.status(500).json({ error: "Failed to execute trade" });
+    }
+  });
+
   // ==================== BALANCE ====================
   app.get("/api/users/:userId/balance", async (req, res) => {
     try {

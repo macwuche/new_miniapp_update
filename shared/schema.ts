@@ -257,6 +257,8 @@ export const portfolios = pgTable("portfolios", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   assetId: varchar("asset_id", { length: 50 }).notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull().default('crypto'),
+  name: varchar("name", { length: 100 }).notNull(),
   symbol: varchar("symbol", { length: 20 }).notNull(),
   amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
   averageBuyPrice: decimal("average_buy_price", { precision: 18, scale: 8 }).notNull(),
