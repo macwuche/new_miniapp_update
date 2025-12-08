@@ -36,9 +36,9 @@ interface SupportTicket {
 
 const STATUS_STYLES: { [key: string]: { bg: string; text: string; icon: any } } = {
   pending: { bg: "bg-yellow-100 dark:bg-yellow-900/40", text: "text-yellow-700 dark:text-yellow-400", icon: Clock },
-  approved: { bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-400", icon: MessageSquare },
-  completed: { bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-700 dark:text-green-400", icon: CheckCircle2 },
-  rejected: { bg: "bg-red-100 dark:bg-red-900/40", text: "text-red-700 dark:text-red-400", icon: AlertCircle },
+  open: { bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-400", icon: MessageSquare },
+  resolved: { bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-700 dark:text-green-400", icon: CheckCircle2 },
+  closed: { bg: "bg-gray-100 dark:bg-gray-900/40", text: "text-gray-700 dark:text-gray-400", icon: AlertCircle },
 };
 
 export default function Support() {
@@ -150,15 +150,16 @@ export default function Support() {
 
     setIsSubmitting(true);
     try {
-      const updatedMessages = [
-        ...selectedTicket.messages,
-        { sender: 'user' as const, text: replyMessage, timestamp: new Date().toISOString() }
-      ];
-
       const res = await fetch(`/api/tickets/${selectedTicket.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updatedMessages })
+        body: JSON.stringify({ 
+          newMessage: { 
+            sender: 'user', 
+            text: replyMessage, 
+            timestamp: new Date().toISOString() 
+          } 
+        })
       });
 
       if (!res.ok) throw new Error('Failed to send reply');

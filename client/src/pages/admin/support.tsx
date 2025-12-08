@@ -51,9 +51,9 @@ interface User {
 
 const STATUS_STYLES: { [key: string]: { bg: string; text: string; border: string } } = {
   pending: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-300" },
-  approved: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-300" },
-  completed: { bg: "bg-green-50", text: "text-green-700", border: "border-green-300" },
-  rejected: { bg: "bg-red-50", text: "text-red-700", border: "border-red-300" },
+  open: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-300" },
+  resolved: { bg: "bg-green-50", text: "text-green-700", border: "border-green-300" },
+  closed: { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-300" },
 };
 
 const StatCard = ({ title, count, percentage, buttonColor, ringColor, onClick }: any) => (
@@ -128,8 +128,8 @@ export default function Support() {
   });
 
   const pendingCount = tickets.filter(t => t.status === 'pending').length;
-  const activeCount = tickets.filter(t => t.status === 'approved').length;
-  const solvedCount = tickets.filter(t => t.status === 'completed').length;
+  const activeCount = tickets.filter(t => t.status === 'open').length;
+  const solvedCount = tickets.filter(t => t.status === 'resolved').length;
   const totalCount = tickets.length;
 
   const filteredTickets = statusFilter === 'all' 
@@ -146,15 +146,17 @@ export default function Support() {
 
     setIsSubmitting(true);
     try {
-      const updatedMessages = [
-        ...selectedTicket.messages,
-        { sender: 'admin' as const, text: replyMessage, timestamp: new Date().toISOString() }
-      ];
-
       const res = await fetch(`/api/tickets/${selectedTicket.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updatedMessages, status: 'approved' })
+        body: JSON.stringify({ 
+          newMessage: { 
+            sender: 'admin', 
+            text: replyMessage, 
+            timestamp: new Date().toISOString() 
+          },
+          status: 'open' 
+        })
       });
 
       if (!res.ok) throw new Error('Failed to send reply');

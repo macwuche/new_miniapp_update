@@ -1191,9 +1191,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/tickets/:id", async (req, res) => {
     try {
-      const ticket = await storage.updateSupportTicket(parseInt(req.params.id), req.body);
+      const ticketId = parseInt(req.params.id);
+      const { newMessage, status } = req.body;
+      
+      // Get the current ticket to append the new message
+      const currentTicket = await storage.getSupportTicket(ticketId);
+      if (!currentTicket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+      
+      // Build updated data
+      const updateData: any = { updatedAt: new Date() };
+      
+      // If a new message is being added, append it atomically
+      if (newMessage && newMessage.sender && newMessage.text) {
+        const existingMessages = currentTicket.messages || [];
+        updateData.messages = [
+          ...existingMessages,
+          {
+            sender: newMessage.sender,
+            text: newMessage.text,
+            timestamp: newMessage.timestamp || new Date().toISOString()
+          }
+        ];
+      }
+      
+      // Update status if provided
+      if (status) {
+        updateData.status = status;
+      }
+      
+      const ticket = await storage.updateSupportTicket(ticketId, updateData);
       res.json(ticket);
     } catch (error) {
+      console.error("Failed to update ticket:", error);
       res.status(500).json({ error: "Failed to update ticket" });
     }
   });
