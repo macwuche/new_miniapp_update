@@ -2,7 +2,7 @@ import { MobileLayout } from "@/components/layout/mobile-layout";
 import { useTelegram } from "@/lib/telegram-mock";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Zap, Send, MessageSquare, Sun, Moon, Smartphone, ArrowUpDown } from "lucide-react";
+import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Send, MessageSquare, Sun, Moon, Smartphone, ArrowUpDown } from "lucide-react";
 import { Link } from "wouter";
 import { useTheme } from "@/lib/theme";
 import premiumStarIcon from "@assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922.png";
@@ -38,23 +38,6 @@ export default function Profile() {
           {user?.first_name} {user?.last_name}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6">@{user?.username || "username"}</p>
-
-        {!user?.is_premium && (
-           <div className="mb-6 bg-gradient-to-r from-primary/10 to-blue-400/10 p-4 rounded-2xl border border-blue-100">
-             <div className="flex items-center gap-3 mb-3">
-               <div className="p-2 bg-primary text-white rounded-full">
-                 <Zap size={18} fill="currentColor" />
-               </div>
-               <div className="text-left">
-                 <h3 className="font-bold text-primary">Upgrade to Pro</h3>
-                 <p className="text-xs text-gray-500">0% fees on your first deposit</p>
-               </div>
-             </div>
-             <Button className="w-full bg-primary text-white shadow-blue-200 shadow-lg">
-               Get Started
-             </Button>
-           </div>
-        )}
 
         <div className="grid grid-cols-2 gap-3 mb-8">
           <Card 
