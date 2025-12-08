@@ -17,6 +17,7 @@ import {
   cryptoAddresses,
   portfolios,
   userBalances,
+  supportTicketCategories,
   supportTickets,
   systemSettings,
   userEmails,
@@ -59,6 +60,8 @@ import {
   type InsertPortfolio,
   type UserBalance,
   type InsertUserBalance,
+  type SupportTicketCategory,
+  type InsertSupportTicketCategory,
   type SupportTicket,
   type InsertSupportTicket,
   type SystemSettings,
@@ -179,6 +182,12 @@ export interface IStorage {
   getUserBalance(userId: number): Promise<UserBalance | undefined>;
   createUserBalance(balance: InsertUserBalance): Promise<UserBalance>;
   updateUserBalance(userId: number, balance: Partial<InsertUserBalance>): Promise<UserBalance | undefined>;
+  
+  // Support Ticket Categories
+  createSupportTicketCategory(category: InsertSupportTicketCategory): Promise<SupportTicketCategory>;
+  listSupportTicketCategories(activeOnly?: boolean): Promise<SupportTicketCategory[]>;
+  updateSupportTicketCategory(id: number, category: Partial<InsertSupportTicketCategory>): Promise<SupportTicketCategory | undefined>;
+  deleteSupportTicketCategory(id: number): Promise<boolean>;
   
   // Support Tickets
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
@@ -627,6 +636,30 @@ export class DatabaseStorage implements IStorage {
   async updateUserBalance(userId: number, balance: Partial<InsertUserBalance>): Promise<UserBalance | undefined> {
     const [updated] = await db.update(userBalances).set(balance).where(eq(userBalances.userId, userId)).returning();
     return updated || undefined;
+  }
+
+  // Support Tickets
+  // Support Ticket Categories
+  async createSupportTicketCategory(category: InsertSupportTicketCategory): Promise<SupportTicketCategory> {
+    const [created] = await db.insert(supportTicketCategories).values(category).returning();
+    return created;
+  }
+
+  async listSupportTicketCategories(activeOnly?: boolean): Promise<SupportTicketCategory[]> {
+    if (activeOnly) {
+      return await db.select().from(supportTicketCategories).where(eq(supportTicketCategories.isActive, true));
+    }
+    return await db.select().from(supportTicketCategories);
+  }
+
+  async updateSupportTicketCategory(id: number, category: Partial<InsertSupportTicketCategory>): Promise<SupportTicketCategory | undefined> {
+    const [updated] = await db.update(supportTicketCategories).set(category).where(eq(supportTicketCategories.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteSupportTicketCategory(id: number): Promise<boolean> {
+    const result = await db.delete(supportTicketCategories).where(eq(supportTicketCategories.id, id));
+    return true;
   }
 
   // Support Tickets

@@ -5,12 +5,67 @@ import { Card } from "@/components/ui/card";
 import { Settings, Shield, CreditCard, HelpCircle, LogOut, ChevronRight, Send, MessageSquare, Sun, Moon, Smartphone, ArrowUpDown } from "lucide-react";
 import { Link } from "wouter";
 import { useTheme } from "@/lib/theme";
+import { useQuery } from "@tanstack/react-query";
 import premiumStarIcon from "@assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922.png";
 import regularUserIcon from "@assets/image-mJpsijxGqz7FlGXguHAG8f1zAYsu25_1764962504673.png";
+
+interface UserBalance {
+  userId: number;
+  totalBalanceUsd: string;
+  availableBalanceUsd: string;
+  lockedBalanceUsd: string;
+}
+
+interface SystemSettings {
+  telegramSupportUrl?: string;
+}
 
 export default function Profile() {
   const { user } = useTelegram();
   const { theme, setTheme } = useTheme();
+  
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', user?.id],
+    queryFn: async () => {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.id?.toString() || null,
+          username: user?.username || 'demo_user',
+          firstName: user?.first_name || 'Demo',
+          lastName: user?.last_name || 'User',
+          profilePicture: user?.photo_url || null
+        })
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: true,
+  });
+  
+  const { data: balance } = useQuery<UserBalance>({
+    queryKey: ['/api/users/balance', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return null;
+      const res = await fetch(`/api/users/${dbUser.id}/balance`);
+      if (!res.ok) throw new Error('Failed to fetch balance');
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+  });
+
+  const { data: settings } = useQuery<SystemSettings>({
+    queryKey: ['/api/settings/telegram-support'],
+    queryFn: async () => {
+      const res = await fetch('/api/settings/telegram-support');
+      if (!res.ok) return { telegramSupportUrl: 'https://t.me/BrokerageSupport' };
+      return res.json();
+    }
+  });
+
+  const telegramUrl = settings?.telegramSupportUrl || 'https://t.me/BrokerageSupport';
+  const totalBalance = balance ? parseFloat(balance.totalBalanceUsd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
 
   return (
     <MobileLayout>
@@ -46,9 +101,10 @@ export default function Profile() {
               background: 'linear-gradient(to bottom right, #2563eb, #1d4ed8)',
               color: 'white'
             }}
+            data-testid="card-total-balance"
           >
-            <p className="text-xs mb-1" style={{ opacity: 0.8, color: 'white' }}>Total Assets</p>
-            <p className="text-lg font-bold" style={{ color: 'white' }}>$12,450.00</p>
+            <p className="text-xs mb-1" style={{ opacity: 0.8, color: 'white' }}>Total Balance</p>
+            <p className="text-lg font-bold" style={{ color: 'white' }} data-testid="text-balance-amount">${totalBalance}</p>
           </Card>
           <Card className="p-4 border-none shadow-sm bg-white dark:bg-slate-800">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Today's P&L</p>
@@ -127,7 +183,7 @@ export default function Profile() {
           <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2 mt-6">Support</p>
 
           {/* Telegram Support */}
-          <a href="https://t.me/BrokerageSupport" target="_blank" rel="noopener noreferrer" className="block">
+          <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="block" data-testid="link-telegram-support">
             <button className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm active:bg-gray-50 dark:active:bg-slate-700 transition-colors mb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-500">

@@ -6,14 +6,63 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Save, AlertTriangle, Shield, Bell, Settings as SettingsIcon, DollarSign, Image as ImageIcon, Upload } from "lucide-react";
+import { Save, AlertTriangle, Shield, Bell, Settings as SettingsIcon, DollarSign, Image as ImageIcon, Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface SystemSettings {
+  id?: number;
+  siteName: string;
+  supportEmail: string;
+  telegramSupportUrl?: string | null;
+  depositEnabled: boolean;
+  withdrawalEnabled: boolean;
+  minDeposit: string;
+  minWithdrawal: string;
+  maintenanceMode: boolean;
+}
 
 export default function AdminSettings() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState<Partial<SystemSettings>>({
+    siteName: 'Crypto Trading Platform',
+    supportEmail: 'support@example.com',
+    telegramSupportUrl: '',
+    depositEnabled: true,
+    withdrawalEnabled: true,
+    minDeposit: '10',
+    minWithdrawal: '10',
+    maintenanceMode: false
+  });
+
+  const { data: settings, isLoading } = useQuery<SystemSettings>({
+    queryKey: ['/api/settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/settings');
+      if (!res.ok) throw new Error('Failed to fetch settings');
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        siteName: settings.siteName || 'Crypto Trading Platform',
+        supportEmail: settings.supportEmail || '',
+        telegramSupportUrl: settings.telegramSupportUrl || '',
+        depositEnabled: settings.depositEnabled ?? true,
+        withdrawalEnabled: settings.withdrawalEnabled ?? true,
+        minDeposit: settings.minDeposit || '10',
+        minWithdrawal: settings.minWithdrawal || '10',
+        maintenanceMode: settings.maintenanceMode ?? false
+      });
+    }
+  }, [settings]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,14 +77,41 @@ export default function AdminSettings() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    toast({
-      title: "Settings Saved",
-      description: "System configuration has been updated successfully.",
-    });
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) throw new Error('Failed to save settings');
+
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      
+      toast({
+        title: "Settings Saved",
+        description: "System configuration has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -44,13 +120,9 @@ export default function AdminSettings() {
           <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
           <p className="text-gray-500 mt-2">Manage platform configuration and operational parameters.</p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
-          {isSaving ? "Saving..." : (
-            <>
-              <Save size={18} className="mr-2" />
-              Save Changes
-            </>
-          )}
+        <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700" data-testid="button-save-settings">
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save size={18} className="mr-2" />}
+          Save Changes
         </Button>
       </div>
 
@@ -133,20 +205,11 @@ export default function AdminSettings() {
                     <Label className="text-base">Platform Name</Label>
                     <p className="text-sm text-gray-500">Used in emails and browser titles.</p>
                   </div>
-                  <Input defaultValue="TradeMaster Pro" />
-                  
-                  <Separator className="my-4" />
-
-                  <div className="space-y-1">
-                    <Label className="text-base">Dark Mode Logo</Label>
-                    <p className="text-sm text-gray-500">Optional version for dark themes.</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Button variant="outline" className="w-full" disabled>
-                      <Upload size={16} className="mr-2" />
-                      Upload Dark Variant
-                    </Button>
-                  </div>
+                  <Input 
+                    value={formData.siteName} 
+                    onChange={(e) => setFormData({ ...formData, siteName: e.target.value })}
+                    data-testid="input-site-name"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -162,33 +225,29 @@ export default function AdminSettings() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label>Default Trading Fee (%)</Label>
-                  <div className="relative">
-                    <Input defaultValue="0.1" type="number" step="0.01" />
-                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">%</span>
-                  </div>
-                  <p className="text-xs text-gray-500">Applied to all spot trading pairs unless overridden.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Bot Performance Fee (%)</Label>
-                  <div className="relative">
-                    <Input defaultValue="2.5" type="number" step="0.1" />
-                    <span className="absolute right-3 top-2.5 text-gray-500 text-sm">%</span>
-                  </div>
-                  <p className="text-xs text-gray-500">Deducted from profits generated by AI bots.</p>
-                </div>
-                <div className="space-y-2">
                   <Label>Minimum Deposit (USD)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-gray-500 text-sm">$</span>
-                    <Input defaultValue="50" type="number" className="pl-7" />
+                    <Input 
+                      value={formData.minDeposit} 
+                      onChange={(e) => setFormData({ ...formData, minDeposit: e.target.value })}
+                      type="number" 
+                      className="pl-7" 
+                      data-testid="input-min-deposit"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Minimum Withdrawal (USD)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-gray-500 text-sm">$</span>
-                    <Input defaultValue="100" type="number" className="pl-7" />
+                    <Input 
+                      value={formData.minWithdrawal} 
+                      onChange={(e) => setFormData({ ...formData, minWithdrawal: e.target.value })}
+                      type="number" 
+                      className="pl-7" 
+                      data-testid="input-min-withdrawal"
+                    />
                   </div>
                 </div>
               </div>
@@ -196,22 +255,28 @@ export default function AdminSettings() {
               <Separator />
               
               <div className="space-y-4">
-                <h3 className="font-medium text-gray-900">Risk Management</h3>
+                <h3 className="font-medium text-gray-900">Operations</h3>
                 <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-gray-50">
                   <div className="space-y-0.5">
-                    <Label className="text-base">Max Leverage Cap</Label>
-                    <p className="text-sm text-gray-500">Limit the maximum leverage available to standard users</p>
+                    <Label className="text-base">Enable Deposits</Label>
+                    <p className="text-sm text-gray-500">Allow users to deposit funds</p>
                   </div>
-                  <div className="w-[100px]">
-                    <Input defaultValue="100" type="number" />
-                  </div>
+                  <Switch 
+                    checked={formData.depositEnabled} 
+                    onCheckedChange={(v) => setFormData({ ...formData, depositEnabled: v })}
+                    data-testid="switch-deposit-enabled"
+                  />
                 </div>
                 <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-gray-50">
                   <div className="space-y-0.5">
-                    <Label className="text-base">Require KYC for Withdrawals &gt; $10k</Label>
-                    <p className="text-sm text-gray-500">Enforce identity verification for large transactions</p>
+                    <Label className="text-base">Enable Withdrawals</Label>
+                    <p className="text-sm text-gray-500">Allow users to withdraw funds</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={formData.withdrawalEnabled} 
+                    onCheckedChange={(v) => setFormData({ ...formData, withdrawalEnabled: v })}
+                    data-testid="switch-withdrawal-enabled"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -240,11 +305,6 @@ export default function AdminSettings() {
                 </div>
                 <Switch defaultChecked />
               </div>
-              <Separator />
-              <div className="space-y-2">
-                <Label>Admin Session Timeout (Minutes)</Label>
-                <Input defaultValue="30" type="number" className="max-w-[200px]" />
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -259,16 +319,22 @@ export default function AdminSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Support Email Address</Label>
-                  <Input defaultValue="support@brokerage.com" type="email" />
+                  <Input 
+                    value={formData.supportEmail} 
+                    onChange={(e) => setFormData({ ...formData, supportEmail: e.target.value })}
+                    type="email" 
+                    data-testid="input-support-email"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Telegram Announcement Channel</Label>
-                  <Input defaultValue="@BrokerageAnnouncements" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telegram Support Contact</Label>
-                  <Input defaultValue="@BrokerageSupport" placeholder="@username or https://t.me/..." />
-                  <p className="text-xs text-gray-500">Users will be directed here for Telegram support.</p>
+                  <Label>Telegram Support Link</Label>
+                  <Input 
+                    value={formData.telegramSupportUrl || ''} 
+                    onChange={(e) => setFormData({ ...formData, telegramSupportUrl: e.target.value })}
+                    placeholder="https://t.me/YourSupport"
+                    data-testid="input-telegram-support-url"
+                  />
+                  <p className="text-xs text-gray-500">Users will be directed here for Telegram support from the profile page.</p>
                 </div>
               </div>
               <Separator />
@@ -280,10 +346,6 @@ export default function AdminSettings() {
                 </div>
                 <div className="flex items-center justify-between">
                   <Label className="font-normal">Withdrawal Status Updates</Label>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label className="font-normal">Bot Profit Reports (Daily)</Label>
                   <Switch defaultChecked />
                 </div>
               </div>
@@ -309,7 +371,11 @@ export default function AdminSettings() {
                     This will disconnect all active users and pause trading bots.
                   </p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={formData.maintenanceMode} 
+                  onCheckedChange={(v) => setFormData({ ...formData, maintenanceMode: v })}
+                  data-testid="switch-maintenance-mode"
+                />
               </div>
             </CardContent>
           </Card>

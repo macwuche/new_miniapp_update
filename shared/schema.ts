@@ -273,10 +273,19 @@ export const userBalances = pgTable("user_balances", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Support Ticket Categories table (admin-defined)
+export const supportTicketCategories = pgTable("support_ticket_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Support Tickets table
 export const supportTickets = pgTable("support_tickets", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  categoryId: integer("category_id").references(() => supportTicketCategories.id),
   subject: varchar("subject", { length: 255 }).notNull(),
   message: text("message").notNull(),
   status: ticketStatusEnum("status").default('pending').notNull(),
@@ -291,6 +300,7 @@ export const systemSettings = pgTable("system_settings", {
   id: serial("id").primaryKey(),
   siteName: varchar("site_name", { length: 100 }).default('Crypto Trading Platform').notNull(),
   supportEmail: varchar("support_email", { length: 255 }).notNull(),
+  telegramSupportUrl: varchar("telegram_support_url", { length: 500 }),
   depositEnabled: boolean("deposit_enabled").default(true).notNull(),
   withdrawalEnabled: boolean("withdrawal_enabled").default(true).notNull(),
   minDeposit: decimal("min_deposit", { precision: 18, scale: 8 }).default('10').notNull(),
@@ -461,6 +471,7 @@ export const insertConnectedWalletSchema = createInsertSchema(connectedWallets).
 export const insertCryptoAddressSchema = createInsertSchema(cryptoAddresses).omit({ id: true, createdAt: true });
 export const insertPortfolioSchema = createInsertSchema(portfolios).omit({ id: true, updatedAt: true });
 export const insertUserBalanceSchema = createInsertSchema(userBalances).omit({ updatedAt: true });
+export const insertSupportTicketCategorySchema = createInsertSchema(supportTicketCategories).omit({ id: true, createdAt: true });
 export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omit({ id: true, updatedAt: true });
 export const insertUserEmailSchema = createInsertSchema(userEmails).omit({ id: true, linkedAt: true });
@@ -505,6 +516,8 @@ export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
 export type Portfolio = typeof portfolios.$inferSelect;
 export type InsertUserBalance = z.infer<typeof insertUserBalanceSchema>;
 export type UserBalance = typeof userBalances.$inferSelect;
+export type InsertSupportTicketCategory = z.infer<typeof insertSupportTicketCategorySchema>;
+export type SupportTicketCategory = typeof supportTicketCategories.$inferSelect;
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;

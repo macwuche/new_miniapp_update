@@ -1154,6 +1154,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/tickets", requireAdmin, async (req, res) => {
+    try {
+      const tickets = await storage.listAllTickets();
+      res.json(tickets);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tickets" });
+    }
+  });
+
   app.get("/api/users/:userId/tickets", async (req, res) => {
     try {
       const tickets = await storage.listUserTickets(parseInt(req.params.userId));
@@ -1191,12 +1200,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/settings/telegram-support", async (req, res) => {
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json({ telegramSupportUrl: settings?.telegramSupportUrl || null });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch telegram support URL" });
+    }
+  });
+
   app.patch("/api/settings", requireAdmin, async (req, res) => {
     try {
       const settings = await storage.updateSystemSettings(req.body);
       res.json(settings);
     } catch (error) {
       res.status(500).json({ error: "Failed to update settings" });
+    }
+  });
+
+  // ==================== TICKET CATEGORIES ====================
+  app.get("/api/ticket-categories", async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const categories = await storage.listSupportTicketCategories(activeOnly);
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch ticket categories" });
+    }
+  });
+
+  app.post("/api/admin/ticket-categories", requireAdmin, async (req, res) => {
+    try {
+      const category = await storage.createSupportTicketCategory(req.body);
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create ticket category" });
+    }
+  });
+
+  app.patch("/api/admin/ticket-categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const category = await storage.updateSupportTicketCategory(parseInt(req.params.id), req.body);
+      res.json(category);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update ticket category" });
+    }
+  });
+
+  app.delete("/api/admin/ticket-categories/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteSupportTicketCategory(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete ticket category" });
     }
   });
 
