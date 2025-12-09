@@ -155,6 +155,9 @@ export default function Home() {
     ub.status === 'active' && !ub.isStopped && new Date(ub.expiryDate) > new Date()
   ) ?? false;
 
+  // Check if user has purchased any bots (active or not)
+  const hasPurchasedBots = (userBots?.length ?? 0) > 0;
+
   // Fetch popular assets from API
   const [featuredAssets, setFeaturedAssets] = useState<any[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(true);
@@ -273,12 +276,12 @@ export default function Home() {
                   <span className="text-xs font-medium">Withdraw</span>
                 </button>
               </Link>
-              <Link href="/bot-market">
+              <Link href={hasPurchasedBots ? "/bot-investments" : "/bot-market"}>
                 <button className="w-full group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95">
                   <div className="p-2.5 bg-white text-primary rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
                     <TrendingUp size={20} strokeWidth={2.5} />
                   </div>
-                  <span className="text-xs font-medium">Buy Bot</span>
+                  <span className="text-xs font-medium">{hasPurchasedBots ? "View Bot" : "Buy Bot"}</span>
                 </button>
               </Link>
             </div>
