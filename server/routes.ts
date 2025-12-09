@@ -1021,6 +1021,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== ADMIN AI BOTS ====================
+  app.get("/api/admin/bots", requireAdmin, async (req, res) => {
+    try {
+      const bots = await storage.listAllAiBots();
+      res.json(bots);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch bots" });
+    }
+  });
+
+  app.post("/api/admin/bots", requireAdmin, async (req, res) => {
+    try {
+      const bot = await storage.createAiBot(req.body);
+      res.json(bot);
+    } catch (error) {
+      console.error("Bot creation error:", error);
+      res.status(500).json({ error: "Failed to create bot" });
+    }
+  });
+
+  app.patch("/api/admin/bots/:id", requireAdmin, async (req, res) => {
+    try {
+      const bot = await storage.updateAiBot(parseInt(req.params.id), req.body);
+      if (!bot) {
+        return res.status(404).json({ error: "Bot not found" });
+      }
+      res.json(bot);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update bot" });
+    }
+  });
+
+  app.delete("/api/admin/bots/:id", requireAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteAiBot(parseInt(req.params.id));
+      if (!deleted) {
+        return res.status(404).json({ error: "Bot not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete bot" });
+    }
+  });
+
   // ==================== USER BOT SUBSCRIPTIONS ====================
   app.get("/api/users/:userId/bots", async (req, res) => {
     try {
@@ -1033,7 +1077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user-bots", async (req, res) => {
     try {
-      const { userId, botId } = req.body;
+      const { userId, botId, investmentAmount } = req.body;
 
       // Get bot details
       const bot = await storage.getAiBot(botId);
@@ -1041,9 +1085,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Bot not found" });
       }
 
-      // Check balance
+      // Validate investment amount
+      const investment = parseFloat(investmentAmount);
+      if (!investment || investment < parseFloat(bot.minInvestment) || investment > parseFloat(bot.maxInvestment)) {
+        return res.status(400).json({ 
+          error: `Investment must be between $${bot.minInvestment} and $${bot.maxInvestment}` 
+        });
+      }
+
+      // Check balance (subscription fee + investment amount)
+      const totalCost = parseFloat(bot.price) + investment;
       const balance = await storage.getUserBalance(userId);
-      if (!balance || parseFloat(balance.availableBalanceUsd) < parseFloat(bot.price)) {
+      if (!balance || parseFloat(balance.totalBalanceUsd) < totalCost) {
         return res.status(400).json({ error: "Insufficient balance" });
       }
 
@@ -1056,26 +1109,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userBot = await storage.createUserBot({
         userId,
         botId,
+        investmentAmount: investmentAmount.toString(),
         purchaseDate,
         expiryDate,
         status: 'active',
         currentProfit: "0"
       });
 
-      // Update balance
-      const newAvailable = parseFloat(balance.availableBalanceUsd) - parseFloat(bot.price);
+      // Update balance (deduct subscription fee + investment amount)
+      const newTotal = parseFloat(balance.totalBalanceUsd) - totalCost;
       await storage.updateUserBalance(userId, {
-        availableBalanceUsd: newAvailable.toString()
+        totalBalanceUsd: newTotal.toString()
       });
 
-      // Create transaction
+      // Create transaction for subscription
       await storage.createTransaction({
         userId,
         type: 'bot_subscription',
-        amount: bot.price,
+        amount: totalCost.toString(),
         currency: 'USD',
         status: 'completed',
-        description: `AI Bot: ${bot.name}`
+        description: `AI Bot: ${bot.name} (Fee: $${bot.price}, Investment: $${investmentAmount})`
       });
 
       res.json(userBot);

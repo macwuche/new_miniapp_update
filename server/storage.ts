@@ -153,7 +153,9 @@ export interface IStorage {
   createAiBot(bot: InsertAiBot): Promise<AiBot>;
   getAiBot(id: number): Promise<AiBot | undefined>;
   listAiBots(): Promise<AiBot[]>;
+  listAllAiBots(): Promise<AiBot[]>;
   updateAiBot(id: number, bot: Partial<InsertAiBot>): Promise<AiBot | undefined>;
+  deleteAiBot(id: number): Promise<boolean>;
   
   // User Bots
   createUserBot(userBot: InsertUserBot): Promise<UserBot>;
@@ -529,9 +531,18 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(aiBots).where(eq(aiBots.isActive, true));
   }
 
+  async listAllAiBots(): Promise<AiBot[]> {
+    return await db.select().from(aiBots).orderBy(desc(aiBots.createdAt));
+  }
+
   async updateAiBot(id: number, bot: Partial<InsertAiBot>): Promise<AiBot | undefined> {
     const [updated] = await db.update(aiBots).set(bot).where(eq(aiBots.id, id)).returning();
     return updated || undefined;
+  }
+
+  async deleteAiBot(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(aiBots).where(eq(aiBots.id, id)).returning();
+    return !!deleted;
   }
 
   // User Bots
