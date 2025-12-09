@@ -71,7 +71,6 @@ export default function AssetDetail() {
   const { symbol } = useParams<{ symbol: string }>();
   const [, setLocation] = useLocation();
   const { user } = useTelegram();
-  const userId = user?.id || 4;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -82,6 +81,29 @@ export default function AssetDetail() {
   const [chartPeriod, setChartPeriod] = useState<'1' | '7' | '30'>('7');
 
   const assetId = SYMBOL_TO_ID[symbol?.toUpperCase() || ''] || symbol?.toLowerCase();
+
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', user?.id],
+    queryFn: async () => {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.id?.toString() || null,
+          username: user?.username || 'demo_user',
+          firstName: user?.first_name || 'Demo',
+          lastName: user?.last_name || 'User',
+          profilePicture: user?.photo_url || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to register user');
+      return res.json();
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60,
+  });
+
+  const userId = dbUser?.id || 4;
 
   const { data: assetDetails, isLoading: detailsLoading } = useQuery<AssetDetails>({
     queryKey: ['asset-details', assetId],
