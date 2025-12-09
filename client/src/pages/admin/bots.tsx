@@ -105,7 +105,7 @@ export default function BotManagement() {
   const { data: bots = [], isLoading } = useQuery<AiBot[]>({
     queryKey: ['/api/admin/bots'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/bots');
+      const res = await fetch('/api/admin/bots', { credentials: 'include' });
       if (!res.ok) throw new Error("Failed to fetch bots");
       return res.json();
     },
@@ -117,6 +117,7 @@ export default function BotManagement() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error("Failed to create bot");
       return res.json();
@@ -137,6 +138,7 @@ export default function BotManagement() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error("Failed to update bot");
       return res.json();
@@ -153,7 +155,7 @@ export default function BotManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`/api/admin/bots/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/bots/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) throw new Error("Failed to delete bot");
       return res.json();
     },
