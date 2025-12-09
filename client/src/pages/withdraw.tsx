@@ -517,10 +517,10 @@ export default function Withdraw() {
   if (!gatewaysLoading && gateways.length === 0) {
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-8 pt-2">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={() => window.history.back()}
               data-testid="button-back"
             >
@@ -533,11 +533,11 @@ export default function Withdraw() {
               <LogOut className="text-white" size={40} strokeWidth={2.5} />
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">
               No Withdrawal Methods
             </h1>
 
-            <p className="text-gray-500 text-sm max-w-xs mx-auto mb-10 leading-relaxed">
+            <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs mx-auto mb-10 leading-relaxed">
               There are currently no withdrawal methods available. Please check back later or contact support.
             </p>
 
@@ -556,16 +556,16 @@ export default function Withdraw() {
   if (view === 'gateways') {
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-6 pt-2 flex items-center justify-between">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={goBack}
               data-testid="button-back"
             >
               <ArrowLeft size={20} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Withdraw Funds</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Withdraw Funds</h1>
             <div className="w-10" />
           </div>
 
@@ -583,7 +583,7 @@ export default function Withdraw() {
 
           {gatewaysLoading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-500" />
             </div>
           ) : (
             <div className="space-y-3">
@@ -600,11 +600,11 @@ export default function Withdraw() {
                         <Link2 className="text-purple-600" size={24} />
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900">Linked Wallet</h3>
+                        <h3 className="font-bold text-gray-900 dark:text-white">Linked Wallet</h3>
                         <p className="text-xs text-purple-600 font-medium">
                           Withdraw to connected external wallet
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                           {connectedWallets.length} wallet{connectedWallets.length !== 1 ? 's' : ''} connected
                         </p>
                       </div>
@@ -618,30 +618,30 @@ export default function Withdraw() {
               {gateways.map((gateway) => (
                 <Card 
                   key={gateway.id}
-                  className="p-4 border-none shadow-sm bg-white hover:shadow-md transition-all cursor-pointer group"
+                  className="p-4 border-none shadow-sm bg-white dark:bg-gray-800 hover:shadow-md transition-all cursor-pointer group"
                   onClick={() => handleSelectGateway(gateway)}
                   data-testid={`card-gateway-${gateway.id}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
                         {gateway.imageUrl ? (
                           <img src={gateway.imageUrl} alt={gateway.name} className="w-8 h-8 object-contain" />
                         ) : (
-                          <Wallet className="text-gray-500" size={24} />
+                          <Wallet className="text-gray-500 dark:text-gray-400" size={24} />
                         )}
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900">{gateway.name}</h3>
-                        <p className="text-xs text-gray-500">
+                        <h3 className="font-bold text-gray-900 dark:text-white">{gateway.name}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {gateway.networkType} • Fee: {gateway.charges}{gateway.chargesType === 'percentage' ? '%' : ' USD'}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                           Min: ${parseFloat(gateway.minAmount).toFixed(2)} - Max: ${parseFloat(gateway.maxAmount).toFixed(2)}
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="text-gray-300 group-hover:text-gray-500 transition-colors" size={20} />
+                    <ChevronRight className="text-gray-300 group-hover:text-gray-500 dark:text-gray-400 transition-colors" size={20} />
                   </div>
                 </Card>
               ))}
@@ -681,16 +681,16 @@ export default function Withdraw() {
   if (view === 'linked-wallets') {
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-6 pt-2 flex items-center justify-between">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={goBack}
               data-testid="button-back"
             >
               <ArrowLeft size={20} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Linked Wallets</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Linked Wallets</h1>
             <div className="w-10" />
           </div>
 
@@ -708,14 +708,14 @@ export default function Withdraw() {
 
           {walletsLoading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-500" />
             </div>
           ) : (
             <div className="space-y-3">
               {connectedWallets.map((wallet) => (
                 <Card 
                   key={wallet.id}
-                  className="p-4 border-none shadow-sm bg-white hover:shadow-md transition-all cursor-pointer group"
+                  className="p-4 border-none shadow-sm bg-white dark:bg-gray-800 hover:shadow-md transition-all cursor-pointer group"
                   onClick={() => {
                     setSelectedLinkedWallet(wallet);
                     setView('linked-withdraw');
@@ -732,20 +732,20 @@ export default function Withdraw() {
                         </div>
                       )}
                       <div>
-                        <h3 className="font-bold text-gray-900">{wallet.name}</h3>
-                        <p className="text-xs text-gray-500 font-mono truncate max-w-[180px]">
+                        <h3 className="font-bold text-gray-900 dark:text-white">{wallet.name}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate max-w-[180px]">
                           {wallet.address.slice(0, 8)}...{wallet.address.slice(-6)}
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="text-gray-300 group-hover:text-gray-500 transition-colors" size={20} />
+                    <ChevronRight className="text-gray-300 group-hover:text-gray-500 dark:text-gray-400 transition-colors" size={20} />
                   </div>
                 </Card>
               ))}
 
               <Link href="/connect-wallet">
                 <Button 
-                  className="w-full h-14 mt-4 bg-white border-2 border-dashed border-purple-300 text-purple-500 hover:border-purple-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all"
+                  className="w-full h-14 mt-4 bg-white dark:bg-gray-800 border-2 border-dashed border-purple-300 text-purple-500 hover:border-purple-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all"
                   data-testid="button-connect-new-wallet"
                 >
                   <Plus size={20} />
@@ -769,14 +769,14 @@ export default function Withdraw() {
     if (isSubmitting) {
       return (
         <MobileLayout>
-          <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-6">
             {showLinkedSuccess ? (
               <div className="text-center animate-in fade-in duration-500">
                 <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                   <CheckCircle2 className="w-14 h-14 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Withdrawal Submitted!</h2>
-                <p className="text-gray-500">Your withdrawal request is pending approval.</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Withdrawal Submitted!</h2>
+                <p className="text-gray-500 dark:text-gray-400">Your withdrawal request is pending approval.</p>
               </div>
             ) : (
               <div className="text-center w-full max-w-xs">
@@ -791,9 +791,9 @@ export default function Withdraw() {
                     <Wallet className="w-10 h-10 text-purple-600" />
                   </div>
                 )}
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Processing Withdrawal</h2>
-                <p className="text-gray-500 mb-2">${parseFloat(amount).toFixed(2)} in {selectedCoin}</p>
-                <p className="text-sm text-gray-400 mb-8">Please wait while we process your request...</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Processing Withdrawal</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-2">${parseFloat(amount).toFixed(2)} in {selectedCoin}</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">Please wait while we process your request...</p>
                 
                 <div className="w-full">
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -802,7 +802,7 @@ export default function Withdraw() {
                       style={{ width: `${linkedWithdrawProgress}%` }}
                     />
                   </div>
-                  <p className="text-sm text-gray-400 mt-2">{linkedWithdrawProgress}% Complete</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">{linkedWithdrawProgress}% Complete</p>
                 </div>
               </div>
             )}
@@ -813,22 +813,22 @@ export default function Withdraw() {
 
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-6 pt-2 flex items-center justify-between">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={goBack}
               data-testid="button-back"
             >
               <ArrowLeft size={20} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Withdraw to Wallet</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Withdraw to Wallet</h1>
             <div className="w-10" />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm space-y-6">
             {/* Selected wallet */}
-            <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
               {selectedLinkedWallet?.logo ? (
                 <img src={selectedLinkedWallet.logo} alt={selectedLinkedWallet.name} className="w-12 h-12 rounded-xl object-contain" />
               ) : (
@@ -837,8 +837,8 @@ export default function Withdraw() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-gray-900">{selectedLinkedWallet?.name}</h3>
-                <p className="text-xs text-gray-500 font-mono truncate">
+                <h3 className="font-bold text-gray-900 dark:text-white">{selectedLinkedWallet?.name}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">
                   {selectedLinkedWallet?.address}
                 </p>
               </div>
@@ -876,24 +876,24 @@ export default function Withdraw() {
                 className="text-lg h-14"
                 data-testid="input-amount"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Min: ${limits.min.toFixed(2)} | Max: ${limits.max.toFixed(2)}
               </p>
             </div>
 
             {/* Summary */}
             {parseFloat(amount) > 0 && selectedCoin && (
-              <div className="space-y-2 pt-4 border-t border-gray-100">
+              <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Amount</span>
+                  <span className="text-gray-500 dark:text-gray-400">Amount</span>
                   <span className="font-medium">${parseFloat(amount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Coin</span>
+                  <span className="text-gray-500 dark:text-gray-400">Coin</span>
                   <span className="font-medium">{selectedCoin}</span>
                 </div>
-                <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
-                  <span className="font-bold text-gray-900">Receiving</span>
+                <div className="flex justify-between text-sm pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="font-bold text-gray-900 dark:text-white">Receiving</span>
                   <span className="font-bold text-purple-600">${parseFloat(amount).toFixed(2)} in {selectedCoin}</span>
                 </div>
               </div>
@@ -908,7 +908,7 @@ export default function Withdraw() {
               Make Withdrawal
             </Button>
 
-            <p className="text-xs text-center text-gray-400">
+            <p className="text-xs text-center text-gray-400 dark:text-gray-500">
               Withdrawal requests are processed within 24 hours
             </p>
           </div>
@@ -921,16 +921,16 @@ export default function Withdraw() {
   if (view === 'addresses') {
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-6 pt-2 flex items-center justify-between">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={goBack}
               data-testid="button-back"
             >
               <ArrowLeft size={20} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">{selectedGateway?.name}</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{selectedGateway?.name}</h1>
             <div className="w-10" />
           </div>
 
@@ -946,18 +946,18 @@ export default function Withdraw() {
             </div>
           </div>
 
-          <p className="text-sm text-gray-600 mb-4 font-medium">Your Saved Addresses</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 font-medium">Your Saved Addresses</p>
 
           {addressesLoading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-500" />
             </div>
           ) : savedAddresses.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Wallet className="text-gray-400" size={28} />
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                <Wallet className="text-gray-400 dark:text-gray-500" size={28} />
               </div>
-              <p className="text-gray-500 mb-6">No saved addresses for {selectedGateway?.name}</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">No saved addresses for {selectedGateway?.name}</p>
               <Button 
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
                 onClick={() => setView('add-address')}
@@ -972,15 +972,15 @@ export default function Withdraw() {
               {savedAddresses.map((addr) => (
                 <Card 
                   key={addr.id}
-                  className="p-4 border-none shadow-sm bg-white hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
+                  className="p-4 border-none shadow-sm bg-white dark:bg-gray-800 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
                   onClick={() => handleSelectAddress(addr)}
                   data-testid={`card-address-${addr.id}`}
                 >
                   <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
                   <div className="flex items-center justify-between">
                     <div className="overflow-hidden">
-                      <h3 className="font-bold text-gray-900">{addr.label}</h3>
-                      <p className="text-xs text-gray-500 font-mono truncate max-w-[200px]">
+                      <h3 className="font-bold text-gray-900 dark:text-white">{addr.label}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate max-w-[200px]">
                         {addr.address}
                       </p>
                     </div>
@@ -994,14 +994,14 @@ export default function Withdraw() {
                       >
                         <Trash2 size={18} />
                       </Button>
-                      <ChevronRight className="text-gray-300 group-hover:text-gray-500" size={20} />
+                      <ChevronRight className="text-gray-300 group-hover:text-gray-500 dark:text-gray-400" size={20} />
                     </div>
                   </div>
                 </Card>
               ))}
 
               <Button 
-                className="w-full h-14 mt-4 bg-white border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all"
+                className="w-full h-14 mt-4 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all"
                 onClick={() => setView('add-address')}
                 data-testid="button-add-another-address"
               >
@@ -1019,27 +1019,27 @@ export default function Withdraw() {
   if (view === 'add-address') {
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-6 pt-2 flex items-center justify-between">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={goBack}
               data-testid="button-back"
             >
               <ArrowLeft size={20} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Add Address</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Add Address</h1>
             <div className="w-10" />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
               {selectedGateway?.imageUrl && (
                 <img src={selectedGateway.imageUrl} alt={selectedGateway.name} className="w-10 h-10 object-contain" />
               )}
               <div>
-                <p className="font-bold text-gray-900">{selectedGateway?.name}</p>
-                <p className="text-xs text-gray-500">{selectedGateway?.networkType}</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedGateway?.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedGateway?.networkType}</p>
               </div>
             </div>
 
@@ -1096,35 +1096,35 @@ export default function Withdraw() {
 
     return (
       <MobileLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
           <div className="mb-6 pt-2 flex items-center justify-between">
             <div 
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+              className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
               onClick={goBack}
               data-testid="button-back"
             >
               <ArrowLeft size={20} />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Withdraw</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Withdraw</h1>
             <div className="w-10" />
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm space-y-6">
             {/* Selected method and address */}
-            <div className="space-y-3 pb-4 border-b border-gray-100">
+            <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 {selectedGateway?.imageUrl && (
                   <img src={selectedGateway.imageUrl} alt={selectedGateway.name} className="w-8 h-8 object-contain" />
                 )}
                 <div>
-                  <p className="font-bold text-gray-900">{selectedGateway?.name}</p>
-                  <p className="text-xs text-gray-500">{selectedGateway?.networkType}</p>
+                  <p className="font-bold text-gray-900 dark:text-white">{selectedGateway?.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{selectedGateway?.networkType}</p>
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">Sending to</p>
-                <p className="font-medium text-gray-900">{selectedAddress?.label}</p>
-                <p className="text-xs text-gray-500 font-mono truncate">{selectedAddress?.address}</p>
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sending to</p>
+                <p className="font-medium text-gray-900 dark:text-white">{selectedAddress?.label}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{selectedAddress?.address}</p>
               </div>
             </div>
 
@@ -1145,7 +1145,7 @@ export default function Withdraw() {
                 className="text-lg h-14"
                 data-testid="input-withdraw-amount"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Min: ${parseFloat(selectedGateway?.minAmount || "0").toFixed(2)} | 
                 Max: ${parseFloat(selectedGateway?.maxAmount || "0").toFixed(2)}
               </p>
@@ -1153,17 +1153,17 @@ export default function Withdraw() {
 
             {/* Fee breakdown */}
             {withdrawAmount > 0 && (
-              <div className="space-y-2 pt-4 border-t border-gray-100">
+              <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Withdrawal Amount</span>
+                  <span className="text-gray-500 dark:text-gray-400">Withdrawal Amount</span>
                   <span className="font-medium">${withdrawAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Fee ({selectedGateway?.charges}{selectedGateway?.chargesType === 'percentage' ? '%' : ' USD'})</span>
+                  <span className="text-gray-500 dark:text-gray-400">Fee ({selectedGateway?.charges}{selectedGateway?.chargesType === 'percentage' ? '%' : ' USD'})</span>
                   <span className="font-medium text-red-500">-${fee.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-base pt-2 border-t border-gray-100">
-                  <span className="font-bold text-gray-900">You'll Receive</span>
+                <div className="flex justify-between text-base pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <span className="font-bold text-gray-900 dark:text-white">You'll Receive</span>
                   <span className="font-bold text-green-600">${netAmount.toFixed(2)}</span>
                 </div>
               </div>

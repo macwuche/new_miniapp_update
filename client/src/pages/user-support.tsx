@@ -59,7 +59,7 @@ export default function UserSupport() {
   return (
     <MobileLayout>
       <div className="px-6 pt-8 pb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Support Center</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Support Center</h1>
       </div>
       
       <div className="px-4 space-y-6 pb-20">
@@ -78,7 +78,7 @@ export default function UserSupport() {
             </div>
 
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Your Tickets</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your Tickets</h2>
               <Button size="sm" onClick={() => setIsCreating(true)} className="bg-blue-600 text-white">
                 <Plus size={16} className="mr-1" /> New Ticket
               </Button>
@@ -90,20 +90,20 @@ export default function UserSupport() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <span className="text-xs font-mono text-gray-500 block mb-1">#{ticket.id}</span>
-                        <h3 className="font-bold text-gray-900">{ticket.subject}</h3>
+                        <span className="text-xs font-mono text-gray-500 dark:text-gray-400 block mb-1">#{ticket.id}</span>
+                        <h3 className="font-bold text-gray-900 dark:text-white">{ticket.subject}</h3>
                       </div>
                       <Badge 
                         className={
                           ticket.status === "Open" 
                             ? "bg-green-100 text-green-700 hover:bg-green-200" 
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
                         }
                       >
                         {ticket.status}
                       </Badge>
                     </div>
-                    <div className="flex justify-between items-center text-xs text-gray-500 mt-3">
+                    <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-3">
                       <div className="flex items-center gap-1">
                         <Clock size={12} />
                         Updated {ticket.lastUpdate}

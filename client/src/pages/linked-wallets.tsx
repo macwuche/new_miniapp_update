@@ -110,12 +110,12 @@ export default function LinkedWallets() {
   // Generate color based on wallet name
   const getWalletColor = (name: string) => {
     const colors = [
-      "bg-blue-100 text-blue-600",
-      "bg-green-100 text-green-600",
-      "bg-orange-100 text-orange-600",
-      "bg-purple-100 text-purple-600",
-      "bg-pink-100 text-pink-600",
-      "bg-indigo-100 text-indigo-600",
+      "bg-blue-100 dark:bg-blue-900/30 text-blue-600",
+      "bg-green-100 dark:bg-green-900/30 text-green-600",
+      "bg-orange-100 dark:bg-orange-900/30 text-orange-600",
+      "bg-purple-100 dark:bg-purple-900/30 text-purple-600",
+      "bg-pink-100 dark:bg-pink-900/30 text-pink-600",
+      "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600",
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
@@ -129,28 +129,28 @@ export default function LinkedWallets() {
 
   return (
     <MobileLayout>
-      <div className="min-h-screen bg-gray-50 flex flex-col p-6 pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col p-6 pb-24">
         <div className="mb-6 pt-2 flex items-center gap-4">
           <div 
-            className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer shadow-sm transition-colors"
+            className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer shadow-sm transition-colors"
             onClick={() => window.history.back()}
           >
             <ArrowLeft size={20} />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Linked Wallets</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Linked Wallets</h1>
         </div>
 
         <div className="space-y-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <p className="text-gray-500 text-sm">Loading wallets...</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Loading wallets...</p>
             </div>
           ) : wallets && wallets.length > 0 ? (
             wallets.map((wallet: any) => (
               <Card 
                 key={wallet.id} 
-                className={`p-4 border-none shadow-sm bg-white flex items-center justify-between ${returnTo ? 'cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all ring-1 ring-transparent hover:ring-blue-200' : ''}`}
+                className={`p-4 border-none shadow-sm bg-white dark:bg-gray-800 flex items-center justify-between ${returnTo ? 'cursor-pointer hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all ring-1 ring-transparent hover:ring-blue-200 dark:hover:ring-blue-800' : ''}`}
                 onClick={() => handleSelectWallet(wallet)}
                 data-testid={`card-wallet-${wallet.id}`}
               >
@@ -164,10 +164,10 @@ export default function LinkedWallets() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">{wallet.name}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-white">{wallet.name}</h3>
                     </div>
-                    <p className="text-sm text-gray-500 font-mono">{truncateAddress(wallet.address)}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{truncateAddress(wallet.address)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       Connected {new Date(wallet.connectedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -177,7 +177,7 @@ export default function LinkedWallets() {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                    className="text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
                     onClick={(e) => handleDeleteWallet(e, wallet.id)}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-wallet-${wallet.id}`}
@@ -193,16 +193,16 @@ export default function LinkedWallets() {
             ))
           ) : (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wallet size={32} className="text-gray-400" />
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wallet size={32} className="text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">No Wallets Connected</h3>
-              <p className="text-gray-500 text-sm">Connect a wallet to get started</p>
+              <h3 className="font-bold text-gray-900 dark:text-white mb-1">No Wallets Connected</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Connect a wallet to get started</p>
             </div>
           )}
 
           <Link href="/connect-wallet">
-            <Button className="w-full h-14 mt-4 bg-white border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all" data-testid="button-connect-wallet">
+            <Button className="w-full h-14 mt-4 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl flex items-center justify-center gap-2 font-medium transition-all" data-testid="button-connect-wallet">
               <Plus size={20} />
               Connect New Wallet
             </Button>
@@ -210,13 +210,13 @@ export default function LinkedWallets() {
         </div>
 
         <div className="mt-8 px-2">
-          <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
-            <div className="p-2 bg-blue-100 rounded-full text-blue-600 mt-0.5">
+          <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+            <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-400 mt-0.5">
               <LinkIcon size={16} />
             </div>
             <div>
-              <h4 className="font-bold text-blue-900 text-sm mb-1">About Linked Wallets</h4>
-              <p className="text-blue-700 text-xs leading-relaxed">
+              <h4 className="font-bold text-blue-900 dark:text-blue-100 text-sm mb-1">About Linked Wallets</h4>
+              <p className="text-blue-700 dark:text-blue-300 text-xs leading-relaxed">
                 Linked wallets allow you to easily switch between different accounts for trading and withdrawals. You can manage all your connections here.
               </p>
             </div>

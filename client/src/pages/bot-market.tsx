@@ -371,7 +371,7 @@ export default function BotMarket() {
                   </Avatar>
                   <div>
                     <SheetTitle className="text-xl" data-testid="text-sheet-bot-name">{selectedBot.name}</SheetTitle>
-                    <p className="text-xs text-gray-500 capitalize">{getBotCategory(selectedBot.description)} Trading Bot</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{getBotCategory(selectedBot.description)} Trading Bot</p>
                   </div>
                 </div>
                 <SheetDescription className="text-sm" data-testid="text-sheet-bot-description">
@@ -383,17 +383,17 @@ export default function BotMarket() {
                 <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
                   <TrendingUp className="w-5 h-5 mx-auto text-green-500 mb-1" />
                   <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBot.minProfitPercent}-{selectedBot.maxProfitPercent}%</p>
-                  <p className="text-[10px] text-gray-500">Daily Profit</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Daily Profit</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
                   <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
                   <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBot.durationDays} Days</p>
-                  <p className="text-[10px] text-gray-500">Duration</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Duration</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
                   <DollarSign className="w-5 h-5 mx-auto text-purple-500 mb-1" />
                   <p className="text-sm font-bold text-gray-900 dark:text-white">${parseFloat(selectedBot.price).toLocaleString()}</p>
-                  <p className="text-[10px] text-gray-500">Sub. Fee</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Sub. Fee</p>
                 </div>
               </div>
 
@@ -403,7 +403,7 @@ export default function BotMarket() {
                     Investment Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                     <Input
                       type="number"
                       value={investmentAmount}
@@ -415,7 +415,7 @@ export default function BotMarket() {
                       data-testid="input-investment-amount"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Min: ${parseFloat(selectedBot.minInvestment).toLocaleString()} • Max: ${parseFloat(selectedBot.maxInvestment).toLocaleString()}
                   </p>
                   {!isInvestmentValid && investmentAmount && (
@@ -428,11 +428,11 @@ export default function BotMarket() {
 
               <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 mb-6 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Subscription Fee</span>
+                  <span className="text-gray-500 dark:text-gray-400">Subscription Fee</span>
                   <span className="font-medium" data-testid="text-subscription-fee">${subscriptionFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Investment Amount</span>
+                  <span className="text-gray-500 dark:text-gray-400">Investment Amount</span>
                   <span className="font-medium" data-testid="text-investment-amount">${investmentNum.toLocaleString()}</span>
                 </div>
                 <div className="border-t border-gray-200 dark:border-slate-700 pt-3 flex justify-between">

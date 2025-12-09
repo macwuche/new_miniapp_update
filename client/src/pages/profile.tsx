@@ -113,7 +113,7 @@ export default function Profile() {
         </div>
 
         <div className="space-y-3 text-left">
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2">Account</p>
+          <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider ml-2">Account</p>
           
           {[
             { icon: ArrowUpDown, label: "Transactions", to: "/transactions" },
@@ -133,7 +133,7 @@ export default function Profile() {
             </Link>
           ))}
 
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2 mt-6">Appearance</p>
+          <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider ml-2 mt-6">Appearance</p>
           
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-4 mb-3">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Theme</p>
@@ -180,7 +180,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-2 mt-6">Support</p>
+          <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider ml-2 mt-6">Support</p>
 
           {/* Telegram Support */}
           <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="block" data-testid="link-telegram-support">
@@ -191,7 +191,7 @@ export default function Profile() {
                 </div>
                 <span className="font-medium text-gray-900 dark:text-white">Telegram Support</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">
                 <span className="text-xs">Open</span>
                 <ChevronRight size={20} />
               </div>

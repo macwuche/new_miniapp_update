@@ -221,34 +221,34 @@ export default function AssetDetail() {
 
   return (
     <MobileLayout>
-      <div className="min-h-screen bg-white pb-24">
+      <div className="min-h-screen bg-white dark:bg-gray-800 pb-24">
         {/* Header */}
-        <div className="px-6 pt-8 pb-4 flex justify-between items-center sticky top-0 bg-white z-10">
+        <div className="px-6 pt-8 pb-4 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
           <Link href="/markets">
-            <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors">
+            <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
               <ArrowLeft size={24} />
             </div>
           </Link>
-          <div className="font-bold text-lg text-gray-900">{pairSymbol}</div>
+          <div className="font-bold text-lg text-gray-900 dark:text-white">{pairSymbol}</div>
           <Button variant="ghost" size="icon" className="rounded-full w-10 h-10">
-            <MoreHorizontal size={24} className="text-gray-600" />
+            <MoreHorizontal size={24} className="text-gray-600 dark:text-gray-300" />
           </Button>
         </div>
 
         <div className="flex flex-col items-center pt-2 px-6">
           {/* Asset Icon */}
-          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-gray-100 overflow-hidden p-2">
+          <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-gray-100 overflow-hidden p-2">
              {currentAsset.image ? (
                <img src={currentAsset.image} alt={currentAsset.name} className="w-full h-full object-contain" />
              ) : (
-               <span className="text-gray-900 font-bold text-2xl">{displaySymbol[0]}</span>
+               <span className="text-gray-900 dark:text-white font-bold text-2xl">{displaySymbol[0]}</span>
              )}
           </div>
 
           {/* Price Info */}
-          <h1 className="text-4xl font-bold text-gray-900 mb-1 tracking-tight">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-1 tracking-tight">
             {isLoading ? (
-              <span className="animate-pulse bg-gray-200 rounded h-10 w-48 block"></span>
+              <span className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded h-10 w-48 block"></span>
             ) : (
               `$${currentAsset.price}`
             )}
@@ -263,7 +263,7 @@ export default function AssetDetail() {
               <div className={`w-12 h-12 transition-all duration-300 ${isBotActive ? 'grayscale-0 scale-110 drop-shadow-md animate-[bot-pulse_2s_ease-in-out_infinite]' : 'grayscale opacity-60 hover:opacity-80'}`}>
                 <img src={aiLogo} alt="AI Trading" className="w-full h-full object-contain" />
               </div>
-              <span className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${isBotActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+              <span className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${isBotActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
                 AI {isBotActive ? "ON" : "OFF"}
               </span>
             </div>
@@ -273,7 +273,7 @@ export default function AssetDetail() {
         {/* Chart Section */}
         <div className="h-[300px] w-full mt-8 mb-6 relative">
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50 animate-pulse">
+            <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 animate-pulse">
               <RefreshCw className="animate-spin text-gray-300" size={32} />
             </div>
           ) : (
@@ -306,15 +306,15 @@ export default function AssetDetail() {
 
         {/* Timeframe Selector */}
         <div className="px-4 mb-8">
-          <div className="flex justify-between bg-gray-50 p-1 rounded-xl">
+          <div className="flex justify-between bg-gray-50 dark:bg-gray-900 p-1 rounded-xl">
             {TIMEFRAMES.map((tf) => (
               <button
                 key={tf}
                 onClick={() => setSelectedTimeframe(tf)}
                 className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                   selectedTimeframe === tf 
-                    ? "bg-white text-gray-900 shadow-sm" 
-                    : "text-gray-400 hover:text-gray-600"
+                    ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm" 
+                    : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               >
                 {tf}
@@ -326,25 +326,25 @@ export default function AssetDetail() {
         {/* Market Stats Section */}
         {currentAsset.marketCap && (
           <div className="px-6 mb-6 grid grid-cols-2 gap-4">
-            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
-              <p className="text-xs font-medium text-gray-500 mb-1">Market Cap</p>
-              <p className="text-sm font-bold text-gray-900">
+            <Card className="p-4 bg-gray-50 dark:bg-gray-900 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Market Cap</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">
                 ${(currentAsset.marketCap / 1e9).toLocaleString(undefined, { maximumFractionDigits: 2 })}B
               </p>
             </Card>
-            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
-              <p className="text-xs font-medium text-gray-500 mb-1">Volume (24h)</p>
-              <p className="text-sm font-bold text-gray-900">
+            <Card className="p-4 bg-gray-50 dark:bg-gray-900 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Volume (24h)</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">
                 ${(currentAsset.volume / 1e9).toLocaleString(undefined, { maximumFractionDigits: 2 })}B
               </p>
             </Card>
-            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
-              <p className="text-xs font-medium text-gray-500 mb-1">High (24h)</p>
-              <p className="text-sm font-bold text-gray-900">${currentAsset.high24h?.toLocaleString()}</p>
+            <Card className="p-4 bg-gray-50 dark:bg-gray-900 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">High (24h)</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">${currentAsset.high24h?.toLocaleString()}</p>
             </Card>
-            <Card className="p-4 bg-gray-50 border-none shadow-sm rounded-2xl">
-              <p className="text-xs font-medium text-gray-500 mb-1">Low (24h)</p>
-              <p className="text-sm font-bold text-gray-900">${currentAsset.low24h?.toLocaleString()}</p>
+            <Card className="p-4 bg-gray-50 dark:bg-gray-900 border-none shadow-sm rounded-2xl">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Low (24h)</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">${currentAsset.low24h?.toLocaleString()}</p>
             </Card>
           </div>
         )}
@@ -355,11 +355,11 @@ export default function AssetDetail() {
             <div className="flex justify-between items-center">
               <div className="text-center flex-1 border-r border-gray-700">
                 <p className="text-2xl font-bold text-yellow-400 mb-1">0.001775</p>
-                <p className="text-sm font-medium text-gray-400">{displaySymbol}</p>
+                <p className="text-sm font-medium text-gray-400 dark:text-gray-500">{displaySymbol}</p>
               </div>
               <div className="text-center flex-1">
                 <p className="text-2xl font-bold text-white mb-1">$153.36</p>
-                <p className="text-sm font-medium text-gray-400">Value</p>
+                <p className="text-sm font-medium text-gray-400 dark:text-gray-500">Value</p>
               </div>
             </div>
           </Card>

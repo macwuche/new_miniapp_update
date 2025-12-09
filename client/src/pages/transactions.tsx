@@ -96,11 +96,11 @@ export default function Transactions() {
 
   return (
     <MobileLayout>
-      <div className="bg-gray-50 dark:bg-slate-900 min-h-screen pb-20">
-        <div className="px-6 pt-8 pb-4 sticky top-0 bg-white dark:bg-slate-900 z-10 border-b border-gray-100 dark:border-slate-800">
+      <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pb-20">
+        <div className="px-6 pt-8 pb-4 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-4 mb-4">
             <div 
-              className="w-10 h-10 rounded-full bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+              className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
               onClick={() => window.history.back()}
               data-testid="back-btn"
             >
@@ -118,7 +118,7 @@ export default function Transactions() {
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   activeTab === tab
                     ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -131,22 +131,22 @@ export default function Transactions() {
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-4 animate-pulse">
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-4 animate-pulse">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-slate-700" />
+                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700" />
                     <div className="flex-1">
-                      <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-24 mb-2" />
-                      <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-32" />
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2" />
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32" />
                     </div>
-                    <div className="h-5 bg-gray-200 dark:bg-slate-700 rounded w-16" />
+                    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16" />
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ArrowDownCircle size={40} className="text-gray-400" />
+              <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ArrowDownCircle size={40} className="text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Transactions Yet</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -167,7 +167,7 @@ export default function Transactions() {
                 return (
                   <div
                     key={`${transaction.type}-${transaction.id}`}
-                    className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
                     data-testid={`transaction-${transaction.type}-${transaction.id}`}
                   >
                     <div className="flex items-center gap-4">

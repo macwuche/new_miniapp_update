@@ -108,20 +108,20 @@ export default function Markets() {
 
   return (
     <MobileLayout>
-      <div className="px-6 pt-8 pb-4 bg-white sticky top-0 z-10 border-b border-gray-100">
+      <div className="px-6 pt-8 pb-4 bg-white dark:bg-gray-800 sticky top-0 z-10 border-b border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Markets</h1>
           <Link href="/markets/manage">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 active:bg-gray-200 transition-colors">
-              <MoreVertical size={24} className="text-gray-600" />
+            <button className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-colors">
+              <MoreVertical size={24} className="text-gray-600 dark:text-gray-400" />
             </button>
           </Link>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
           <Input 
             placeholder="Search assets..." 
-            className="pl-10 bg-gray-50 border-none h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+            className="pl-10 bg-gray-50 dark:bg-gray-900 border-none h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
       </div>
@@ -129,14 +129,14 @@ export default function Markets() {
       <div className="px-6 py-6">
         {availableMarkets.length > 0 ? (
           <>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Tradable Assets</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Tradable Assets</h2>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full bg-gray-100/80 p-1.5 rounded-2xl mb-8 h-14 flex gap-1">
+              <TabsList className="w-full bg-gray-100/80 dark:bg-gray-700/80 p-1.5 rounded-2xl mb-8 h-14 flex gap-1">
                 {marketStatus.crypto && (
                   <TabsTrigger 
                     value="crypto" 
-                    className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 
-                      hover:bg-white hover:text-yellow-600
+                    className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 dark:text-gray-400 
+                      hover:bg-white dark:hover:bg-gray-600 hover:text-yellow-600
                       data-[state=active]:bg-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-md 
                       transition-all duration-200 flex items-center justify-center gap-2"
                   >
@@ -147,8 +147,8 @@ export default function Markets() {
                 {marketStatus.stocks && (
                   <TabsTrigger 
                     value="stocks" 
-                    className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 
-                      hover:bg-white hover:text-[#fe3f26]
+                    className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 dark:text-gray-400 
+                      hover:bg-white dark:hover:bg-gray-600 hover:text-[#fe3f26]
                       data-[state=active]:bg-[#fe3f26] data-[state=active]:text-white data-[state=active]:shadow-md 
                       transition-all duration-200 flex items-center justify-center gap-2"
                   >
@@ -159,8 +159,8 @@ export default function Markets() {
                 {marketStatus.forex && (
                   <TabsTrigger 
                     value="forex" 
-                    className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 
-                      hover:bg-white hover:text-[#08937b]
+                    className="rounded-xl flex-1 h-full text-sm font-bold text-gray-500 dark:text-gray-400 
+                      hover:bg-white dark:hover:bg-gray-600 hover:text-[#08937b]
                       data-[state=active]:bg-[#08937b] data-[state=active]:text-white data-[state=active]:shadow-md 
                       transition-all duration-200 flex items-center justify-center gap-2"
                   >
@@ -175,15 +175,15 @@ export default function Markets() {
                     {isLoadingCrypto ? (
                       <div className="space-y-3 py-4">
                         {[1, 2, 3, 4, 5].map((i) => (
-                          <div key={i} className="h-20 bg-gray-50 rounded-2xl animate-pulse" />
+                          <div key={i} className="h-20 bg-gray-50 dark:bg-gray-900 rounded-2xl animate-pulse" />
                         ))}
                       </div>
                     ) : (
                       (cryptoAssets.length > 0 ? cryptoAssets : MARKET_DATA.crypto).map((asset) => (
                         <Link key={asset.id || asset.symbol} href={`/asset/${encodeURIComponent(asset.symbol)}`}>
-                          <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
+                          <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors overflow-hidden p-1">
+                              <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors overflow-hidden p-1">
                                 {asset.image ? (
                                   <img src={asset.image} alt={asset.name} className="w-full h-full object-contain" />
                                 ) : (
@@ -191,18 +191,18 @@ export default function Markets() {
                                 )}
                               </div>
                               <div>
-                                <h4 className="font-bold text-gray-900 text-base">{asset.name}</h4>
-                                <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
+                                <h4 className="font-bold text-gray-900 dark:text-white text-base">{asset.name}</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{asset.symbol}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
                               <div className="text-right">
-                                <p className="font-bold text-gray-900 text-base">${asset.price}</p>
-                                <p className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${asset.isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                <p className="font-bold text-gray-900 dark:text-white text-base">${asset.price}</p>
+                                <p className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${asset.isUp ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
                                   {asset.change}
                                 </p>
                               </div>
-                              <button className="text-gray-300 hover:text-yellow-400 transition-colors" onClick={(e) => e.preventDefault()}>
+                              <button className="text-gray-300 dark:text-gray-600 hover:text-yellow-400 transition-colors" onClick={(e) => e.preventDefault()}>
                                 <Star size={20} />
                               </button>
                             </div>
@@ -219,24 +219,24 @@ export default function Markets() {
                   <TabsContent key={category} value={category} className="space-y-3 mt-0 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
                     {items.map((asset) => (
                       <Link key={asset.symbol} href={`/asset/${encodeURIComponent(asset.symbol)}`}>
-                        <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
+                        <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md active:scale-[0.98] transition-all mb-3 cursor-pointer group">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-900 group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors">
+                            <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center font-black text-sm transition-colors">
                               {asset.symbol.slice(0, 2)}
                             </div>
                             <div>
-                              <h4 className="font-bold text-gray-900 text-base">{asset.name}</h4>
-                              <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
+                              <h4 className="font-bold text-gray-900 dark:text-white text-base">{asset.name}</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{asset.symbol}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="text-right">
-                              <p className="font-bold text-gray-900 text-base">${asset.price}</p>
-                              <p className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${asset.isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                              <p className="font-bold text-gray-900 dark:text-white text-base">${asset.price}</p>
+                              <p className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${asset.isUp ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
                                 {asset.change}
                               </p>
                             </div>
-                            <button className="text-gray-300 hover:text-yellow-400 transition-colors" onClick={(e) => e.preventDefault()}>
+                            <button className="text-gray-300 dark:text-gray-600 hover:text-yellow-400 transition-colors" onClick={(e) => e.preventDefault()}>
                               <Star size={20} />
                             </button>
                           </div>
@@ -250,11 +250,11 @@ export default function Markets() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <AlertCircle size={32} className="text-gray-400" />
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle size={32} className="text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900">No Markets Available</h3>
-            <p className="text-gray-500 max-w-xs mt-2">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Markets Available</h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-xs mt-2">
               All trading markets are currently closed or disabled by the administrator. Please check back later.
             </p>
           </div>

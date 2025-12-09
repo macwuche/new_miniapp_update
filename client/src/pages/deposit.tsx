@@ -217,7 +217,7 @@ export default function Deposit() {
                         <span className="text-xs font-medium px-2 py-0.5 bg-gray-100 dark:bg-slate-700 rounded-md text-gray-600 dark:text-gray-300">
                           {gateway.networkType}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
                           Min: ${parseFloat(gateway.minAmount).toLocaleString()}
                         </span>
                       </div>
@@ -290,7 +290,7 @@ export default function Deposit() {
               {/* QR Code */}
               {selectedGateway && (
                 <div className="flex justify-center py-4">
-                  <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100">
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700">
                     <img 
                       src={selectedGateway.barcodeImage || generateQRCodeUrl(selectedGateway.walletAddress)} 
                       alt={`QR Code for ${selectedGateway.name} address`}

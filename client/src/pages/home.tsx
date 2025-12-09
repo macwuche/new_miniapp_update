@@ -292,7 +292,7 @@ export default function Home() {
       {/* Featured Assets */}
       <div className="px-6 mb-6 mt-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-gray-900 text-lg">Popular Assets</h3>
+          <h3 className="font-bold text-gray-900 dark:text-white text-lg">Popular Assets</h3>
           <span className="text-primary text-sm font-medium cursor-pointer hover:opacity-80">See All</span>
         </div>
 
@@ -300,23 +300,23 @@ export default function Home() {
           {isLoadingAssets ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 animate-pulse" />
+                <div key={i} className="h-20 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-pulse" />
               ))}
             </div>
           ) : featuredAssets.length > 0 ? (
             featuredAssets.map((asset) => (
-              <div key={asset.symbol} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
+              <div key={asset.symbol} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center overflow-hidden border border-gray-100 p-1">
+                  <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-700 p-1">
                     {asset.image ? (
                       <img src={asset.image} alt={asset.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="text-gray-900 font-black text-sm">{asset.symbol[0]}</div>
+                      <div className="text-gray-900 dark:text-white font-black text-sm">{asset.symbol[0]}</div>
                     )}
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900">{asset.name}</h4>
-                    <p className="text-xs text-gray-500 font-medium">{asset.symbol}</p>
+                    <h4 className="font-bold text-gray-900 dark:text-white">{asset.name}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{asset.symbol}</p>
                   </div>
                 </div>
                 
@@ -325,7 +325,7 @@ export default function Home() {
                      <Sparkline data={asset.history} color={asset.isUp ? '#22c55e' : '#ef4444'} />
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900 text-base">${asset.price}</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-base">${asset.price}</p>
                     <p className={`text-xs font-bold ${asset.isUp ? 'text-green-500' : 'text-red-500'}`}>
                       {asset.change}
                     </p>
@@ -334,7 +334,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm bg-gray-50 dark:bg-gray-900 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
               No featured assets available
             </div>
           )}

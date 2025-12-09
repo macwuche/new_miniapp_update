@@ -10,11 +10,11 @@ export default function WalletPage() {
 
   return (
     <MobileLayout>
-      <div className="min-h-screen bg-white dark:bg-slate-900 px-6 pt-8 pb-4">
+      <div className="min-h-screen bg-white dark:bg-gray-900 px-6 pt-8 pb-4">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Wallet</h1>
           <Link href="/linked-wallets">
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <Button variant="ghost" size="icon" className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
               <MoreHorizontal size={24} />
             </Button>
           </Link>
@@ -23,7 +23,7 @@ export default function WalletPage() {
 
         {!isConnected ? (
           <div className="space-y-4">
-            <Card className="p-6 border-none shadow-lg bg-white dark:bg-slate-800 overflow-hidden relative min-h-[300px] flex flex-col justify-center">
+            <Card className="p-6 border-none shadow-lg bg-white dark:bg-gray-800 overflow-hidden relative min-h-[300px] flex flex-col justify-center">
                <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-3xl" />
                <div className="absolute -left-10 -bottom-10 w-30 h-30 bg-purple-500/10 dark:bg-purple-400/10 rounded-full blur-2xl" />
                
@@ -81,12 +81,12 @@ export default function WalletPage() {
              </Card>
 
              <div className="grid grid-cols-2 gap-4">
-               <Card className="p-4 bg-white dark:bg-slate-800 border-none shadow-sm">
+               <Card className="p-4 bg-white dark:bg-gray-800 border-none shadow-sm">
                  <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">TON Balance</p>
                  <p className="text-xl font-bold text-gray-900 dark:text-white">450.5 TON</p>
                  <p className="text-xs text-gray-400 dark:text-gray-500">≈ $2,340.50</p>
                </Card>
-               <Card className="p-4 bg-white dark:bg-slate-800 border-none shadow-sm">
+               <Card className="p-4 bg-white dark:bg-gray-800 border-none shadow-sm">
                  <p className="text-gray-500 dark:text-gray-400 text-xs mb-1">USDT Balance</p>
                  <p className="text-xl font-bold text-gray-900 dark:text-white">1,200.00</p>
                  <p className="text-xs text-gray-400 dark:text-gray-500">USDT</p>

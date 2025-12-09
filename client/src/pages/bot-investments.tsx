@@ -183,7 +183,7 @@ export default function BotInvestments() {
         );
       case 'expired':
         return (
-          <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-100" data-testid="badge-status-expired">
+          <Badge className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" data-testid="badge-status-expired">
             Expired
           </Badge>
         );
@@ -390,7 +390,7 @@ export default function BotInvestments() {
   const renderEmptyState = (type: 'active' | 'history') => (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
-        <Bot className="text-gray-400" size={32} />
+        <Bot className="text-gray-400 dark:text-gray-500" size={32} />
       </div>
       <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
         {type === 'active' ? 'No Active Bots' : 'No Bot History'}

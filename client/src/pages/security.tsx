@@ -127,7 +127,7 @@ export default function Security() {
   return (
     <MobileLayout>
       <div className="px-6 pt-8 pb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Security</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security</h1>
       </div>
       
       <div className="px-4 space-y-6 pb-24">
@@ -157,7 +157,7 @@ export default function Security() {
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+                    <Mail className="absolute left-3 top-3 text-gray-400 dark:text-gray-500" size={18} />
                     <Input
                       id="email"
                       type="email"
@@ -186,7 +186,7 @@ export default function Security() {
             <CardHeader>
               <CardTitle>Enter Verification Code</CardTitle>
               <CardDescription>
-                We sent a 6-digit code to <span className="font-medium text-gray-900">{email}</span>. 
+                We sent a 6-digit code to <span className="font-medium text-gray-900 dark:text-white">{email}</span>. 
                 Check your spam folder if you don't see it.
               </CardDescription>
             </CardHeader>
@@ -222,7 +222,7 @@ export default function Security() {
                   size="sm"
                   onClick={handleResendCode}
                   disabled={timer > 0 || isSending}
-                  className="text-gray-500"
+                  className="text-gray-500 dark:text-gray-400"
                 >
                   {timer > 0 ? `Resend code in ${timer}s` : "Resend Code"}
                 </Button>
@@ -230,7 +230,7 @@ export default function Security() {
               
               <Button 
                 variant="link" 
-                className="w-full text-gray-400 h-auto p-0"
+                className="w-full text-gray-400 dark:text-gray-500 h-auto p-0"
                 onClick={() => setStep("email")}
               >
                 Change Email
@@ -269,16 +269,16 @@ export default function Security() {
 
         {/* Additional Security Settings (Mock) */}
         <div className="space-y-3">
-          <h3 className="font-bold text-gray-900 px-1">Advanced Security</h3>
+          <h3 className="font-bold text-gray-900 dark:text-white px-1">Advanced Security</h3>
           
-          <div className="bg-white p-4 rounded-xl border border-gray-100 flex items-center justify-between opacity-60">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 flex items-center justify-between opacity-60">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 text-gray-500 rounded-lg">
+              <div className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg">
                 <AlertTriangle size={20} />
               </div>
               <div>
-                <p className="font-medium text-gray-900">Login Alerts</p>
-                <p className="text-xs text-gray-500">Enabled by default</p>
+                <p className="font-medium text-gray-900 dark:text-white">Login Alerts</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Enabled by default</p>
               </div>
             </div>
             <Button variant="ghost" size="sm" disabled>Manage</Button>
