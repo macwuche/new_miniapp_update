@@ -34,26 +34,50 @@ const COINGECKO_API = "https://api.coingecko.com/api/v3";
 
 export default function Portfolio() {
   const { user } = useTelegram();
-  const userId = user?.id || 4;
   const [assetPrices, setAssetPrices] = useState<Record<string, AssetPrice>>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: portfolio = [], isLoading: portfolioLoading, refetch: refetchPortfolio } = useQuery<PortfolioItem[]>({
-    queryKey: [`/api/users/${userId}/portfolio`],
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', user?.id],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${userId}/portfolio`);
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.id?.toString() || null,
+          username: user?.username || 'demo_user',
+          firstName: user?.first_name || 'Demo',
+          lastName: user?.last_name || 'User',
+          profilePicture: user?.photo_url || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to register user');
+      return res.json();
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: rawPortfolio = [], isLoading: portfolioLoading, refetch: refetchPortfolio } = useQuery<PortfolioItem[]>({
+    queryKey: [`/api/users/${dbUser?.id}/portfolio`],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${dbUser?.id}/portfolio`);
       if (!res.ok) throw new Error("Failed to fetch portfolio");
       return res.json();
     },
+    enabled: !!dbUser?.id,
   });
 
+  const portfolio = rawPortfolio.filter(item => parseFloat(item.amount) > 0);
+
   const { data: balance } = useQuery({
-    queryKey: [`/api/users/${userId}/balance`],
+    queryKey: [`/api/users/${dbUser?.id}/balance`],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${userId}/balance`);
+      const res = await fetch(`/api/users/${dbUser?.id}/balance`);
       if (!res.ok) throw new Error("Failed to fetch balance");
       return res.json();
     },
+    enabled: !!dbUser?.id,
   });
 
   const fetchPrices = async () => {
