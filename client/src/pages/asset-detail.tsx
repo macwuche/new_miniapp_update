@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import aiLogo from "@assets/ai (1)_1764071986101.png";
+import { usersAPI } from "@/lib/api";
 
 const TIMEFRAMES = ["LIVE", "1D", "7D", "1M", "3M", "6M", "1Y"];
 
@@ -22,8 +24,52 @@ export default function AssetDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [assetInfo, setAssetInfo] = useState<any>(null);
   
-  // Mock bot state (would come from backend/context)
-  const [isBotActive, setIsBotActive] = useState(false);
+  // Register/fetch user from backend to check bot subscription status
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register'],
+    queryFn: async (): Promise<{ id: number } | null> => {
+      // @ts-ignore
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        return usersAPI.register({
+          telegramId: userData.id.toString(),
+          username: userData.username || userData.first_name,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          profilePicture: userData.photo_url
+        }) as Promise<{ id: number }>;
+      } else {
+        return usersAPI.register({
+          telegramId: null,
+          username: "demo_user",
+          firstName: "Demo",
+          lastName: "User",
+          profilePicture: null
+        }) as Promise<{ id: number }>;
+      }
+    },
+    staleTime: 1000 * 60,
+  });
+
+  // Fetch user's bot subscriptions to check if any bot is active
+  const { data: userBots } = useQuery({
+    queryKey: ['/api/user-bots', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/bots`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  // Check if user has any active (not stopped) bot subscription
+  const isBotActive = userBots?.some((ub: any) => 
+    ub.status === 'active' && !ub.isStopped && new Date(ub.expiryDate) > new Date()
+  ) ?? false;
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -214,7 +260,7 @@ export default function AssetDetail() {
           {/* AI Trading Bot Indicator */}
           <Link href={`/asset/${encodeURIComponent(rawSymbol)}/bot-status`}>
             <div className="flex flex-col items-center cursor-pointer group">
-              <div className={`w-12 h-12 transition-all duration-300 ${isBotActive ? 'grayscale-0 scale-110 drop-shadow-md' : 'grayscale opacity-60 hover:opacity-80'}`}>
+              <div className={`w-12 h-12 transition-all duration-300 ${isBotActive ? 'grayscale-0 scale-110 drop-shadow-md animate-[bot-pulse_2s_ease-in-out_infinite]' : 'grayscale opacity-60 hover:opacity-80'}`}>
                 <img src={aiLogo} alt="AI Trading" className="w-full h-full object-contain" />
               </div>
               <span className={`text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full transition-colors ${isBotActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>

@@ -247,7 +247,7 @@ export default function Home() {
                 </h2>
                 <Link href="/markets">
                   <div className="flex flex-col items-center cursor-pointer group">
-                    <div className={`w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg transition-all duration-300 group-hover:scale-105 ${!hasActiveBotSubscription ? 'grayscale opacity-80' : ''}`}>
+                    <div className={`w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg transition-all duration-300 group-hover:scale-105 ${!hasActiveBotSubscription ? 'grayscale opacity-80' : 'animate-[bot-pulse_2s_ease-in-out_infinite]'}`}>
                       <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-[10px] font-bold text-blue-100 mt-1 tracking-wide">AI Bot</span>

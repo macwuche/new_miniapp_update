@@ -167,3 +167,15 @@
 .dark .glass-panel {
   @apply bg-black/40 backdrop-blur-md border border-white/10 shadow-sm;
 }
+
+/* Bot pulse animation - smooth and noticeable */
+@keyframes bot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px 8px rgba(59, 130, 246, 0.3);
+  }
+}

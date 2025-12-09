@@ -1,26 +1,68 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, Power, Activity, Cpu, Settings, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Activity, Cpu, Settings, ShoppingCart } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import aiLogo from "@assets/ai (1)_1764071986101.png";
+import { usersAPI } from "@/lib/api";
 
 export default function BotStatus() {
   const [match, params] = useRoute("/asset/:symbol/bot-status");
   const symbol = params?.symbol ? decodeURIComponent(params.symbol) : "BTC";
   
-  // Mock state - using localStorage to persist across pages for the demo
-  const [isActive, setIsActive] = useState(() => {
-    return localStorage.getItem("is_bot_active") === "true";
+  // Register/fetch user from backend to check bot subscription status
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register'],
+    queryFn: async (): Promise<{ id: number } | null> => {
+      // @ts-ignore
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        return usersAPI.register({
+          telegramId: userData.id.toString(),
+          username: userData.username || userData.first_name,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          profilePicture: userData.photo_url
+        }) as Promise<{ id: number }>;
+      } else {
+        return usersAPI.register({
+          telegramId: null,
+          username: "demo_user",
+          firstName: "Demo",
+          lastName: "User",
+          profilePicture: null
+        }) as Promise<{ id: number }>;
+      }
+    },
+    staleTime: 1000 * 60,
   });
 
-  const toggleBot = () => {
-    const newState = !isActive;
-    setIsActive(newState);
-    localStorage.setItem("is_bot_active", String(newState));
-  };
+  // Fetch user's bot subscriptions to check if any bot is active
+  const { data: userBots } = useQuery({
+    queryKey: ['/api/user-bots', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/bots`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  // Check if user has any active (not stopped) bot subscription
+  const isActive = userBots?.some((ub: any) => 
+    ub.status === 'active' && !ub.isStopped && new Date(ub.expiryDate) > new Date()
+  ) ?? false;
+
+  // Calculate total profit from all active bots
+  const totalProfit = userBots?.filter((ub: any) => 
+    ub.status === 'active' && !ub.isStopped && new Date(ub.expiryDate) > new Date()
+  ).reduce((sum: number, ub: any) => sum + parseFloat(ub.currentProfit || '0'), 0) ?? 0;
 
   return (
     <MobileLayout>
@@ -46,7 +88,7 @@ export default function BotStatus() {
         <div className="p-6 flex flex-col items-center">
           {/* Status Card */}
           <Card className="w-full p-6 rounded-2xl border-none shadow-lg bg-white mb-6 flex flex-col items-center">
-            <div className={`w-32 h-32 mb-6 transition-all duration-500 ${isActive ? 'grayscale-0 scale-105' : 'grayscale opacity-70'}`}>
+            <div className={`w-32 h-32 mb-6 transition-all duration-500 ${isActive ? 'grayscale-0 scale-105 animate-[bot-pulse_2s_ease-in-out_infinite]' : 'grayscale opacity-70'}`}>
               <img src={aiLogo} alt="AI Trading Bot" className="w-full h-full object-contain" />
             </div>
             
@@ -83,8 +125,10 @@ export default function BotStatus() {
               <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-primary mb-3">
                 <Activity size={20} />
               </div>
-              <p className="text-xs text-gray-500 font-medium">24h Profit</p>
-              <p className="text-lg font-bold text-gray-900">{isActive ? "+1.2%" : "---"}</p>
+              <p className="text-xs text-gray-500 font-medium">Total Profit</p>
+              <p className={`text-lg font-bold ${totalProfit > 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                {isActive ? `+$${totalProfit.toFixed(2)}` : "---"}
+              </p>
             </Card>
             <Card className="p-4 border-none shadow-sm bg-white rounded-2xl">
               <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-3">
@@ -118,17 +162,18 @@ export default function BotStatus() {
               </Button>
             </Link>
 
-            <Button 
-              className={`flex-1 h-14 text-base font-bold rounded-xl shadow-lg transition-all ${
-                isActive 
-                  ? 'bg-red-50 text-red-600 hover:bg-red-100 shadow-red-100' 
-                  : 'bg-primary text-white hover:bg-primary/90 shadow-blue-200'
-              }`}
-              onClick={toggleBot}
-            >
-              <Power className="mr-2" size={20} strokeWidth={2.5} />
-              {isActive ? "Stop Bot" : "Activate Bot"}
-            </Button>
+            <Link href="/bot-investments" className="flex-1">
+              <Button 
+                className={`w-full h-14 text-base font-bold rounded-xl shadow-lg transition-all ${
+                  isActive 
+                    ? 'bg-green-50 text-green-600 hover:bg-green-100 shadow-green-100' 
+                    : 'bg-primary text-white hover:bg-primary/90 shadow-blue-200'
+                }`}
+              >
+                <Activity className="mr-2" size={20} strokeWidth={2.5} />
+                {isActive ? "Manage Bots" : "View Bots"}
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
