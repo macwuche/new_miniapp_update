@@ -185,6 +185,7 @@ export interface IStorage {
   getUserBalance(userId: number): Promise<UserBalance | undefined>;
   createUserBalance(balance: InsertUserBalance): Promise<UserBalance>;
   updateUserBalance(userId: number, balance: Partial<InsertUserBalance>): Promise<UserBalance | undefined>;
+  getAllUserBalances(): Promise<UserBalance[]>;
   
   // Support Ticket Categories
   createSupportTicketCategory(category: InsertSupportTicketCategory): Promise<SupportTicketCategory>;
@@ -670,6 +671,10 @@ export class DatabaseStorage implements IStorage {
   async updateUserBalance(userId: number, balance: Partial<InsertUserBalance>): Promise<UserBalance | undefined> {
     const [updated] = await db.update(userBalances).set(balance).where(eq(userBalances.userId, userId)).returning();
     return updated || undefined;
+  }
+
+  async getAllUserBalances(): Promise<UserBalance[]> {
+    return await db.select().from(userBalances);
   }
 
   // Support Tickets

@@ -101,6 +101,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.listUsers(100, 0);
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
   app.get("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const user = await storage.getUser(parseInt(req.params.id));
@@ -1190,9 +1199,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (action === 'buy') {
         const balance = await storage.getUserBalance(userId);
-        const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
+        const totalBalance = parseFloat(balance?.totalBalanceUsd || '0');
         
-        if (tradeValue > availableBalance) {
+        if (tradeValue > totalBalance) {
           return res.status(400).json({ error: "Insufficient balance" });
         }
 
@@ -1220,9 +1229,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        const newAvailable = availableBalance - tradeValue;
+        const newTotalBalance = totalBalance - tradeValue;
         await storage.updateUserBalance(userId, {
-          availableBalanceUsd: newAvailable.toString(),
+          totalBalanceUsd: newTotalBalance.toString(),
         });
 
         await storage.createTransaction({
@@ -1256,11 +1265,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const balance = await storage.getUserBalance(userId);
-        const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
-        const newAvailable = availableBalance + tradeValue;
+        const totalBalance = parseFloat(balance?.totalBalanceUsd || '0');
+        const newTotalBalance = totalBalance + tradeValue;
         
         await storage.updateUserBalance(userId, {
-          availableBalanceUsd: newAvailable.toString(),
+          totalBalanceUsd: newTotalBalance.toString(),
         });
 
         await storage.createTransaction({
@@ -1294,6 +1303,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(balance || { totalBalanceUsd: "0", availableBalanceUsd: "0", lockedBalanceUsd: "0" });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch balance" });
+    }
+  });
+
+  app.get("/api/balances", requireAdmin, async (req, res) => {
+    try {
+      const balances = await storage.getAllUserBalances();
+      res.json(balances);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch balances" });
     }
   });
 

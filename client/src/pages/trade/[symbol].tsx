@@ -122,7 +122,7 @@ export default function AssetDetail() {
   });
 
   const userHolding = portfolio.find(p => p.symbol.toUpperCase() === symbol?.toUpperCase());
-  const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
+  const totalBalance = parseFloat(balance?.totalBalanceUsd || '0');
   const currentPrice = assetDetails?.market_data?.current_price?.usd || 0;
   const holdingAmount = parseFloat(userHolding?.amount || '0');
 
@@ -141,7 +141,7 @@ export default function AssetDetail() {
       return;
     }
 
-    if (tradeType === 'buy' && usdValue > availableBalance) {
+    if (tradeType === 'buy' && usdValue > totalBalance) {
       toast({ 
         title: "Insufficient Balance", 
         description: "You need to top up before you can complete this transaction. Redirecting to deposit...", 
@@ -213,9 +213,9 @@ export default function AssetDetail() {
   const handleQuickAmount = (percentage: number) => {
     if (tradeType === 'buy') {
       if (inputMode === 'usd') {
-        setAmount((availableBalance * percentage / 100).toFixed(2));
+        setAmount((totalBalance * percentage / 100).toFixed(2));
       } else {
-        const maxBuyAmount = availableBalance / currentPrice;
+        const maxBuyAmount = totalBalance / currentPrice;
         setAmount((maxBuyAmount * percentage / 100).toFixed(6));
       }
     } else {
@@ -424,7 +424,7 @@ export default function AssetDetail() {
                   {tradeType === 'buy' && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Available</span>
-                      <span>${availableBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span>${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
                   {tradeType === 'sell' && (
