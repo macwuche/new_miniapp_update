@@ -3,7 +3,7 @@ import { useTelegram } from "@/lib/telegram-mock";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PieChart, Activity, ArrowUpRight, ArrowDownRight, TrendingUp, Loader2, Wallet, RefreshCw } from "lucide-react";
+import { PieChart, Activity, ArrowUpRight, ArrowDownRight, TrendingUp, Loader2, Wallet, RefreshCw, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -190,16 +190,28 @@ export default function Portfolio() {
                 </span>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="bg-white/20 rounded-full"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              data-testid="button-refresh"
-            >
-              <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href="/trade">
+                <Button 
+                  variant="ghost" 
+                  className="bg-white/20 rounded-full px-3 py-2 text-sm font-medium"
+                  data-testid="button-buy-assets"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Buy
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="bg-white/20 rounded-full"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                data-testid="button-refresh"
+              >
+                <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
