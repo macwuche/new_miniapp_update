@@ -1,14 +1,18 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Wallet, ArrowLeft, Link as LinkIcon, Plus, Trash2 } from "lucide-react";
+import { Wallet, ArrowLeft, Link as LinkIcon, Plus, Trash2, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import trustWalletLogo from "@/assets/trust-wallet.png";
 import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usersAPI } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LinkedWallets() {
   const [location, setLocation] = useLocation();
   const [returnTo, setReturnTo] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -18,44 +22,110 @@ export default function LinkedWallets() {
     }
   }, []);
 
+  // Fetch user from database
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register'],
+    queryFn: async (): Promise<{ id: number } | null> => {
+      // @ts-ignore
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        return usersAPI.register({
+          telegramId: userData.id.toString(),
+          username: userData.username || userData.first_name,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          profilePicture: userData.photo_url
+        }) as Promise<{ id: number }>;
+      } else {
+        return usersAPI.register({
+          telegramId: null,
+          username: "demo_user",
+          firstName: "Demo",
+          lastName: "User",
+          profilePicture: null
+        }) as Promise<{ id: number }>;
+      }
+    },
+    staleTime: 1000 * 60,
+  });
+
+  // Fetch connected wallets from API
+  const { data: wallets, isLoading } = useQuery({
+    queryKey: ['/api/connected-wallets', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/connected-wallets`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  // Delete wallet mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (walletId: number) => {
+      const res = await fetch(`/api/wallets/${walletId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete wallet');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Wallet Removed",
+        description: "The wallet has been disconnected successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/connected-wallets', dbUser?.id] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSelectWallet = (wallet: any) => {
     if (returnTo) {
-      // Save selection
       localStorage.setItem('selected_withdrawal_method', 'connected');
       localStorage.setItem('selected_withdrawal_wallet', JSON.stringify(wallet));
-      // Return to origin
       setLocation(`${returnTo}?action=withdraw`);
     }
   };
 
-  // Mock data for linked wallets
-  const linkedWallets = [
-    {
-      id: 1,
-      name: "Tonkeeper",
-      address: "EQD4...8j92",
-      type: "TON",
-      color: "bg-blue-100 text-blue-600",
-      isConnected: true
-    },
-    {
-      id: 2,
-      name: "Trust Wallet",
-      address: "0x71C...9A23",
-      type: "EVM",
-      color: "bg-green-100 text-green-600",
-      isConnected: false,
-      image: trustWalletLogo
-    },
-    {
-      id: 3,
-      name: "MetaMask",
-      address: "0x82B...1F45",
-      type: "EVM",
-      color: "bg-orange-100 text-orange-600",
-      isConnected: false
+  const handleDeleteWallet = (e: React.MouseEvent, walletId: number) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to remove this wallet?")) {
+      deleteMutation.mutate(walletId);
     }
-  ];
+  };
+
+  // Generate color based on wallet name
+  const getWalletColor = (name: string) => {
+    const colors = [
+      "bg-blue-100 text-blue-600",
+      "bg-green-100 text-green-600",
+      "bg-orange-100 text-orange-600",
+      "bg-purple-100 text-purple-600",
+      "bg-pink-100 text-pink-600",
+      "bg-indigo-100 text-indigo-600",
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  // Truncate address for display
+  const truncateAddress = (address: string) => {
+    if (address.length <= 12) return address;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
 
   return (
     <MobileLayout>
@@ -71,43 +141,68 @@ export default function LinkedWallets() {
         </div>
 
         <div className="space-y-4">
-          {linkedWallets.map((wallet) => (
-            <Card 
-              key={wallet.id} 
-              className={`p-4 border-none shadow-sm bg-white flex items-center justify-between ${returnTo ? 'cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all ring-1 ring-transparent hover:ring-blue-200' : ''}`}
-              onClick={() => handleSelectWallet(wallet)}
-            >
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${wallet.color} flex items-center justify-center overflow-hidden`}>
-                  {wallet.image ? (
-                    <img src={wallet.image} alt={wallet.name} className="w-8 h-8 object-contain" />
-                  ) : (
-                    <Wallet size={24} />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-900">{wallet.name}</h3>
-                    {wallet.isConnected && (
-                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-wide">
-                        Active
-                      </span>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-gray-500 text-sm">Loading wallets...</p>
+            </div>
+          ) : wallets && wallets.length > 0 ? (
+            wallets.map((wallet: any) => (
+              <Card 
+                key={wallet.id} 
+                className={`p-4 border-none shadow-sm bg-white flex items-center justify-between ${returnTo ? 'cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all ring-1 ring-transparent hover:ring-blue-200' : ''}`}
+                onClick={() => handleSelectWallet(wallet)}
+                data-testid={`card-wallet-${wallet.id}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl ${getWalletColor(wallet.name)} flex items-center justify-center overflow-hidden`}>
+                    {wallet.logo ? (
+                      <img src={wallet.logo} alt={wallet.name} className="w-8 h-8 object-contain" />
+                    ) : (
+                      <Wallet size={24} />
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 font-mono">{wallet.address}</p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900">{wallet.name}</h3>
+                    </div>
+                    <p className="text-sm text-gray-500 font-mono">{truncateAddress(wallet.address)}</p>
+                    <p className="text-xs text-gray-400">
+                      Connected {new Date(wallet.connectedAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
+                
+                {!returnTo && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                    onClick={(e) => handleDeleteWallet(e, wallet.id)}
+                    disabled={deleteMutation.isPending}
+                    data-testid={`button-delete-wallet-${wallet.id}`}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={18} />
+                    )}
+                  </Button>
+                )}
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wallet size={32} className="text-gray-400" />
               </div>
-              
-              {!returnTo && (
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500 hover:bg-red-50">
-                  <Trash2 size={18} />
-                </Button>
-              )}
-            </Card>
-          ))}
+              <h3 className="font-bold text-gray-900 mb-1">No Wallets Connected</h3>
+              <p className="text-gray-500 text-sm">Connect a wallet to get started</p>
+            </div>
+          )}
 
           <Link href="/connect-wallet">
-            <Button className="w-full h-14 mt-4 bg-white border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all">
+            <Button className="w-full h-14 mt-4 bg-white border-2 border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-2 font-medium transition-all" data-testid="button-connect-wallet">
               <Plus size={20} />
               Connect New Wallet
             </Button>
