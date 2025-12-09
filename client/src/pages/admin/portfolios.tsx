@@ -109,10 +109,10 @@ export default function AdminPortfolios() {
 
   const userPortfolioData = useMemo(() => {
     return users.map(user => {
-      const portfolios = allPortfolios.filter(p => p.userId === user.id);
+      const portfolios = allPortfolios.filter(p => p.userId === user.id && parseFloat(p.amount) > 0);
       const balance = allBalances.find(b => b.userId === user.id) || null;
       return { user, balance, portfolios };
-    }).filter(data => data.portfolios.length > 0);
+    });
   }, [users, allPortfolios, allBalances]);
 
   const filteredData = userPortfolioData.filter(data => 
