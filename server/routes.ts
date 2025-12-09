@@ -1065,6 +1065,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to trigger daily profit distribution
+  app.post("/api/admin/distribute-profits", requireAdmin, async (req, res) => {
+    try {
+      const activeUserBots = await storage.listActiveUserBots();
+      const cryptoAssets = await storage.listCryptoAssets();
+      
+      if (cryptoAssets.length === 0) {
+        return res.status(400).json({ error: "No crypto assets available for profit distribution" });
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let distributedCount = 0;
+      const results: any[] = [];
+
+      for (const userBot of activeUserBots) {
+        // Skip if already received profit today
+        if (userBot.lastProfitDate) {
+          const lastProfit = new Date(userBot.lastProfitDate);
+          lastProfit.setHours(0, 0, 0, 0);
+          if (lastProfit.getTime() >= today.getTime()) {
+            continue;
+          }
+        }
+
+        // Get bot details for profit range
+        const bot = await storage.getAiBot(userBot.botId);
+        if (!bot) continue;
+
+        // Validate profit range exists
+        const minProfit = parseFloat(bot.minProfitPercent) || 2;
+        const maxProfit = parseFloat(bot.maxProfitPercent) || 4;
+        if (isNaN(minProfit) || isNaN(maxProfit) || minProfit <= 0 || maxProfit <= 0) {
+          console.log(`Skipping bot ${bot.id} - invalid profit range`);
+          continue;
+        }
+
+        // Calculate random profit within the bot's range
+        const randomPercent = minProfit + Math.random() * (maxProfit - minProfit);
+        const profitAmount = parseFloat(userBot.investmentAmount) * (randomPercent / 100);
+
+        // Pick a random crypto asset
+        const randomAsset = cryptoAssets[Math.floor(Math.random() * cryptoAssets.length)];
+        const cryptoAmount = profitAmount / parseFloat(randomAsset.price);
+
+        // Add/update the user's portfolio with this crypto
+        const portfolio = await storage.getPortfolioBySymbol(userBot.userId, randomAsset.symbol);
+        if (portfolio) {
+          const newAmount = parseFloat(portfolio.amount) + cryptoAmount;
+          const newValue = parseFloat(portfolio.currentValue) + profitAmount;
+          await storage.updatePortfolio(portfolio.id, {
+            amount: newAmount.toString(),
+            currentValue: newValue.toString(),
+          });
+        } else {
+          await storage.createPortfolio({
+            userId: userBot.userId,
+            assetId: randomAsset.coinGeckoId || randomAsset.symbol.toLowerCase(),
+            assetType: 'crypto',
+            name: randomAsset.name,
+            symbol: randomAsset.symbol,
+            amount: cryptoAmount.toString(),
+            averageBuyPrice: randomAsset.price,
+            currentValue: profitAmount.toString(),
+          });
+        }
+
+        // Update user bot's current profit and last profit date
+        const newTotalProfit = parseFloat(userBot.currentProfit) + profitAmount;
+        await storage.updateUserBot(userBot.id, {
+          currentProfit: newTotalProfit.toString(),
+          lastProfitDate: new Date(),
+        });
+
+        distributedCount++;
+        results.push({
+          userId: userBot.userId,
+          botId: userBot.botId,
+          profitAmount: profitAmount.toFixed(2),
+          cryptoAsset: randomAsset.symbol,
+          cryptoAmount: cryptoAmount.toFixed(8),
+        });
+      }
+
+      res.json({
+        success: true,
+        message: `Distributed profits to ${distributedCount} active bot subscriptions`,
+        distributions: results,
+      });
+    } catch (error) {
+      console.error("Profit distribution error:", error);
+      res.status(500).json({ error: "Failed to distribute profits" });
+    }
+  });
+
   // ==================== USER BOT SUBSCRIPTIONS ====================
   app.get("/api/users/:userId/bots", async (req, res) => {
     try {
