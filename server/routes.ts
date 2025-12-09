@@ -5,6 +5,72 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import rateLimit from "express-rate-limit";
+
+// Password validation helper
+function validatePassword(password: string): { valid: boolean; message: string } {
+  if (!password || password.length < 8) {
+    return { valid: false, message: "Password must be at least 8 characters long" };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: "Password must contain at least one uppercase letter" };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: "Password must contain at least one lowercase letter" };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: "Password must contain at least one number" };
+  }
+  return { valid: true, message: "" };
+}
+
+// Track failed login attempts for account lockout
+const failedLoginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+// Normalize identifier to prevent bypass via casing/whitespace variations
+function normalizeIdentifier(identifier: string): string {
+  return (identifier || '').trim().toLowerCase();
+}
+
+function checkLockout(identifier: string): { locked: boolean; remainingMs: number } {
+  const normalized = normalizeIdentifier(identifier);
+  const attempts = failedLoginAttempts.get(normalized);
+  if (!attempts) return { locked: false, remainingMs: 0 };
+  
+  const timeSinceLastAttempt = Date.now() - attempts.lastAttempt;
+  if (timeSinceLastAttempt > LOCKOUT_DURATION_MS) {
+    failedLoginAttempts.delete(normalized);
+    return { locked: false, remainingMs: 0 };
+  }
+  
+  if (attempts.count >= LOCKOUT_THRESHOLD) {
+    return { locked: true, remainingMs: LOCKOUT_DURATION_MS - timeSinceLastAttempt };
+  }
+  
+  return { locked: false, remainingMs: 0 };
+}
+
+function recordFailedLogin(identifier: string): void {
+  const normalized = normalizeIdentifier(identifier);
+  const attempts = failedLoginAttempts.get(normalized) || { count: 0, lastAttempt: 0 };
+  attempts.count += 1;
+  attempts.lastAttempt = Date.now();
+  failedLoginAttempts.set(normalized, attempts);
+}
+
+function clearFailedLogins(identifier: string): void {
+  const normalized = normalizeIdentifier(identifier);
+  failedLoginAttempts.delete(normalized);
+}
+
+// Audit logging helper
+function auditLog(action: string, details: Record<string, any>, req: Request): void {
+  const timestamp = new Date().toISOString();
+  const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  console.log(`[AUDIT] ${timestamp} | ${action} | IP: ${ip} | ${JSON.stringify(details)}`);
+}
 
 // Extend Express Request to include session
 declare module "express-session" {
@@ -16,8 +82,36 @@ declare module "express-session" {
 
 const PgSession = connectPg(session);
 
+// Rate limiters for different endpoints
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 login attempts per window
+  message: { error: "Too many login attempts. Please try again in 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  message: { error: "Too many requests. Please slow down." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const sensitiveOpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 20, // 20 sensitive operations per 5 minutes
+  message: { error: "Too many requests. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware
+  // Apply general API rate limiting
+  app.use("/api", apiLimiter);
+  
+  // Session middleware with enhanced security
   app.use(
     session({
       store: new PgSession({
@@ -31,6 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
       },
     })
   );
@@ -44,21 +139,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // ==================== ADMIN AUTH ====================
-  app.post("/api/admin/login", async (req, res) => {
+  app.post("/api/admin/login", loginLimiter, async (req, res) => {
     try {
       const { email, password } = req.body;
+      
+      // Check for account lockout
+      const lockoutStatus = checkLockout(email);
+      if (lockoutStatus.locked) {
+        const remainingMinutes = Math.ceil(lockoutStatus.remainingMs / 60000);
+        auditLog("ADMIN_LOGIN_BLOCKED", { email, reason: "account_locked" }, req);
+        return res.status(429).json({ 
+          error: `Account temporarily locked. Try again in ${remainingMinutes} minutes.` 
+        });
+      }
+      
       const admin = await storage.getAdminByEmail(email);
 
       if (!admin) {
+        recordFailedLogin(email);
+        auditLog("ADMIN_LOGIN_FAILED", { email, reason: "invalid_email" }, req);
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
       const isValidPassword = await bcrypt.compare(password, admin.password);
       if (!isValidPassword) {
+        recordFailedLogin(email);
+        auditLog("ADMIN_LOGIN_FAILED", { email, reason: "invalid_password" }, req);
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
+      // Successful login - clear failed attempts
+      clearFailedLogins(email);
       req.session.adminId = admin.id;
+      auditLog("ADMIN_LOGIN_SUCCESS", { adminId: admin.id, email }, req);
+      
       res.json({ 
         id: admin.id, 
         email: admin.email, 
@@ -156,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user permanently (admin only)
-  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/users/:id", requireAdmin, sensitiveOpLimiter, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const user = await storage.getUser(userId);
@@ -164,6 +278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
       await storage.deleteUser(userId);
+      auditLog("USER_DELETED", { 
+        adminId: req.session.adminId, 
+        deletedUserId: userId, 
+        username: user.username 
+      }, req);
       res.json({ success: true, message: "User deleted successfully" });
     } catch (error) {
       console.error("Delete user error:", error);
@@ -172,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin adjust user balance
-  app.post("/api/admin/users/:id/balance", requireAdmin, async (req, res) => {
+  app.post("/api/admin/users/:id/balance", requireAdmin, sensitiveOpLimiter, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { amount, type } = req.body; // type: 'add' or 'subtract'
@@ -201,6 +320,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         availableBalanceUsd: newBalance.toString()
       });
 
+      auditLog("BALANCE_ADJUSTED", {
+        adminId: req.session.adminId,
+        userId,
+        type,
+        amount: adjustment,
+        previousBalance: currentBalance,
+        newBalance
+      }, req);
+
       res.json(updated);
     } catch (error) {
       console.error("Adjust balance error:", error);
@@ -209,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin add to user portfolio
-  app.post("/api/admin/users/:id/portfolio", requireAdmin, async (req, res) => {
+  app.post("/api/admin/users/:id/portfolio", requireAdmin, sensitiveOpLimiter, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const { assetSymbol, assetName, amount, priceUsd } = req.body;
@@ -236,6 +364,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currentValue: newValue,
           averageBuyPrice: priceUsd?.toString() || existing.averageBuyPrice
         });
+        
+        auditLog("PORTFOLIO_UPDATED", {
+          adminId: req.session.adminId,
+          userId,
+          symbol: assetSymbol,
+          addedAmount: assetAmount,
+          newTotalAmount: newAmount,
+          priceUsd: price
+        }, req);
+        
         res.json(updated);
       } else {
         // Create new portfolio entry
@@ -249,6 +387,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currentValue,
           assetType: "crypto"
         });
+        
+        auditLog("PORTFOLIO_CREATED", {
+          adminId: req.session.adminId,
+          userId,
+          symbol: assetSymbol,
+          amount: assetAmount,
+          priceUsd: price
+        }, req);
+        
         res.json(portfolio);
       }
     } catch (error) {
