@@ -29,6 +29,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Search, 
   Filter, 
@@ -51,13 +52,14 @@ import {
   AlertCircle,
   ArrowUpRight,
   ArrowDownLeft,
-  Loader2
+  Loader2,
+  Copy
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface User {
   id: number;
@@ -90,27 +92,54 @@ interface TransformedUser {
   profilePicture: string | null;
 }
 
-const MOCK_TRANSACTIONS = [
-  { id: "TX-101", type: "Deposit", amount: "$500.00", status: "Completed", date: "2024-05-20" },
-  { id: "TX-102", type: "Withdrawal", amount: "$200.00", status: "Pending", date: "2024-05-19" },
-  { id: "TX-103", type: "Trade", amount: "$1,200.00", status: "Completed", date: "2024-05-18" },
-  { id: "TX-104", type: "Swap", amount: "$300.00", status: "Completed", date: "2024-05-15" },
-];
+interface UserWallet {
+  id: number;
+  walletName: string;
+  walletAddress: string;
+  connectedAt: string;
+}
 
-const MOCK_BOTS = [
-  { id: "BOT-01", name: "BTC Scalper", strategy: "Scalping", profit: "+12.5%", status: "Active" },
-  { id: "BOT-02", name: "ETH Swing", strategy: "Swing Trading", profit: "-2.1%", status: "Paused" },
-];
+interface Transaction {
+  id: number;
+  amount: string;
+  status: string;
+  createdAt: string;
+  type?: string;
+}
+
+interface UserTransactions {
+  deposits: Transaction[];
+  withdrawals: Transaction[];
+  botSubscriptions: Transaction[];
+}
+
+interface BotSubscription {
+  id: number;
+  botName: string;
+  investmentAmount: string;
+  status: string;
+  expiryDate: string;
+  profit?: string;
+}
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   
   const [selectedUser, setSelectedUser] = useState<TransformedUser | null>(null);
   const [dialogType, setDialogType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+
+  const [portfolioForm, setPortfolioForm] = useState({
+    assetSymbol: "",
+    assetName: "",
+    amount: "",
+    priceUsd: ""
+  });
 
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
@@ -127,6 +156,134 @@ export default function UserManagement() {
       const res = await fetch("/api/balances", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch balances");
       return res.json();
+    },
+  });
+
+  const { data: userWallets = [], isLoading: walletsLoading } = useQuery<UserWallet[]>({
+    queryKey: ["/api/admin/users", selectedUser?.id, "wallets"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${selectedUser?.id}/wallets`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch wallets");
+      return res.json();
+    },
+    enabled: dialogType === 'check-wallet' && !!selectedUser?.id,
+  });
+
+  const { data: userTransactions, isLoading: transactionsLoading } = useQuery<UserTransactions>({
+    queryKey: ["/api/admin/users", selectedUser?.id, "transactions"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${selectedUser?.id}/transactions`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch transactions");
+      return res.json();
+    },
+    enabled: dialogType === 'check-transactions' && !!selectedUser?.id,
+  });
+
+  const { data: userBots = [], isLoading: botsLoading } = useQuery<BotSubscription[]>({
+    queryKey: ["/api/admin/users", selectedUser?.id, "bots"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${selectedUser?.id}/bots`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch bots");
+      return res.json();
+    },
+    enabled: dialogType === 'check-bots' && !!selectedUser?.id,
+  });
+
+  const balanceMutation = useMutation({
+    mutationFn: async ({ userId, amount, type }: { userId: number; amount: number; type: 'add' | 'subtract' }) => {
+      const res = await fetch(`/api/admin/users/${userId}/balance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ amount, type }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to update balance');
+      }
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/balances"] });
+      toast({
+        title: "Balance Updated",
+        description: `Successfully ${variables.type === 'add' ? 'added' : 'subtracted'} $${variables.amount} ${variables.type === 'add' ? 'to' : 'from'} user's balance`,
+      });
+      closeDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to delete user');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/balances"] });
+      toast({
+        title: "User Deleted",
+        description: "User has been permanently deleted",
+      });
+      closeDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const portfolioMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: number; data: typeof portfolioForm }) => {
+      const res = await fetch(`/api/admin/users/${userId}/portfolio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          assetSymbol: data.assetSymbol,
+          assetName: data.assetName,
+          amount: parseFloat(data.amount),
+          priceUsd: parseFloat(data.priceUsd),
+        }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to add to portfolio');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Portfolio Updated",
+        description: "Successfully added asset to user's portfolio",
+      });
+      closeDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -172,6 +329,8 @@ export default function UserManagement() {
     setSelectedUser(user);
     setDialogType(type);
     setAmount("");
+    setDeleteConfirmed(false);
+    setPortfolioForm({ assetSymbol: "", assetName: "", amount: "", priceUsd: "" });
   };
 
   const closeDialog = () => {
@@ -179,39 +338,47 @@ export default function UserManagement() {
     setSelectedUser(null);
     setAmount("");
     setIsLoading(false);
+    setDeleteConfirmed(false);
+    setPortfolioForm({ assetSymbol: "", assetName: "", amount: "", priceUsd: "" });
   };
 
   const handleSubmitAction = async () => {
     if (!selectedUser) return;
     
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    let message = "";
     switch (dialogType) {
       case 'add-balance':
-        message = `Successfully added $${amount} to ${selectedUser.name}'s balance`;
+        balanceMutation.mutate({ 
+          userId: selectedUser.id, 
+          amount: parseFloat(amount), 
+          type: 'add' 
+        });
         break;
       case 'subtract-balance':
-        message = `Successfully subtracted $${amount} from ${selectedUser.name}'s balance`;
+        balanceMutation.mutate({ 
+          userId: selectedUser.id, 
+          amount: parseFloat(amount), 
+          type: 'subtract' 
+        });
         break;
       case 'add-portfolio':
-        message = `Successfully added $${amount} to ${selectedUser.name}'s investment portfolio`;
+        portfolioMutation.mutate({
+          userId: selectedUser.id,
+          data: portfolioForm,
+        });
         break;
       case 'delete-user':
-        message = `User ${selectedUser.name} has been permanently deleted`;
+        deleteUserMutation.mutate(selectedUser.id);
         break;
       case 'send-email':
-        message = `Message sent to ${selectedUser.username}`;
+        setIsLoading(true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast({
+          title: "Message Sent",
+          description: `Message sent to ${selectedUser.username}`,
+        });
+        closeDialog();
         break;
     }
-    
-    toast({
-      title: "Action Completed",
-      description: message,
-    });
-    
-    closeDialog();
   };
 
   const getKycBadge = (status: string) => {
@@ -223,10 +390,18 @@ export default function UserManagement() {
     }
   };
 
+  const truncateAddress = (address: string) => {
+    if (!address) return '';
+    if (address.length <= 16) return address;
+    return `${address.slice(0, 8)}...${address.slice(-8)}`;
+  };
+
   const totalUsers = transformedUsers.length;
   const activeUsers = transformedUsers.filter(u => u.status === "Active").length;
   const pendingKyc = transformedUsers.filter(u => u.kyc === "Unverified").length;
   const suspendedUsers = transformedUsers.filter(u => u.status === "Suspended").length;
+
+  const isMutating = balanceMutation.isPending || deleteUserMutation.isPending || portfolioMutation.isPending || isLoading;
 
   return (
     <AdminLayout>
@@ -467,10 +642,15 @@ export default function UserManagement() {
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             <Button 
               onClick={handleSubmitAction} 
-              disabled={!amount || isLoading}
+              disabled={!amount || isMutating}
               className={dialogType === 'subtract-balance' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
             >
-              {isLoading ? 'Processing...' : (dialogType === 'add-balance' ? 'Add Funds' : 'Subtract Funds')}
+              {isMutating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (dialogType === 'add-balance' ? 'Add Funds' : 'Subtract Funds')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -481,41 +661,75 @@ export default function UserManagement() {
           <DialogHeader>
             <DialogTitle>Add to Portfolio</DialogTitle>
             <DialogDescription>
-              Inject funds directly into {selectedUser?.name}'s investment portfolio.
+              Add an asset to {selectedUser?.name}'s investment portfolio.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-             <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
               <p className="text-sm text-blue-800">
-                This action will add funds to the user's "Investment" portfolio, separate from their main wallet balance.
+                This action will add an asset to the user's portfolio holdings, separate from their main wallet balance.
               </p>
             </div>
-            <div className="space-y-2">
-              <Label>Investment Amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Asset Symbol</Label>
                 <Input 
-                  type="number" 
-                  placeholder="0.00" 
-                  className="pl-7" 
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="e.g., BTC"
+                  value={portfolioForm.assetSymbol}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, assetSymbol: e.target.value.toUpperCase() }))}
+                  data-testid="input-asset-symbol"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Asset Name</Label>
+                <Input 
+                  placeholder="e.g., Bitcoin"
+                  value={portfolioForm.assetName}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, assetName: e.target.value }))}
+                  data-testid="input-asset-name"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Note (Optional)</Label>
-              <Input placeholder="Reason for portfolio adjustment" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <Input 
+                  type="number" 
+                  placeholder="0.00"
+                  value={portfolioForm.amount}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, amount: e.target.value }))}
+                  data-testid="input-portfolio-amount"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Price USD</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    className="pl-7"
+                    value={portfolioForm.priceUsd}
+                    onChange={(e) => setPortfolioForm(prev => ({ ...prev, priceUsd: e.target.value }))}
+                    data-testid="input-price-usd"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             <Button 
               onClick={handleSubmitAction} 
-              disabled={!amount || isLoading}
+              disabled={!portfolioForm.assetSymbol || !portfolioForm.assetName || !portfolioForm.amount || !portfolioForm.priceUsd || isMutating}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {isLoading ? 'Processing...' : 'Add to Portfolio'}
+              {isMutating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : 'Add to Portfolio'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -542,15 +756,83 @@ export default function UserManagement() {
             </ul>
           </div>
 
+          <div className="flex items-center space-x-2 py-2">
+            <input 
+              type="checkbox" 
+              id="confirm-delete" 
+              checked={deleteConfirmed}
+              onChange={(e) => setDeleteConfirmed(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <label htmlFor="confirm-delete" className="text-sm text-gray-700">
+              I understand this action is irreversible
+            </label>
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             <Button 
               onClick={handleSubmitAction} 
-              disabled={isLoading}
+              disabled={!deleteConfirmed || isMutating}
               variant="destructive"
             >
-              {isLoading ? 'Deleting...' : 'Delete Permanently'}
+              {isMutating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : 'Delete Permanently'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogType === 'check-wallet'} onOpenChange={closeDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Connected Wallets</DialogTitle>
+            <DialogDescription>
+              Wallets connected by {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {walletsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Loading wallets...</span>
+              </div>
+            ) : userWallets.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed">
+                <Wallet className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-gray-500">No wallets connected</p>
+                <p className="text-xs text-gray-400 mt-1">This user hasn't linked any external wallets yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {userWallets.map((wallet) => (
+                  <div key={wallet.id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                        <Wallet size={18} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{wallet.walletName}</p>
+                        <p className="text-xs text-gray-500 font-mono">{truncateAddress(wallet.walletAddress)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Connected</p>
+                      <p className="text-xs text-gray-600">{new Date(wallet.connectedAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={closeDialog}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -621,44 +903,144 @@ export default function UserManagement() {
           </DialogHeader>
           
           <div className="py-4">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {MOCK_TRANSACTIONS.map((tx) => (
-                    <TableRow key={tx.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {tx.type === 'Deposit' ? <ArrowDownLeft size={16} className="text-green-500" /> : 
-                           tx.type === 'Withdrawal' ? <ArrowUpRight size={16} className="text-red-500" /> :
-                           <History size={16} className="text-blue-500" />}
-                          {tx.type}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono">{tx.amount}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={
-                          tx.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                        }>{tx.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-gray-500">{tx.date}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            {transactionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Loading transactions...</span>
+              </div>
+            ) : (
+              <Tabs defaultValue="deposits" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="deposits">
+                    Deposits ({userTransactions?.deposits?.length || 0})
+                  </TabsTrigger>
+                  <TabsTrigger value="withdrawals">
+                    Withdrawals ({userTransactions?.withdrawals?.length || 0})
+                  </TabsTrigger>
+                  <TabsTrigger value="bots">
+                    Bot Subscriptions ({userTransactions?.botSubscriptions?.length || 0})
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="deposits" className="mt-4">
+                  {userTransactions?.deposits?.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed">
+                      <ArrowDownLeft className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-gray-500">No deposits found</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {userTransactions?.deposits?.map((tx) => (
+                            <TableRow key={tx.id}>
+                              <TableCell className="font-mono">${parseFloat(tx.amount).toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={
+                                  tx.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                  tx.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                  'bg-red-50 text-red-700 border-red-200'
+                                }>{tx.status}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-gray-500">
+                                {new Date(tx.createdAt).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="withdrawals" className="mt-4">
+                  {userTransactions?.withdrawals?.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed">
+                      <ArrowUpRight className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-gray-500">No withdrawals found</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {userTransactions?.withdrawals?.map((tx) => (
+                            <TableRow key={tx.id}>
+                              <TableCell className="font-mono">${parseFloat(tx.amount).toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={
+                                  tx.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                  tx.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                  'bg-red-50 text-red-700 border-red-200'
+                                }>{tx.status}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-gray-500">
+                                {new Date(tx.createdAt).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="bots" className="mt-4">
+                  {userTransactions?.botSubscriptions?.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed">
+                      <Bot className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-gray-500">No bot subscriptions found</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {userTransactions?.botSubscriptions?.map((tx) => (
+                            <TableRow key={tx.id}>
+                              <TableCell className="font-mono">${parseFloat(tx.amount).toLocaleString()}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={
+                                  tx.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                  tx.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                  'bg-gray-50 text-gray-700 border-gray-200'
+                                }>{tx.status}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-gray-500">
+                                {new Date(tx.createdAt).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>Close</Button>
-            <Button className="bg-blue-600">View Full History</Button>
+            <Button onClick={closeDialog}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -668,32 +1050,62 @@ export default function UserManagement() {
           <DialogHeader>
             <DialogTitle>Active Trading Bots</DialogTitle>
             <DialogDescription>
-              AI trading assistants managed by {selectedUser?.name}
+              AI trading assistants for {selectedUser?.name}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4 space-y-4">
-            {MOCK_BOTS.map((bot) => (
-              <div key={bot.id} className="flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
-                    <Bot size={20} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900">{bot.name}</h4>
-                    <p className="text-xs text-gray-500">{bot.strategy}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className={`font-bold ${bot.profit.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                    {bot.profit}
-                  </div>
-                  <Badge variant="secondary" className="mt-1 text-xs">
-                    {bot.status}
-                  </Badge>
-                </div>
+          <div className="py-4">
+            {botsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Loading bots...</span>
               </div>
-            ))}
+            ) : userBots.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed">
+                <Bot className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-gray-500">No active trading bots</p>
+                <p className="text-xs text-gray-400 mt-1">This user hasn't subscribed to any trading bots yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userBots.map((bot) => (
+                  <div key={bot.id} className="flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                        <Bot size={20} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">{bot.botName}</h4>
+                        <p className="text-xs text-gray-500">
+                          Investment: ${parseFloat(bot.investmentAmount).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {bot.profit && (
+                        <div className={`font-bold ${parseFloat(bot.profit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {parseFloat(bot.profit) >= 0 ? '+' : ''}${parseFloat(bot.profit).toLocaleString()}
+                        </div>
+                      )}
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          "mt-1 text-xs",
+                          bot.status === 'active' ? 'bg-green-50 text-green-700' : 
+                          bot.status === 'expired' ? 'bg-gray-50 text-gray-700' : 
+                          'bg-yellow-50 text-yellow-700'
+                        )}
+                      >
+                        {bot.status}
+                      </Badge>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Expires: {new Date(bot.expiryDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -720,7 +1132,14 @@ export default function UserManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSubmitAction}>Send Message</Button>
+            <Button onClick={handleSubmitAction} disabled={isMutating}>
+              {isMutating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : 'Send Message'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

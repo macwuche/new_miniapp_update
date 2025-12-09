@@ -155,6 +155,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user permanently (admin only)
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      await storage.deleteUser(userId);
+      res.json({ success: true, message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  // Admin adjust user balance
+  app.post("/api/admin/users/:id/balance", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { amount, type } = req.body; // type: 'add' or 'subtract'
+      
+      if (!amount || !type) {
+        return res.status(400).json({ error: "Amount and type are required" });
+      }
+
+      const balance = await storage.getUserBalance(userId);
+      if (!balance) {
+        return res.status(404).json({ error: "User balance not found" });
+      }
+
+      const currentBalance = parseFloat(balance.totalBalanceUsd);
+      const adjustment = parseFloat(amount);
+      const newBalance = type === 'add' 
+        ? currentBalance + adjustment 
+        : currentBalance - adjustment;
+
+      if (newBalance < 0) {
+        return res.status(400).json({ error: "Insufficient balance" });
+      }
+
+      const updated = await storage.updateUserBalance(userId, {
+        totalBalanceUsd: newBalance.toString(),
+        availableBalanceUsd: newBalance.toString()
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Adjust balance error:", error);
+      res.status(500).json({ error: "Failed to adjust balance" });
+    }
+  });
+
+  // Admin add to user portfolio
+  app.post("/api/admin/users/:id/portfolio", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { assetSymbol, assetName, amount, priceUsd } = req.body;
+      
+      if (!assetSymbol || !amount) {
+        return res.status(400).json({ error: "Asset symbol and amount are required" });
+      }
+
+      const price = parseFloat(priceUsd) || 0;
+      const assetAmount = parseFloat(amount);
+      const currentValue = (price * assetAmount).toString();
+
+      // Check if user already has this asset in portfolio
+      const portfolios = await storage.getUserPortfolio(userId);
+      const existing = portfolios.find((p: { symbol: string }) => p.symbol?.toUpperCase() === assetSymbol.toUpperCase());
+
+      if (existing) {
+        // Update existing portfolio entry
+        const currentAmount = parseFloat(existing.amount);
+        const newAmount = currentAmount + assetAmount;
+        const newValue = (price * newAmount).toString();
+        const updated = await storage.updatePortfolio(existing.id, {
+          amount: newAmount.toString(),
+          currentValue: newValue,
+          averageBuyPrice: priceUsd?.toString() || existing.averageBuyPrice
+        });
+        res.json(updated);
+      } else {
+        // Create new portfolio entry
+        const portfolio = await storage.createPortfolio({
+          userId,
+          assetId: assetSymbol.toLowerCase(),
+          symbol: assetSymbol.toUpperCase(),
+          name: assetName || assetSymbol,
+          amount: amount.toString(),
+          averageBuyPrice: priceUsd?.toString() || "0",
+          currentValue,
+          assetType: "crypto"
+        });
+        res.json(portfolio);
+      }
+    } catch (error) {
+      console.error("Add to portfolio error:", error);
+      res.status(500).json({ error: "Failed to add to portfolio" });
+    }
+  });
+
+  // Get user's connected wallets (for admin)
+  app.get("/api/admin/users/:id/wallets", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const wallets = await storage.listUserWallets(userId);
+      res.json(wallets);
+    } catch (error) {
+      console.error("Get user wallets error:", error);
+      res.status(500).json({ error: "Failed to fetch wallets" });
+    }
+  });
+
+  // Get user's transactions (deposits, withdrawals, bot profits)
+  app.get("/api/admin/users/:id/transactions", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const [deposits, withdrawals, botSubscriptions] = await Promise.all([
+        storage.listUserDeposits(userId),
+        storage.listUserWithdrawals(userId),
+        storage.listUserBots(userId)
+      ]);
+      
+      res.json({
+        deposits,
+        withdrawals,
+        botSubscriptions
+      });
+    } catch (error) {
+      console.error("Get user transactions error:", error);
+      res.status(500).json({ error: "Failed to fetch transactions" });
+    }
+  });
+
+  // Get user's bot subscriptions with details
+  app.get("/api/admin/users/:id/bots", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const subscriptions = await storage.listUserBots(userId);
+      
+      // Enrich with bot details
+      const enriched = await Promise.all(subscriptions.map(async (sub: { botId: number }) => {
+        const bot = await storage.getAiBot(sub.botId);
+        return {
+          ...sub,
+          bot: bot ? { name: bot.name, logo: bot.logo, expectedRoi: bot.expectedRoi } : null
+        };
+      }));
+      
+      res.json(enriched);
+    } catch (error) {
+      console.error("Get user bots error:", error);
+      res.status(500).json({ error: "Failed to fetch user bots" });
+    }
+  });
+
   // User registration (for Telegram users)
   app.post("/api/users/register", async (req, res) => {
     try {

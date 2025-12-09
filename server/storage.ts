@@ -85,6 +85,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   listUsers(limit?: number, offset?: number): Promise<User[]>;
   countUsers(): Promise<number>;
   getAdminStats(): Promise<{
@@ -293,6 +294,23 @@ export class DatabaseStorage implements IStorage {
 
   async listUsers(limit: number = 100, offset: number = 0): Promise<User[]> {
     return await db.select().from(users).limit(limit).offset(offset).orderBy(desc(users.joinedAt));
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    // Delete all related data first (cascade delete)
+    await db.delete(userBots).where(eq(userBots.userId, id));
+    await db.delete(portfolios).where(eq(portfolios.userId, id));
+    await db.delete(userBalances).where(eq(userBalances.userId, id));
+    await db.delete(connectedWallets).where(eq(connectedWallets.userId, id));
+    await db.delete(deposits).where(eq(deposits.userId, id));
+    await db.delete(withdrawals).where(eq(withdrawals.userId, id));
+    await db.delete(supportTickets).where(eq(supportTickets.userId, id));
+    await db.delete(userEmails).where(eq(userEmails.userId, id));
+    await db.delete(kycVerifications).where(eq(kycVerifications.userId, id));
+    await db.delete(cryptoAddresses).where(eq(cryptoAddresses.userId, id));
+    // Finally delete the user
+    const [deleted] = await db.delete(users).where(eq(users.id, id)).returning();
+    return !!deleted;
   }
 
   async countUsers(): Promise<number> {
