@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, MoreHorizontal, Edit, Trash2, Power, Bot, Loader2 } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Edit, Trash2, Power, Bot, Loader2, Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -62,6 +62,21 @@ interface AiBot {
   logo: string | null;
   isActive: boolean;
   createdAt: string;
+}
+
+interface Subscriber {
+  id: number;
+  userId: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  investmentAmount: string;
+  currentProfit: string;
+  purchaseDate: string;
+  expiryDate: string;
+  status: 'active' | 'expired';
+  isStopped: boolean;
+  lastProfitDate: string | null;
 }
 
 interface BotFormData {
@@ -98,8 +113,10 @@ export default function BotManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSubscribersDialogOpen, setIsSubscribersDialogOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<AiBot | null>(null);
   const [deletingBot, setDeletingBot] = useState<AiBot | null>(null);
+  const [viewingBot, setViewingBot] = useState<AiBot | null>(null);
   const [formData, setFormData] = useState<BotFormData>(defaultFormData);
 
   const { data: bots = [], isLoading } = useQuery<AiBot[]>({
@@ -170,6 +187,16 @@ export default function BotManagement() {
     },
   });
 
+  const { data: subscribers = [], isLoading: subscribersLoading } = useQuery<Subscriber[]>({
+    queryKey: ['/api/admin/bots', viewingBot?.id, 'subscribers'],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/bots/${viewingBot?.id}/subscribers`, { credentials: 'include' });
+      if (!res.ok) throw new Error("Failed to fetch subscribers");
+      return res.json();
+    },
+    enabled: !!viewingBot?.id && isSubscribersDialogOpen,
+  });
+
   const filteredBots = bots.filter(bot =>
     bot.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     bot.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -237,6 +264,23 @@ export default function BotManagement() {
     setDeletingBot(bot);
     setIsDeleteDialogOpen(true);
   };
+
+  const handleViewUsers = (bot: AiBot) => {
+    setViewingBot(bot);
+    setIsSubscribersDialogOpen(true);
+  };
+
+  const closeSubscribersDialog = () => {
+    setIsSubscribersDialogOpen(false);
+    setViewingBot(null);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const totalInvested = subscribers.reduce((sum, s) => sum + parseFloat(s.investmentAmount), 0);
+  const totalProfit = subscribers.reduce((sum, s) => sum + parseFloat(s.currentProfit), 0);
 
   const confirmDelete = () => {
     if (deletingBot) {
@@ -400,6 +444,10 @@ export default function BotManagement() {
                           <DropdownMenuItem onClick={() => openEditDialog(bot)} data-testid={`button-edit-${bot.id}`}>
                             <Edit size={14} className="mr-2" />
                             Edit Bot
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewUsers(bot)} data-testid={`button-view-users-${bot.id}`}>
+                            <Users size={14} className="mr-2" />
+                            View Users
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleToggleStatus(bot)}>
                             <Power size={14} className="mr-2" />
@@ -622,6 +670,125 @@ export default function BotManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isSubscribersDialogOpen} onOpenChange={(open) => !open && closeSubscribersDialog()}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users size={20} />
+              {viewingBot?.name} - Subscribers
+            </DialogTitle>
+            <DialogDescription>
+              View all users subscribed to this bot and their profit details.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <Card className="border bg-blue-50">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Users className="text-blue-600" size={24} />
+                <div>
+                  <p className="text-xs text-gray-500">Total Subscribers</p>
+                  <p className="text-xl font-bold text-blue-600">{subscribers.length}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border bg-green-50">
+              <CardContent className="p-4 flex items-center gap-3">
+                <DollarSign className="text-green-600" size={24} />
+                <div>
+                  <p className="text-xs text-gray-500">Total Invested</p>
+                  <p className="text-xl font-bold text-green-600">${totalInvested.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border bg-purple-50">
+              <CardContent className="p-4 flex items-center gap-3">
+                <TrendingUp className="text-purple-600" size={24} />
+                <div>
+                  <p className="text-xs text-gray-500">Total Profits Distributed</p>
+                  <p className="text-xl font-bold text-purple-600">${totalProfit.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {subscribersLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          ) : subscribers.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Users size={48} className="mx-auto mb-2 opacity-50" />
+              <p>No subscribers yet for this bot.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Investment</TableHead>
+                  <TableHead>Profit</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Subscribed</TableHead>
+                  <TableHead>Expires</TableHead>
+                  <TableHead>Last Profit</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {subscribers.map((subscriber) => (
+                  <TableRow key={subscriber.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{subscriber.username}</p>
+                        <p className="text-xs text-gray-500">
+                          {subscriber.firstName} {subscriber.lastName}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium text-green-600">
+                      ${parseFloat(subscriber.investmentAmount).toFixed(2)}
+                    </TableCell>
+                    <TableCell className={parseFloat(subscriber.currentProfit) > 0 ? "text-green-600 font-medium" : "text-gray-500"}>
+                      ${parseFloat(subscriber.currentProfit).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {subscriber.isStopped ? (
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                          Stopped
+                        </Badge>
+                      ) : subscriber.status === 'active' ? (
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                          Expired
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {formatDate(subscriber.purchaseDate)}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {formatDate(subscriber.expiryDate)}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {subscriber.lastProfitDate ? formatDate(subscriber.lastProfitDate) : '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeSubscribersDialog}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

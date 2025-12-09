@@ -162,6 +162,7 @@ export interface IStorage {
   getUserBot(id: number): Promise<UserBot | undefined>;
   listUserBots(userId: number): Promise<UserBot[]>;
   listActiveUserBots(): Promise<UserBot[]>;
+  listUserBotsByBotId(botId: number): Promise<UserBot[]>;
   updateUserBot(id: number, userBot: Partial<InsertUserBot>): Promise<UserBot | undefined>;
   
   // Connected Wallets
@@ -570,6 +571,10 @@ export class DatabaseStorage implements IStorage {
         drizzleSql`${userBots.expiryDate} > ${now}`
       )
     );
+  }
+
+  async listUserBotsByBotId(botId: number): Promise<UserBot[]> {
+    return await db.select().from(userBots).where(eq(userBots.botId, botId)).orderBy(desc(userBots.createdAt));
   }
 
   async updateUserBot(id: number, userBot: Partial<InsertUserBot>): Promise<UserBot | undefined> {

@@ -1065,6 +1065,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get bot subscribers with user details
+  app.get("/api/admin/bots/:id/subscribers", requireAdmin, async (req, res) => {
+    try {
+      const botId = parseInt(req.params.id);
+      const userBots = await storage.listUserBotsByBotId(botId);
+      
+      // Enrich with user details
+      const subscribers = await Promise.all(
+        userBots.map(async (userBot) => {
+          const user = await storage.getUser(userBot.userId);
+          return {
+            id: userBot.id,
+            userId: userBot.userId,
+            username: user?.username || 'Unknown',
+            firstName: user?.firstName || '',
+            lastName: user?.lastName || '',
+            investmentAmount: userBot.investmentAmount,
+            currentProfit: userBot.currentProfit,
+            purchaseDate: userBot.purchaseDate,
+            expiryDate: userBot.expiryDate,
+            status: userBot.status,
+            isStopped: userBot.isStopped,
+            lastProfitDate: userBot.lastProfitDate,
+          };
+        })
+      );
+      
+      res.json(subscribers);
+    } catch (error) {
+      console.error("Failed to fetch bot subscribers:", error);
+      res.status(500).json({ error: "Failed to fetch bot subscribers" });
+    }
+  });
+
   // Admin endpoint to trigger daily profit distribution
   app.post("/api/admin/distribute-profits", requireAdmin, async (req, res) => {
     try {
@@ -1237,13 +1271,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user-bots/:id/stop", async (req, res) => {
     try {
-      const updated = await storage.updateUserBot(parseInt(req.params.id), { isStopped: true });
-      if (!updated) {
+      const { userId } = req.body;
+      const userBot = await storage.getUserBot(parseInt(req.params.id));
+      
+      if (!userBot) {
         return res.status(404).json({ error: "Bot subscription not found" });
       }
+      
+      // Verify ownership
+      if (userBot.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You do not own this subscription" });
+      }
+      
+      const updated = await storage.updateUserBot(parseInt(req.params.id), { isStopped: true });
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to stop bot" });
+    }
+  });
+
+  app.post("/api/user-bots/:id/reactivate", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const userBot = await storage.getUserBot(parseInt(req.params.id));
+      
+      if (!userBot) {
+        return res.status(404).json({ error: "Bot subscription not found" });
+      }
+      
+      // Verify ownership
+      if (userBot.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You do not own this subscription" });
+      }
+      
+      // Check if subscription has expired
+      if (new Date(userBot.expiryDate) < new Date()) {
+        return res.status(400).json({ error: "Cannot reactivate expired subscription" });
+      }
+      
+      const updated = await storage.updateUserBot(parseInt(req.params.id), { isStopped: false });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to reactivate bot" });
     }
   });
 

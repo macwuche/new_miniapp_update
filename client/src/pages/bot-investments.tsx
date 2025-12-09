@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, Bot, Loader2, Calendar, DollarSign, TrendingUp, Clock, Square, Plus } from "lucide-react";
+import { ArrowLeft, Bot, Loader2, Calendar, DollarSign, TrendingUp, Clock, Square, Plus, Play } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -99,6 +99,8 @@ export default function BotInvestments() {
     mutationFn: async (userBotId: number) => {
       const res = await fetch(`/api/user-bots/${userBotId}/stop`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: dbUser?.id }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -116,6 +118,35 @@ export default function BotInvestments() {
     onError: (error: Error) => {
       toast({
         title: "Failed to stop bot",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const reactivateBotMutation = useMutation({
+    mutationFn: async (userBotId: number) => {
+      const res = await fetch(`/api/user-bots/${userBotId}/reactivate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: dbUser?.id }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to reactivate bot');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Bot Reactivated",
+        description: "The bot is now active and will resume accumulating profits.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/bots`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to reactivate bot",
         description: error.message,
         variant: "destructive",
       });
@@ -293,10 +324,26 @@ export default function BotInvestments() {
         </div>
 
         {status === 'stopped' && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-4">
-            <p className="text-xs text-orange-700 dark:text-orange-400 font-medium">
-              This bot has been stopped and will no longer accumulate profits. The subscription will continue until expiry.
-            </p>
+          <div className="space-y-3 mb-4">
+            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+              <p className="text-xs text-orange-700 dark:text-orange-400 font-medium">
+                This bot has been stopped and will no longer accumulate profits. The subscription will continue until expiry.
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
+              data-testid={`button-reactivate-bot-${userBot.id}`}
+              onClick={() => reactivateBotMutation.mutate(userBot.id)}
+              disabled={reactivateBotMutation.isPending}
+            >
+              {reactivateBotMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Play size={14} className="mr-2" />
+              )}
+              Reactivate Bot
+            </Button>
           </div>
         )}
 
