@@ -30,7 +30,6 @@ interface AssetPrice {
   image?: string;
 }
 
-const COINGECKO_API = "https://api.coingecko.com/api/v3";
 
 export default function Portfolio() {
   const { user } = useTelegram();
@@ -91,7 +90,7 @@ export default function Portfolio() {
 
     try {
       const response = await fetch(
-        `${COINGECKO_API}/coins/markets?vs_currency=usd&ids=${cryptoSymbols.join(',')}&order=market_cap_desc&sparkline=false`
+        `/api/crypto-prices?ids=${cryptoSymbols.join(',')}`
       );
       if (response.ok) {
         const data: AssetPrice[] = await response.json();
@@ -107,8 +106,10 @@ export default function Portfolio() {
   };
 
   useEffect(() => {
-    fetchPrices();
-  }, [portfolio]);
+    if (portfolio.length > 0) {
+      fetchPrices();
+    }
+  }, [rawPortfolio]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

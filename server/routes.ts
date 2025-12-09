@@ -1459,6 +1459,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== CRYPTO ASSETS ====================
+  
+  // Proxy endpoint for CoinGecko API to avoid CORS issues
+  app.get("/api/crypto-prices", async (req, res) => {
+    try {
+      const ids = req.query.ids as string;
+      if (!ids) {
+        return res.status(400).json({ error: "Missing 'ids' parameter" });
+      }
+      
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(ids)}&order=market_cap_desc&sparkline=false`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Failed to fetch crypto prices:", error);
+      res.status(500).json({ error: "Failed to fetch crypto prices" });
+    }
+  });
+
   app.get("/api/crypto-assets", async (req, res) => {
     try {
       const assets = await storage.listCryptoAssets();
