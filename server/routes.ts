@@ -1139,6 +1139,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/user-bots/:id/stop", async (req, res) => {
+    try {
+      const updated = await storage.updateUserBot(parseInt(req.params.id), { isStopped: true });
+      if (!updated) {
+        return res.status(404).json({ error: "Bot subscription not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to stop bot" });
+    }
+  });
+
   // ==================== WALLETS ====================
   app.get("/api/users/:userId/wallets", async (req, res) => {
     try {
