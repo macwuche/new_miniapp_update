@@ -77,6 +77,7 @@ export default function AssetDetail() {
 
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [amount, setAmount] = useState("");
+  const [inputMode, setInputMode] = useState<'usd' | 'asset'>('usd');
   const [isTrading, setIsTrading] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'1' | '7' | '30'>('7');
 
@@ -125,26 +126,34 @@ export default function AssetDetail() {
   const currentPrice = assetDetails?.market_data?.current_price?.usd || 0;
   const holdingAmount = parseFloat(userHolding?.amount || '0');
 
+  const inputAmount = parseFloat(amount) || 0;
+  const assetAmount = inputMode === 'usd' ? (currentPrice > 0 ? inputAmount / currentPrice : 0) : inputAmount;
+  const usdValue = inputMode === 'usd' ? inputAmount : inputAmount * currentPrice;
+
   const chartData = priceHistory?.prices?.map(([timestamp, price]) => ({
     time: new Date(timestamp).toLocaleDateString(),
     price: price,
   })) || [];
 
   const handleTrade = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!amount || inputAmount <= 0) {
       toast({ title: "Invalid Amount", description: "Please enter a valid amount", variant: "destructive" });
       return;
     }
 
-    const tradeAmount = parseFloat(amount);
-    const tradeValue = tradeAmount * currentPrice;
-
-    if (tradeType === 'buy' && tradeValue > availableBalance) {
-      toast({ title: "Insufficient Balance", description: "You don't have enough funds for this trade", variant: "destructive" });
+    if (tradeType === 'buy' && usdValue > availableBalance) {
+      toast({ 
+        title: "Insufficient Balance", 
+        description: "You need to top up before you can complete this transaction. Redirecting to deposit...", 
+        variant: "destructive" 
+      });
+      setTimeout(() => {
+        setLocation('/deposit');
+      }, 1500);
       return;
     }
 
-    if (tradeType === 'sell' && tradeAmount > holdingAmount) {
+    if (tradeType === 'sell' && assetAmount > holdingAmount) {
       toast({ title: "Insufficient Holdings", description: "You don't have enough of this asset to sell", variant: "destructive" });
       return;
     }
@@ -157,7 +166,7 @@ export default function AssetDetail() {
         body: JSON.stringify({
           action: tradeType,
           symbol: symbol?.toUpperCase(),
-          amount: tradeAmount.toString(),
+          amount: assetAmount.toString(),
           price: currentPrice.toString(),
           assetType: 'crypto',
           name: assetDetails?.name,
@@ -167,6 +176,17 @@ export default function AssetDetail() {
 
       if (!response.ok) {
         const error = await response.json();
+        if (error.error === 'Insufficient balance') {
+          toast({ 
+            title: "Insufficient Balance", 
+            description: "You need to top up before you can complete this transaction. Redirecting to deposit...", 
+            variant: "destructive" 
+          });
+          setTimeout(() => {
+            setLocation('/deposit');
+          }, 1500);
+          return;
+        }
         throw new Error(error.error || 'Trade failed');
       }
 
@@ -175,7 +195,7 @@ export default function AssetDetail() {
 
       toast({
         title: "Trade Successful",
-        description: `${tradeType === 'buy' ? 'Bought' : 'Sold'} ${tradeAmount} ${symbol?.toUpperCase()} at $${currentPrice.toLocaleString()}`,
+        description: `${tradeType === 'buy' ? 'Bought' : 'Sold'} ${assetAmount.toFixed(6)} ${symbol?.toUpperCase()} for $${usdValue.toFixed(2)}`,
       });
 
       setAmount("");
@@ -192,10 +212,19 @@ export default function AssetDetail() {
 
   const handleQuickAmount = (percentage: number) => {
     if (tradeType === 'buy') {
-      const maxBuyAmount = availableBalance / currentPrice;
-      setAmount((maxBuyAmount * percentage / 100).toFixed(6));
+      if (inputMode === 'usd') {
+        setAmount((availableBalance * percentage / 100).toFixed(2));
+      } else {
+        const maxBuyAmount = availableBalance / currentPrice;
+        setAmount((maxBuyAmount * percentage / 100).toFixed(6));
+      }
     } else {
-      setAmount((holdingAmount * percentage / 100).toFixed(6));
+      if (inputMode === 'usd') {
+        const maxSellValue = holdingAmount * currentPrice;
+        setAmount((maxSellValue * percentage / 100).toFixed(2));
+      } else {
+        setAmount((holdingAmount * percentage / 100).toFixed(6));
+      }
     }
   };
 
@@ -332,17 +361,36 @@ export default function AssetDetail() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-500 mb-1 block">
-                    Amount ({symbol?.toUpperCase()})
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="text-lg"
-                    data-testid="input-amount"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm text-gray-500">
+                      Amount ({inputMode === 'usd' ? 'USD' : symbol?.toUpperCase()})
+                    </label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-6 px-2"
+                      onClick={() => {
+                        setInputMode(inputMode === 'usd' ? 'asset' : 'usd');
+                        setAmount('');
+                      }}
+                      data-testid="button-toggle-input-mode"
+                    >
+                      Switch to {inputMode === 'usd' ? symbol?.toUpperCase() : 'USD'}
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    {inputMode === 'usd' && (
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    )}
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className={`text-lg ${inputMode === 'usd' ? 'pl-9' : ''}`}
+                      data-testid="input-amount"
+                    />
+                  </div>
                   <div className="flex gap-2 mt-2">
                     {[25, 50, 75, 100].map((pct) => (
                       <Button
@@ -365,9 +413,12 @@ export default function AssetDetail() {
                     <span className="font-medium">${currentPrice.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Total</span>
+                    <span className="text-gray-500">{inputMode === 'usd' ? 'You Get' : 'Total USD'}</span>
                     <span className="font-bold text-primary">
-                      ${((parseFloat(amount) || 0) * currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {inputMode === 'usd' 
+                        ? `${assetAmount.toFixed(6)} ${symbol?.toUpperCase()}`
+                        : `$${usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      }
                     </span>
                   </div>
                   {tradeType === 'buy' && (
