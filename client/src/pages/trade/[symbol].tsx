@@ -103,8 +103,6 @@ export default function AssetDetail() {
     staleTime: 1000 * 60,
   });
 
-  const userId = dbUser?.id || 4;
-
   const { data: assetDetails, isLoading: detailsLoading } = useQuery<AssetDetails>({
     queryKey: ['asset-details', assetId],
     queryFn: async () => {
@@ -126,21 +124,23 @@ export default function AssetDetail() {
   });
 
   const { data: balance } = useQuery({
-    queryKey: [`/api/users/${userId}/balance`],
+    queryKey: [`/api/users/${dbUser?.id}/balance`],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${userId}/balance`);
+      const res = await fetch(`/api/users/${dbUser?.id}/balance`);
       if (!res.ok) throw new Error("Failed to fetch balance");
       return res.json();
     },
+    enabled: !!dbUser?.id,
   });
 
   const { data: portfolio = [] } = useQuery<PortfolioItem[]>({
-    queryKey: [`/api/users/${userId}/portfolio`],
+    queryKey: [`/api/users/${dbUser?.id}/portfolio`],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${userId}/portfolio`);
+      const res = await fetch(`/api/users/${dbUser?.id}/portfolio`);
       if (!res.ok) throw new Error("Failed to fetch portfolio");
       return res.json();
     },
+    enabled: !!dbUser?.id,
   });
 
   const userHolding = portfolio.find(p => p.symbol.toUpperCase() === symbol?.toUpperCase());
@@ -158,6 +158,11 @@ export default function AssetDetail() {
   })) || [];
 
   const handleTrade = async () => {
+    if (!dbUser?.id) {
+      toast({ title: "Loading", description: "Please wait while we load your account", variant: "destructive" });
+      return;
+    }
+
     if (!amount || inputAmount <= 0) {
       toast({ title: "Invalid Amount", description: "Please enter a valid amount", variant: "destructive" });
       return;
@@ -182,7 +187,7 @@ export default function AssetDetail() {
 
     setIsTrading(true);
     try {
-      const response = await fetch(`/api/users/${userId}/trade`, {
+      const response = await fetch(`/api/users/${dbUser?.id}/trade`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -212,8 +217,8 @@ export default function AssetDetail() {
         throw new Error(error.error || 'Trade failed');
       }
 
-      await queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/balance`] });
-      await queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/portfolio`] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/balance`] });
+      await queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/portfolio`] });
 
       toast({
         title: "Trade Successful",
