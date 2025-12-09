@@ -86,6 +86,23 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   listUsers(limit?: number, offset?: number): Promise<User[]>;
+  countUsers(): Promise<number>;
+  getAdminStats(): Promise<{
+    totalUsers: number;
+    totalDeposits: number;
+    totalWithdrawals: number;
+    activeBotsCount: number;
+    pendingDeposits: number;
+    pendingWithdrawals: number;
+  }>;
+  getRecentActivity(limit?: number): Promise<Array<{
+    type: string;
+    userId: number;
+    userName: string;
+    amount: string;
+    status: string;
+    createdAt: Date;
+  }>>;
   
   // Admins
   getAdmin(id: number): Promise<Admin | undefined>;
@@ -276,6 +293,103 @@ export class DatabaseStorage implements IStorage {
 
   async listUsers(limit: number = 100, offset: number = 0): Promise<User[]> {
     return await db.select().from(users).limit(limit).offset(offset).orderBy(desc(users.joinedAt));
+  }
+
+  async countUsers(): Promise<number> {
+    const result = await db.select({ count: drizzleSql<number>`count(*)` }).from(users);
+    return result[0]?.count || 0;
+  }
+
+  async getAdminStats(): Promise<{
+    totalUsers: number;
+    totalDeposits: number;
+    totalWithdrawals: number;
+    activeBotsCount: number;
+    pendingDeposits: number;
+    pendingWithdrawals: number;
+  }> {
+    const [userCount] = await db.select({ count: drizzleSql<number>`count(*)` }).from(users);
+    
+    const [depositSum] = await db.select({ 
+      sum: drizzleSql<string>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)` 
+    }).from(deposits).where(eq(deposits.status, 'approved'));
+    
+    const [withdrawalSum] = await db.select({ 
+      sum: drizzleSql<string>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)` 
+    }).from(withdrawals).where(eq(withdrawals.status, 'approved'));
+    
+    const [activeBots] = await db.select({ count: drizzleSql<number>`count(*)` })
+      .from(userBots)
+      .where(and(eq(userBots.status, 'active'), eq(userBots.isStopped, false)));
+    
+    const [pendingDeps] = await db.select({ count: drizzleSql<number>`count(*)` })
+      .from(deposits).where(eq(deposits.status, 'pending'));
+    
+    const [pendingWiths] = await db.select({ count: drizzleSql<number>`count(*)` })
+      .from(withdrawals).where(eq(withdrawals.status, 'pending'));
+    
+    return {
+      totalUsers: userCount?.count || 0,
+      totalDeposits: parseFloat(depositSum?.sum || '0'),
+      totalWithdrawals: parseFloat(withdrawalSum?.sum || '0'),
+      activeBotsCount: activeBots?.count || 0,
+      pendingDeposits: pendingDeps?.count || 0,
+      pendingWithdrawals: pendingWiths?.count || 0,
+    };
+  }
+
+  async getRecentActivity(limit: number = 10): Promise<Array<{
+    type: string;
+    userId: number;
+    userName: string;
+    amount: string;
+    status: string;
+    createdAt: Date;
+  }>> {
+    const recentDeposits = await db
+      .select({
+        type: drizzleSql<string>`'Deposit'`,
+        userId: deposits.userId,
+        amount: deposits.amount,
+        status: deposits.status,
+        createdAt: deposits.createdAt,
+      })
+      .from(deposits)
+      .orderBy(desc(deposits.createdAt))
+      .limit(limit);
+
+    const recentWithdrawals = await db
+      .select({
+        type: drizzleSql<string>`'Withdrawal'`,
+        userId: withdrawals.userId,
+        amount: withdrawals.amount,
+        status: withdrawals.status,
+        createdAt: withdrawals.createdAt,
+      })
+      .from(withdrawals)
+      .orderBy(desc(withdrawals.createdAt))
+      .limit(limit);
+
+    const combined = [...recentDeposits, ...recentWithdrawals]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+
+    const userIds = Array.from(new Set(combined.map(item => item.userId)));
+    const userList = await db.select().from(users).where(drizzleSql`${users.id} = ANY(${userIds})`);
+    const userMap = new Map(userList.map(u => [u.id, u]));
+
+    return combined.map(item => {
+      const user = userMap.get(item.userId);
+      const userName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
+      return {
+        type: item.type,
+        userId: item.userId,
+        userName: userName || 'Unknown',
+        amount: String(item.amount),
+        status: item.status,
+        createdAt: item.createdAt,
+      };
+    });
   }
 
   // Admins

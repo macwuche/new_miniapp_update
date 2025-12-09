@@ -91,6 +91,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Failed to fetch admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  app.get("/api/admin/activity", requireAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const activity = await storage.getRecentActivity(limit);
+      res.json(activity);
+    } catch (error) {
+      console.error("Failed to fetch admin activity:", error);
+      res.status(500).json({ error: "Failed to fetch activity" });
+    }
+  });
+
   // ==================== USERS ====================
   app.get("/api/users", requireAdmin, async (req, res) => {
     try {

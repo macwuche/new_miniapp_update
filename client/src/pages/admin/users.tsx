@@ -50,25 +50,46 @@ import {
   XCircle,
   AlertCircle,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Loader2
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
-// Mock data for users
-const MOCK_USERS = [
-  { id: "USR-1001", name: "Alex Thompson", username: "@alex_thompson", balance: "$12,450.00", rawBalance: 12450, kyc: "Verified", status: "Active", joined: "2024-01-15" },
-  { id: "USR-1002", name: "Sarah Jenkins", username: "@sarah_j", balance: "$3,200.50", rawBalance: 3200.50, kyc: "Pending", status: "Active", joined: "2024-02-20" },
-  { id: "USR-1003", name: "Michael Chen", username: "@m_chen99", balance: "$45,900.00", rawBalance: 45900, kyc: "Verified", status: "Suspended", joined: "2023-11-05" },
-  { id: "USR-1004", name: "David Miller", username: "@david_miller", balance: "$0.00", rawBalance: 0, kyc: "Unverified", status: "Active", joined: "2024-05-10" },
-  { id: "USR-1005", name: "Jessica Wu", username: "@jess_wu_trading", balance: "$8,750.25", rawBalance: 8750.25, kyc: "Verified", status: "Active", joined: "2024-03-12" },
-  { id: "USR-1006", name: "Robert Wilson", username: "@rob_wilson", balance: "$1,500.00", rawBalance: 1500, kyc: "Rejected", status: "Active", joined: "2024-04-01" },
-  { id: "USR-1007", name: "Emily Davis", username: "@emily_davis", balance: "$150.00", rawBalance: 150, kyc: "Unverified", status: "Active", joined: "2024-05-14" },
-];
+interface User {
+  id: number;
+  telegramId: string | null;
+  username: string;
+  firstName: string | null;
+  lastName: string | null;
+  profilePicture: string | null;
+  isVerified: boolean;
+  isSuspended?: boolean;
+  joinedAt: string;
+}
 
-// Mock Transactions
+interface UserBalance {
+  userId: number;
+  totalBalanceUsd: string;
+  availableBalanceUsd: string;
+  lockedBalanceUsd: string;
+}
+
+interface TransformedUser {
+  id: number;
+  name: string;
+  username: string;
+  balance: string;
+  rawBalance: number;
+  kyc: string;
+  status: string;
+  joined: string;
+  profilePicture: string | null;
+}
+
 const MOCK_TRANSACTIONS = [
   { id: "TX-101", type: "Deposit", amount: "$500.00", status: "Completed", date: "2024-05-20" },
   { id: "TX-102", type: "Withdrawal", amount: "$200.00", status: "Pending", date: "2024-05-19" },
@@ -76,7 +97,6 @@ const MOCK_TRANSACTIONS = [
   { id: "TX-104", type: "Swap", amount: "$300.00", status: "Completed", date: "2024-05-15" },
 ];
 
-// Mock Bots
 const MOCK_BOTS = [
   { id: "BOT-01", name: "BTC Scalper", strategy: "Scalping", profit: "+12.5%", status: "Active" },
   { id: "BOT-02", name: "ETH Swing", strategy: "Swing Trading", profit: "-2.1%", status: "Paused" },
@@ -87,19 +107,64 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
-  // Dialog States
-  const [selectedUser, setSelectedUser] = useState<typeof MOCK_USERS[0] | null>(null);
+  const [selectedUser, setSelectedUser] = useState<TransformedUser | null>(null);
   const [dialogType, setDialogType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const filteredUsers = MOCK_USERS.filter(user => 
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/users", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json();
+    },
+  });
+
+  const { data: balances = [] } = useQuery<UserBalance[]>({
+    queryKey: ["/api/balances"],
+    queryFn: async () => {
+      const res = await fetch("/api/balances", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch balances");
+      return res.json();
+    },
+  });
+
+  const balanceMap = useMemo(() => {
+    const map = new Map<number, UserBalance>();
+    balances.forEach(b => map.set(b.userId, b));
+    return map;
+  }, [balances]);
+
+  const transformedUsers: TransformedUser[] = useMemo(() => {
+    return users.map(user => {
+      const balance = balanceMap.get(user.id);
+      const totalBalance = balance ? parseFloat(balance.totalBalanceUsd) : 0;
+      const firstName = user.firstName || "";
+      const lastName = user.lastName || "";
+      const name = `${firstName} ${lastName}`.trim() || user.username;
+      
+      return {
+        id: user.id,
+        name,
+        username: `@${user.username}`,
+        balance: `$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        rawBalance: totalBalance,
+        kyc: user.isVerified ? "Verified" : "Unverified",
+        status: user.isSuspended ? "Suspended" : "Active",
+        joined: new Date(user.joinedAt).toISOString().split('T')[0],
+        profilePicture: user.profilePicture,
+      };
+    });
+  }, [users, balanceMap]);
+
+  const filteredUsers = transformedUsers.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.id.toLowerCase().includes(searchTerm.toLowerCase())
+    user.id.toString().includes(searchTerm.toLowerCase())
   );
 
-  const handleAction = (type: string, user: typeof MOCK_USERS[0]) => {
+  const handleAction = (type: string, user: TransformedUser) => {
     if (type === 'view-profile') {
       setLocation(`/admin/users/${user.id}`);
       return;
@@ -120,7 +185,6 @@ export default function UserManagement() {
     if (!selectedUser) return;
     
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     let message = "";
@@ -159,6 +223,11 @@ export default function UserManagement() {
     }
   };
 
+  const totalUsers = transformedUsers.length;
+  const activeUsers = transformedUsers.filter(u => u.status === "Active").length;
+  const pendingKyc = transformedUsers.filter(u => u.kyc === "Unverified").length;
+  const suspendedUsers = transformedUsers.filter(u => u.status === "Suspended").length;
+
   return (
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -178,30 +247,29 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="border-none shadow-sm">
           <CardContent className="p-6">
             <p className="text-gray-500 text-sm font-medium mb-1">Total Users</p>
-            <h3 className="text-3xl font-bold text-gray-900">12,453</h3>
+            <h3 className="text-3xl font-bold text-gray-900">{totalUsers.toLocaleString()}</h3>
             <span className="text-xs text-green-600 font-medium flex items-center mt-2">
-              +125 this week
+              All registered users
             </span>
           </CardContent>
         </Card>
         <Card className="border-none shadow-sm">
           <CardContent className="p-6">
-            <p className="text-gray-500 text-sm font-medium mb-1">Active Today</p>
-            <h3 className="text-3xl font-bold text-gray-900">3,201</h3>
+            <p className="text-gray-500 text-sm font-medium mb-1">Active Users</p>
+            <h3 className="text-3xl font-bold text-gray-900">{activeUsers.toLocaleString()}</h3>
             <span className="text-xs text-gray-500 font-medium flex items-center mt-2">
-              25% of total base
+              {totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0}% of total base
             </span>
           </CardContent>
         </Card>
         <Card className="border-none shadow-sm bg-blue-50 border-blue-100">
           <CardContent className="p-6">
             <p className="text-blue-800 text-sm font-medium mb-1">Pending KYC</p>
-            <h3 className="text-3xl font-bold text-blue-900">45</h3>
+            <h3 className="text-3xl font-bold text-blue-900">{pendingKyc}</h3>
             <span className="text-xs text-blue-700 font-medium flex items-center mt-2">
               Requires verification
             </span>
@@ -210,7 +278,7 @@ export default function UserManagement() {
         <Card className="border-none shadow-sm">
           <CardContent className="p-6">
             <p className="text-gray-500 text-sm font-medium mb-1">Suspended</p>
-            <h3 className="text-3xl font-bold text-red-600">12</h3>
+            <h3 className="text-3xl font-bold text-red-600">{suspendedUsers}</h3>
             <span className="text-xs text-gray-400 font-medium flex items-center mt-2">
               Restricted accounts
             </span>
@@ -232,129 +300,141 @@ export default function UserManagement() {
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                data-testid="input-search-users"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>KYC Level</TableHead>
-                <TableHead>Total Balance</TableHead>
-                <TableHead>Joined Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-gray-900">{user.name}</p>
-                        <p className="text-xs text-blue-600 font-medium">{user.username}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        user.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                      )}
-                    >
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {getKycBadge(user.kyc)}
-                  </TableCell>
-                  <TableCell className="font-mono font-medium">
-                    {user.balance}
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm">
-                    {user.joined}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>User Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleAction('view-profile', user)}>
-                          <UserCheck size={14} className="mr-2" />
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('send-email', user)}>
-                          <Mail size={14} className="mr-2" />
-                          Send Email
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('check-wallet', user)}>
-                          <Wallet size={14} className="mr-2" />
-                          Check Wallet
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs text-gray-500">Financial</DropdownMenuLabel>
-                        
-                        <DropdownMenuItem onClick={() => handleAction('add-balance', user)}>
-                          <PlusCircle size={14} className="mr-2 text-green-600" />
-                          Add to Balance
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('subtract-balance', user)}>
-                          <MinusCircle size={14} className="mr-2 text-red-600" />
-                          Subtract from Balance
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('add-portfolio', user)}>
-                          <Briefcase size={14} className="mr-2 text-blue-600" />
-                          Add to Portfolio
-                        </DropdownMenuItem>
-
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs text-gray-500">Monitoring</DropdownMenuLabel>
-
-                        <DropdownMenuItem onClick={() => handleAction('check-kyc', user)}>
-                          <FileCheck size={14} className="mr-2" />
-                          Check KYC
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('check-transactions', user)}>
-                          <History size={14} className="mr-2" />
-                          Check Transactions
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('check-bots', user)}>
-                          <Bot size={14} className="mr-2" />
-                          Check Trading Bots
-                        </DropdownMenuItem>
-
-                        <DropdownMenuSeparator />
-                        
-                        <DropdownMenuItem onClick={() => handleAction('delete-user', user)} className="text-red-600 focus:text-red-600">
-                          <Trash2 size={14} className="mr-2" />
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {usersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-500">Loading users...</span>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>KYC Level</TableHead>
+                  <TableHead>Total Balance</TableHead>
+                  <TableHead>Joined Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}&background=random`} />
+                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="text-xs text-blue-600 font-medium">{user.username}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          user.status === "Active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                        )}
+                      >
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {getKycBadge(user.kyc)}
+                    </TableCell>
+                    <TableCell className="font-mono font-medium">
+                      {user.balance}
+                    </TableCell>
+                    <TableCell className="text-gray-500 text-sm">
+                      {user.joined}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" data-testid={`button-actions-${user.id}`}>
+                            <MoreHorizontal size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuLabel>User Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleAction('view-profile', user)}>
+                            <UserCheck size={14} className="mr-2" />
+                            View Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('send-email', user)}>
+                            <Mail size={14} className="mr-2" />
+                            Send Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('check-wallet', user)}>
+                            <Wallet size={14} className="mr-2" />
+                            Check Wallet
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel className="text-xs text-gray-500">Financial</DropdownMenuLabel>
+                          
+                          <DropdownMenuItem onClick={() => handleAction('add-balance', user)}>
+                            <PlusCircle size={14} className="mr-2 text-green-600" />
+                            Add to Balance
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('subtract-balance', user)}>
+                            <MinusCircle size={14} className="mr-2 text-red-600" />
+                            Subtract from Balance
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('add-portfolio', user)}>
+                            <Briefcase size={14} className="mr-2 text-blue-600" />
+                            Add to Portfolio
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel className="text-xs text-gray-500">Monitoring</DropdownMenuLabel>
+
+                          <DropdownMenuItem onClick={() => handleAction('check-kyc', user)}>
+                            <FileCheck size={14} className="mr-2" />
+                            Check KYC
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('check-transactions', user)}>
+                            <History size={14} className="mr-2" />
+                            Check Transactions
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('check-bots', user)}>
+                            <Bot size={14} className="mr-2" />
+                            Check Trading Bots
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem onClick={() => handleAction('delete-user', user)} className="text-red-600 focus:text-red-600">
+                            <Trash2 size={14} className="mr-2" />
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredUsers.length === 0 && !usersLoading && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      No users found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* --- Dialogs --- */}
-
-      {/* Add/Subtract Balance Dialog */}
       <Dialog open={dialogType === 'add-balance' || dialogType === 'subtract-balance'} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
@@ -378,6 +458,7 @@ export default function UserManagement() {
                   className="pl-7" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  data-testid="input-amount"
                 />
               </div>
             </div>
@@ -395,7 +476,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Add to Portfolio Dialog */}
       <Dialog open={dialogType === 'add-portfolio'} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
@@ -441,7 +521,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete User Dialog */}
       <Dialog open={dialogType === 'delete-user'} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
@@ -476,7 +555,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Check KYC Dialog */}
       <Dialog open={dialogType === 'check-kyc'} onOpenChange={closeDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -533,7 +611,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Check Transactions Dialog */}
       <Dialog open={dialogType === 'check-transactions'} onOpenChange={closeDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -586,7 +663,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Check Bots Dialog */}
       <Dialog open={dialogType === 'check-bots'} onOpenChange={closeDialog}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
@@ -626,7 +702,6 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Send Email Dialog (Placeholder) */}
       <Dialog open={dialogType === 'send-email'} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
