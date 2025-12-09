@@ -1151,6 +1151,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/portfolio", async (req, res) => {
+    try {
+      const portfolios = await storage.getAllPortfolios();
+      const formatted = portfolios.map(p => ({
+        id: p.id,
+        userId: p.userId,
+        assetId: p.assetId,
+        assetType: p.assetType,
+        name: p.name,
+        symbol: p.symbol,
+        amount: p.amount,
+        averageBuyPrice: p.averageBuyPrice,
+        currentValue: p.currentValue,
+      }));
+      res.json(formatted);
+    } catch (error) {
+      console.error("Failed to fetch all portfolios:", error);
+      res.status(500).json({ error: "Failed to fetch portfolios" });
+    }
+  });
+
   app.post("/api/portfolio", async (req, res) => {
     try {
       const portfolio = await storage.createPortfolio(req.body);
@@ -1309,7 +1330,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/balances", requireAdmin, async (req, res) => {
     try {
       const balances = await storage.getAllUserBalances();
-      res.json(balances);
+      const formatted = balances.map(b => ({
+        userId: b.userId,
+        totalBalanceUsd: b.totalBalanceUsd,
+        availableBalanceUsd: b.availableBalanceUsd,
+        lockedBalanceUsd: b.lockedBalanceUsd,
+      }));
+      res.json(formatted);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch balances" });
     }
