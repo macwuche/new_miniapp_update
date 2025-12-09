@@ -1,124 +1,164 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, CheckCircle2, TrendingUp, BarChart3, Activity, DollarSign } from "lucide-react";
+import { ArrowLeft, TrendingUp, BarChart3, Activity, Loader2, Bot, Clock, DollarSign, Wallet } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTelegram } from "@/lib/telegram-mock";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
-const BOTS = [
-  {
-    id: 1,
-    name: "ForexMaster Pro",
-    type: "Forex Trading",
-    category: "forex",
-    success: "87%",
-    description: "Advanced forex trading bot specializing in major currency pairs. Uses sophisticated algorithms to analyze market trends.",
-    dailyProfit: "0.80% - 2.50%",
-    duration: "30 Days",
-    minInvest: 100,
-    maxInvest: 10000,
-    pairs: ["EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF"],
-    activeUsers: 1240,
-    totalEarned: 0
-  },
-  {
-    id: 2,
-    name: "CryptoGain Elite",
-    type: "Crypto Trading",
-    category: "crypto",
-    success: "82%",
-    description: "High-performance cryptocurrency trading bot designed for the volatile crypto markets. Leverages machine learning to identify opportunities.",
-    dailyProfit: "1.20% - 4.50%",
-    duration: "45 Days",
-    minInvest: 250,
-    maxInvest: 25000,
-    pairs: ["BTC/USD", "ETH/USD", "BNB/USD", "ADA/USD"],
-    activeUsers: 3500,
-    totalEarned: 23
-  },
-  {
-    id: 3,
-    name: "StockTrader AI",
-    type: "Stocks Trading",
-    category: "stocks",
-    success: "89%",
-    description: "Intelligent stock trading bot focusing on blue-chip stocks and growth companies. Combines fundamental analysis with technical indicators.",
-    dailyProfit: "0.50% - 2.00%",
-    duration: "60 Days",
-    minInvest: 500,
-    maxInvest: 50000,
-    pairs: ["AAPL", "GOOGL", "MSFT", "AMZN"],
-    activeUsers: 850,
-    totalEarned: 454
-  },
-  {
-    id: 6,
-    name: "Index Arbitrage Bot",
-    type: "Indices Trading",
-    category: "stocks",
-    success: "95%",
-    description: "Advanced arbitrage bot that exploits price differences between index futures and their underlying components. High-frequency strategies.",
-    dailyProfit: "0.80% - 2.50%",
-    duration: "365 Days",
-    minInvest: 2500,
-    maxInvest: 120000,
-    pairs: ["SPX", "NDX", "RUT", "VIX"],
-    activeUsers: 150,
-    totalEarned: 0
-  },
-  {
-    id: 7,
-    name: "Bond Yield Hunter",
-    type: "Bonds Trading",
-    category: "stocks",
-    success: "92%",
-    description: "Sophisticated fixed-income trading bot that navigates interest rate changes and yield curve movements. Perfect for institutional-grade stability.",
-    dailyProfit: "0.40% - 1.80%",
-    duration: "365 Days",
-    minInvest: 5000,
-    maxInvest: 200000,
-    pairs: ["10Y_TREASURY", "30Y_TREASURY", "2Y_TREASURY", "CORP_BONDS"],
-    activeUsers: 95,
-    totalEarned: 0
-  },
-  {
-    id: 8,
-    name: "AI Sentiment Trader",
-    type: "Mixed Trading",
-    category: "crypto",
-    success: "86%",
-    description: "Revolutionary sentiment-based trading bot that analyzes social media, news, and market sentiment across multiple asset classes.",
-    dailyProfit: "1.90% - 5.80%",
-    duration: "60 Days",
-    minInvest: 600,
-    maxInvest: 35000,
-    pairs: ["BTC/USD", "ETH/USD", "AAPL", "TSLA"],
-    activeUsers: 2100,
-    totalEarned: 0
-  },
-  {
-    id: 9,
-    name: "Volatility Surface Bot",
-    type: "Volatility Trading",
-    category: "stocks",
-    success: "88%",
-    description: "Advanced volatility trading bot that maps and trades the volatility surface across multiple assets. Ideal for sophisticated investors.",
-    dailyProfit: "1.10% - 4.20%",
-    duration: "45 Days",
-    minInvest: 3000,
-    maxInvest: 150000,
-    pairs: ["VIX", "VXX", "UVXY", "SVXY"],
-    activeUsers: 180,
-    totalEarned: 0
-  }
-];
+interface AiBot {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  durationDays: number;
+  expectedRoi: string;
+  minInvestment: string;
+  maxInvestment: string;
+  minProfitPercent: string;
+  maxProfitPercent: string;
+  totalGains: string;
+  totalLosses: string;
+  winRate: string;
+  logo: string | null;
+  isActive: boolean;
+}
 
 export default function BotMarket() {
+  const { user } = useTelegram();
+  const queryClient = useQueryClient();
+  const [selectedBot, setSelectedBot] = useState<AiBot | null>(null);
+  const [investmentAmount, setInvestmentAmount] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', user?.id],
+    queryFn: async () => {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.id?.toString() || null,
+          username: user?.username || 'demo_user',
+          firstName: user?.first_name || 'Demo',
+          lastName: user?.last_name || 'User',
+          profilePicture: user?.photo_url || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to register user');
+      return res.json();
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: bots = [], isLoading: botsLoading } = useQuery<AiBot[]>({
+    queryKey: ['/api/bots'],
+    queryFn: async () => {
+      const res = await fetch('/api/bots');
+      if (!res.ok) throw new Error('Failed to fetch bots');
+      return res.json();
+    },
+  });
+
+  const { data: balance } = useQuery({
+    queryKey: [`/api/users/${dbUser?.id}/balance`],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${dbUser?.id}/balance`);
+      if (!res.ok) throw new Error("Failed to fetch balance");
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+  });
+
+  const subscribeMutation = useMutation({
+    mutationFn: async (data: { userId: number; botId: number; investmentAmount: string }) => {
+      const res = await fetch('/api/user-bots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to subscribe');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Subscription successful!",
+        description: `You have successfully subscribed to ${selectedBot?.name}. The bot is now active.`,
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/balance`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/bots`] });
+      setIsSheetOpen(false);
+      setSelectedBot(null);
+      setInvestmentAmount("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Subscription failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const activeBots = bots.filter(bot => bot.isActive);
+
+  const handleBotClick = (bot: AiBot) => {
+    setSelectedBot(bot);
+    setInvestmentAmount(bot.minInvestment);
+    setIsSheetOpen(true);
+  };
+
+  const handleSubscribe = () => {
+    if (!dbUser?.id || !selectedBot) return;
+
+    subscribeMutation.mutate({
+      userId: dbUser.id,
+      botId: selectedBot.id,
+      investmentAmount: investmentAmount,
+    });
+  };
+
+  const availableBalance = parseFloat(balance?.availableBalanceUsd || balance?.totalBalanceUsd || '0');
+  const investmentNum = parseFloat(investmentAmount) || 0;
+  const subscriptionFee = selectedBot ? parseFloat(selectedBot.price) : 0;
+  const totalCost = subscriptionFee + investmentNum;
+  const hasInsufficientBalance = totalCost > availableBalance;
+  
+  const minInv = selectedBot ? parseFloat(selectedBot.minInvestment) : 0;
+  const maxInv = selectedBot ? parseFloat(selectedBot.maxInvestment) : 0;
+  const isInvestmentValid = investmentNum >= minInv && investmentNum <= maxInv;
+
+  const getBotCategory = (description: string): 'forex' | 'crypto' | 'stocks' => {
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes('forex') || lowerDesc.includes('currency')) return 'forex';
+    if (lowerDesc.includes('crypto') || lowerDesc.includes('bitcoin') || lowerDesc.includes('ethereum')) return 'crypto';
+    return 'stocks';
+  };
+
+  if (botsLoading) {
+    return (
+      <MobileLayout>
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MobileLayout>
+    );
+  }
+
   return (
     <MobileLayout>
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-24">
-        {/* Hero Section - Blue background with white text for both light and dark modes */}
         <div 
           className="pt-8 pb-12 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden"
           style={{ 
@@ -126,7 +166,6 @@ export default function BotMarket() {
             color: 'white'
           }}
         >
-          {/* Decorative Circles */}
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl pointer-events-none" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl pointer-events-none" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
 
@@ -136,6 +175,7 @@ export default function BotMarket() {
                 className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors"
                 style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
                 onClick={() => window.history.back()}
+                data-testid="button-back"
               >
                 <ArrowLeft size={20} />
               </div>
@@ -153,7 +193,7 @@ export default function BotMarket() {
             </div>
 
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-black mb-3 tracking-tight" style={{ color: 'white' }}>Bot Trading Hub</h1>
+              <h1 className="text-3xl font-black mb-3 tracking-tight" style={{ color: 'white' }} data-testid="text-page-title">Bot Trading Hub</h1>
               <p className="text-sm max-w-xs mx-auto leading-relaxed" style={{ color: '#bfdbfe' }}>
                 Invest in AI-powered trading bots that work 24/7 to maximize your profits across multiple markets.
               </p>
@@ -164,6 +204,7 @@ export default function BotMarket() {
                 <Button 
                   className="border-none rounded-xl font-bold shadow-sm"
                   style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  data-testid="button-dashboard"
                 >
                   Back to Dashboard
                 </Button>
@@ -172,6 +213,7 @@ export default function BotMarket() {
                 <Button 
                   className="border-none rounded-xl font-bold shadow-sm"
                   style={{ backgroundColor: 'white', color: '#2563eb' }}
+                  data-testid="button-my-investments"
                 >
                   <Activity size={16} className="mr-2" />
                   My Bot Investments
@@ -181,111 +223,264 @@ export default function BotMarket() {
           </div>
         </div>
 
-        {/* Content Section */}
         <div className="px-6 pt-8">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Available Trading Bots</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1" data-testid="text-section-title">Available Trading Bots</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">Choose from our AI-powered trading bots</p>
           </div>
 
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="w-full flex overflow-x-auto no-scrollbar justify-start gap-2 bg-transparent h-auto p-0 mb-6">
-              <TabsTrigger 
-                value="all" 
-                className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
-              >
-                All Bots
-              </TabsTrigger>
-              <TabsTrigger 
-                value="forex" 
-                className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
-              >
-                Forex
-              </TabsTrigger>
-              <TabsTrigger 
-                value="crypto" 
-                className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
-              >
-                Crypto
-              </TabsTrigger>
-              <TabsTrigger 
-                value="stocks" 
-                className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
-              >
-                Stocks
-              </TabsTrigger>
-            </TabsList>
+          {activeBots.length === 0 ? (
+            <Card className="p-8 text-center border-none shadow-sm bg-white dark:bg-slate-800">
+              <Bot className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">No Bots Available</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Check back later for new trading bots.</p>
+            </Card>
+          ) : (
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="w-full flex overflow-x-auto no-scrollbar justify-start gap-2 bg-transparent h-auto p-0 mb-6">
+                <TabsTrigger 
+                  value="all" 
+                  className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
+                  data-testid="tab-all"
+                >
+                  All Bots
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="forex" 
+                  className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
+                  data-testid="tab-forex"
+                >
+                  Forex
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="crypto" 
+                  className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
+                  data-testid="tab-crypto"
+                >
+                  Crypto
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="stocks" 
+                  className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
+                  data-testid="tab-stocks"
+                >
+                  Stocks
+                </TabsTrigger>
+              </TabsList>
 
-            {["all", "forex", "crypto", "stocks"].map((tab) => (
-              <TabsContent key={tab} value={tab} className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {BOTS.filter(b => tab === "all" || b.category === tab).map((bot) => (
-                    <Card key={bot.id} className="p-5 rounded-2xl border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white dark:bg-slate-800 overflow-hidden relative">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex gap-3">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md
-                            ${bot.category === 'forex' ? 'bg-blue-500' : 
-                              bot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'}`}>
-                            <BarChart3 size={24} strokeWidth={2.5} />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900 dark:text-white text-lg">{bot.name}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{bot.type}</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800 px-2 py-1">
-                          {bot.success} Success
-                        </Badge>
-                      </div>
+              {["all", "forex", "crypto", "stocks"].map((tab) => (
+                <TabsContent key={tab} value={tab} className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {activeBots
+                      .filter(b => tab === "all" || getBotCategory(b.description) === tab)
+                      .map((bot) => {
+                        const category = getBotCategory(bot.description);
+                        return (
+                          <Card 
+                            key={bot.id} 
+                            className="p-5 rounded-2xl border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white dark:bg-slate-800 overflow-hidden relative cursor-pointer hover:shadow-lg transition-shadow"
+                            onClick={() => handleBotClick(bot)}
+                            data-testid={`card-bot-${bot.id}`}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex gap-3">
+                                <Avatar className={`w-12 h-12 rounded-xl shadow-md ${
+                                  category === 'forex' ? 'bg-blue-500' : 
+                                  category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'
+                                }`}>
+                                  {bot.logo ? (
+                                    <AvatarImage src={bot.logo} alt={bot.name} />
+                                  ) : null}
+                                  <AvatarFallback className="bg-transparent text-white">
+                                    <BarChart3 size={24} strokeWidth={2.5} />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h3 className="font-bold text-gray-900 dark:text-white text-lg" data-testid={`text-bot-name-${bot.id}`}>{bot.name}</h3>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium capitalize">{category} Trading</p>
+                                </div>
+                              </div>
+                              <Badge className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800 px-2 py-1">
+                                {bot.winRate}% Win
+                              </Badge>
+                            </div>
 
-                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                        {bot.description}
-                      </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6 line-clamp-2" data-testid={`text-bot-description-${bot.id}`}>
+                              {bot.description}
+                            </p>
 
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="bg-gray-50 dark:bg-slate-700 p-3 rounded-xl border border-gray-100 dark:border-slate-600 text-center">
-                          <p className="text-lg font-black text-gray-900 dark:text-white">{bot.dailyProfit}</p>
-                          <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mt-1">Daily Profit</p>
-                        </div>
-                        <div className="bg-gray-50 dark:bg-slate-700 p-3 rounded-xl border border-gray-100 dark:border-slate-600 text-center">
-                          <p className="text-lg font-black text-gray-900 dark:text-white">{bot.duration}</p>
-                          <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mt-1">Duration</p>
-                        </div>
-                      </div>
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                              <div className="bg-gray-50 dark:bg-slate-700 p-3 rounded-xl border border-gray-100 dark:border-slate-600 text-center">
+                                <p className="text-lg font-black text-gray-900 dark:text-white" data-testid={`text-bot-profit-${bot.id}`}>
+                                  {bot.minProfitPercent}-{bot.maxProfitPercent}%
+                                </p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mt-1">Daily Profit</p>
+                              </div>
+                              <div className="bg-gray-50 dark:bg-slate-700 p-3 rounded-xl border border-gray-100 dark:border-slate-600 text-center">
+                                <p className="text-lg font-black text-gray-900 dark:text-white" data-testid={`text-bot-duration-${bot.id}`}>{bot.durationDays} Days</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mt-1">Duration</p>
+                              </div>
+                            </div>
 
-                      <div className="flex justify-between items-center mb-6 text-sm">
-                        <span className="text-gray-500 dark:text-gray-400 font-medium">Investment Range:</span>
-                        <span className="font-bold text-gray-900 dark:text-white">${bot.minInvest.toLocaleString()} - ${bot.maxInvest.toLocaleString()}</span>
-                      </div>
+                            <div className="flex justify-between items-center mb-4 text-sm">
+                              <span className="text-gray-500 dark:text-gray-400 font-medium">Subscription Fee:</span>
+                              <span className="font-bold text-blue-600 dark:text-blue-400" data-testid={`text-bot-price-${bot.id}`}>${parseFloat(bot.price).toLocaleString()}</span>
+                            </div>
 
-                      <div className="mb-6">
-                        <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Trading Pairs</p>
-                        <div className="flex flex-wrap gap-2">
-                          {bot.pairs.map(pair => (
-                            <span key={pair} className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg border border-blue-100 dark:border-blue-800">
-                              {pair}
-                            </span>
-                          ))}
-                          <span className="px-2 py-1 bg-gray-50 dark:bg-slate-700 text-gray-500 dark:text-gray-400 text-xs font-bold rounded-lg border border-gray-100 dark:border-slate-600">
-                            +2 more
-                          </span>
-                        </div>
-                      </div>
+                            <div className="flex justify-between items-center mb-6 text-sm">
+                              <span className="text-gray-500 dark:text-gray-400 font-medium">Investment Range:</span>
+                              <span className="font-bold text-gray-900 dark:text-white" data-testid={`text-bot-investment-${bot.id}`}>
+                                ${parseFloat(bot.minInvestment).toLocaleString()} - ${parseFloat(bot.maxInvestment).toLocaleString()}
+                              </span>
+                            </div>
 
-                      <Link href={`/bot/${bot.id}`}>
-                        <Button className="w-full h-12 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30">
-                          Activate this bot
-                          <ArrowLeft className="rotate-180 ml-2" size={18} />
-                        </Button>
-                      </Link>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+                            <Button 
+                              className="w-full h-12 rounded-xl text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/30"
+                              data-testid={`button-activate-bot-${bot.id}`}
+                            >
+                              Subscribe to Bot
+                              <ArrowLeft className="rotate-180 ml-2" size={18} />
+                            </Button>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
         </div>
       </div>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-[2rem] px-6 pb-8 max-h-[90vh] overflow-y-auto">
+          {selectedBot && (
+            <>
+              <SheetHeader className="text-left mb-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar className={`w-12 h-12 rounded-xl shadow-md ${
+                    getBotCategory(selectedBot.description) === 'forex' ? 'bg-blue-500' : 
+                    getBotCategory(selectedBot.description) === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'
+                  }`}>
+                    {selectedBot.logo ? (
+                      <AvatarImage src={selectedBot.logo} alt={selectedBot.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-transparent text-white">
+                      <BarChart3 size={24} strokeWidth={2.5} />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <SheetTitle className="text-xl" data-testid="text-sheet-bot-name">{selectedBot.name}</SheetTitle>
+                    <p className="text-xs text-gray-500 capitalize">{getBotCategory(selectedBot.description)} Trading Bot</p>
+                  </div>
+                </div>
+                <SheetDescription className="text-sm" data-testid="text-sheet-bot-description">
+                  {selectedBot.description}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
+                  <TrendingUp className="w-5 h-5 mx-auto text-green-500 mb-1" />
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBot.minProfitPercent}-{selectedBot.maxProfitPercent}%</p>
+                  <p className="text-[10px] text-gray-500">Daily Profit</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
+                  <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBot.durationDays} Days</p>
+                  <p className="text-[10px] text-gray-500">Duration</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
+                  <DollarSign className="w-5 h-5 mx-auto text-purple-500 mb-1" />
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">${parseFloat(selectedBot.price).toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-500">Sub. Fee</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Investment Amount
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <Input
+                      type="number"
+                      value={investmentAmount}
+                      onChange={(e) => setInvestmentAmount(e.target.value)}
+                      placeholder={`${selectedBot.minInvestment} - ${selectedBot.maxInvestment}`}
+                      className="pl-7 h-12 rounded-xl"
+                      min={parseFloat(selectedBot.minInvestment)}
+                      max={parseFloat(selectedBot.maxInvestment)}
+                      data-testid="input-investment-amount"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Min: ${parseFloat(selectedBot.minInvestment).toLocaleString()} • Max: ${parseFloat(selectedBot.maxInvestment).toLocaleString()}
+                  </p>
+                  {!isInvestmentValid && investmentAmount && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Investment must be between ${parseFloat(selectedBot.minInvestment).toLocaleString()} and ${parseFloat(selectedBot.maxInvestment).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 mb-6 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Subscription Fee</span>
+                  <span className="font-medium" data-testid="text-subscription-fee">${subscriptionFee.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Investment Amount</span>
+                  <span className="font-medium" data-testid="text-investment-amount">${investmentNum.toLocaleString()}</span>
+                </div>
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-3 flex justify-between">
+                  <span className="font-semibold text-gray-900 dark:text-white">Total Cost</span>
+                  <span className="font-bold text-blue-600" data-testid="text-total-cost">${totalCost.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Your Balance</span>
+                </div>
+                <span className={`font-bold ${hasInsufficientBalance ? 'text-red-500' : 'text-green-600'}`} data-testid="text-user-balance">
+                  ${availableBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              {hasInsufficientBalance && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 mb-4">
+                  <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                    Insufficient balance. You need ${(totalCost - availableBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} more.
+                  </p>
+                </div>
+              )}
+
+              <Button 
+                className="w-full h-14 rounded-xl text-lg font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={hasInsufficientBalance || !isInvestmentValid || subscribeMutation.isPending}
+                onClick={handleSubscribe}
+                data-testid="button-subscribe"
+              >
+                {subscribeMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Subscribe Now
+                    <ArrowLeft className="rotate-180 ml-2" size={20} />
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </MobileLayout>
   );
 }
