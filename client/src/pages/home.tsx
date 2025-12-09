@@ -52,7 +52,6 @@ export default function Home() {
 
   const user = tgUser || defaultUser;
 
-  const [isBotActive, setIsBotActive] = useState(false);
   const [marketStatus, setMarketStatus] = useState({
     crypto: true,
     forex: true,
@@ -61,9 +60,6 @@ export default function Home() {
 
   // Initialize Telegram WebApp
   useEffect(() => {
-    const active = localStorage.getItem("is_bot_active") === "true";
-    setIsBotActive(active);
-
     const savedStatus = localStorage.getItem("market_status");
     if (savedStatus) {
       setMarketStatus(JSON.parse(savedStatus));
@@ -138,6 +134,26 @@ export default function Home() {
     refetchOnWindowFocus: true,
     refetchOnMount: true, // Refetch when component mounts
   });
+
+  // Fetch user's bot subscriptions to check if any bot is active
+  const { data: userBots } = useQuery({
+    queryKey: ['/api/user-bots', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return [];
+      const res = await fetch(`/api/users/${dbUser.id}/bots`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  });
+
+  // Check if user has any active (not stopped) bot subscription
+  const hasActiveBotSubscription = userBots?.some((ub: any) => 
+    ub.status === 'active' && !ub.isStopped && new Date(ub.expiryDate) > new Date()
+  ) ?? false;
 
   // Fetch popular assets from API
   const [featuredAssets, setFeaturedAssets] = useState<any[]>([]);
@@ -231,7 +247,7 @@ export default function Home() {
                 </h2>
                 <Link href="/markets">
                   <div className="flex flex-col items-center cursor-pointer group">
-                    <div className={`w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg transition-all duration-300 group-hover:scale-105 ${!isBotActive ? 'grayscale opacity-80' : ''}`}>
+                    <div className={`w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm p-2 border border-white/30 shadow-lg transition-all duration-300 group-hover:scale-105 ${!hasActiveBotSubscription ? 'grayscale opacity-80' : ''}`}>
                       <img src={aiLogo} alt="AI" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-[10px] font-bold text-blue-100 mt-1 tracking-wide">AI Bot</span>
