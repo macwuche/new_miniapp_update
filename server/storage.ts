@@ -76,7 +76,7 @@ import {
   type InsertWithdrawalGateway,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql as drizzleSql } from "drizzle-orm";
+import { eq, and, desc, sql as drizzleSql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -393,7 +393,11 @@ export class DatabaseStorage implements IStorage {
       .slice(0, limit);
 
     const userIds = Array.from(new Set(combined.map(item => item.userId)));
-    const userList = await db.select().from(users).where(drizzleSql`${users.id} = ANY(${userIds})`);
+    
+    let userList: typeof users.$inferSelect[] = [];
+    if (userIds.length > 0) {
+      userList = await db.select().from(users).where(inArray(users.id, userIds));
+    }
     const userMap = new Map(userList.map(u => [u.id, u]));
 
     return combined.map(item => {

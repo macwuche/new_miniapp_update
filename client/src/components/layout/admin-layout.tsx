@@ -23,13 +23,15 @@ import {
   Coins,
   Globe,
   Building2,
-  PieChart
+  PieChart,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { adminAPI } from "@/lib/api";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -38,6 +40,34 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [location, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [adminData, setAdminData] = useState<{ email: string } | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const admin = await adminAPI.me() as { email: string };
+        setAdminData(admin);
+        setIsAuthenticated(true);
+      } catch (error) {
+        setIsAuthenticated(false);
+        setLocation("/admin");
+      }
+    };
+    checkAuth();
+  }, [setLocation]);
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
@@ -60,8 +90,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Settings, label: "Settings", href: "/admin/settings" },
   ];
 
-  const handleLogout = () => {
-    // In a real app, we would clear auth tokens here
+  const handleLogout = async () => {
+    try {
+      await adminAPI.logout();
+    } catch (error) {
+      // Ignore logout errors
+    }
     setLocation("/admin");
   };
 
