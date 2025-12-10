@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading Platform - VPS Deployment Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #fff;
+        }
+        h1 {
+            color: #1a1a2e;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #4361ee;
+            padding-bottom: 15px;
+        }
+        h2 {
+            color: #16213e;
+            font-size: 1.8em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4361ee;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #0f3460;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        .header-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .header-info p {
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+        pre {
+            background: #1a1a2e;
+            color: #e9ecef;
+            padding: 15px 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        .toc h2 {
+            margin-top: 0;
+            border-left: none;
+            padding-left: 0;
+        }
+        .toc ol {
+            padding-left: 25px;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #4361ee;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .challenge-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .challenge-box h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .solution-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .solution-box h4 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+        .important-box {
+            background: #cce5ff;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .important-box h4 {
+            color: #004085;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #4361ee;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #dee2e6;
+            margin: 40px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #dee2e6;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        @media print {
+            body {
+                padding: 20px;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            h2 {
+                page-break-before: always;
+            }
+            h2:first-of-type {
+                page-break-before: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Crypto Trading Platform<br>Complete VPS Deployment Guide</h1>
+    
+    <div class="header-info">
+        <p><strong>Project:</strong> Nakamotoshi Crypto Trading Platform</p>
+        <p><strong>Domain:</strong> nakamotoshi.online</p>
+        <p><strong>Server:</strong> Ubuntu VPS (103.74.92.174)</p>
+        <p><strong>Date:</strong> December 10, 2025</p>
+    </div>
+
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ol>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#requirements">Server Requirements</a></li>
+            <li><a href="#initial-setup">Initial Server Setup</a></li>
+            <li><a href="#prerequisites">Installing Prerequisites</a></li>
+            <li><a href="#database">PostgreSQL Database Setup</a></li>
+            <li><a href="#deployment">Application Deployment</a></li>
+            <li><a href="#nginx">Nginx Reverse Proxy Configuration</a></li>
+            <li><a href="#ssl">SSL Certificate Setup</a></li>
+            <li><a href="#pm2">PM2 Process Manager Configuration</a></li>
+            <li><a href="#admin">Admin User Setup</a></li>
+            <li><a href="#challenges">Challenges Faced & Solutions</a></li>
+            <li><a href="#summary">Final Configuration Summary</a></li>
+            <li><a href="#maintenance">Maintenance Commands</a></li>
+            <li><a href="#troubleshooting">Troubleshooting Guide</a></li>
+        </ol>
+    </div>
+
+    <hr>
+
+    <h2 id="overview">1. Overview</h2>
+    <p>This document provides a comprehensive guide for deploying the Crypto Trading Platform to a production Ubuntu VPS server. The platform is a full-stack application built with:</p>
+    <ul>
+        <li><strong>Frontend:</strong> React 18 + Vite + TailwindCSS + shadcn/ui</li>
+        <li><strong>Backend:</strong> Express.js + TypeScript</li>
+        <li><strong>Database:</strong> PostgreSQL with Drizzle ORM</li>
+        <li><strong>Process Manager:</strong> PM2</li>
+        <li><strong>Web Server:</strong> Nginx (reverse proxy)</li>
+        <li><strong>SSL:</strong> Let's Encrypt (Certbot)</li>
+    </ul>
+
+    <h2 id="requirements">2. Server Requirements</h2>
+    <h3>Minimum Specifications</h3>
+    <table>
+        <tr><th>Component</th><th>Requirement</th></tr>
+        <tr><td>OS</td><td>Ubuntu 20.04 LTS or later</td></tr>
+        <tr><td>RAM</td><td>2GB minimum (4GB recommended for builds)</td></tr>
+        <tr><td>Storage</td><td>20GB SSD</td></tr>
+        <tr><td>CPU</td><td>1 vCPU minimum</td></tr>
+    </table>
+
+    <h3>Required Ports</h3>
+    <table>
+        <tr><th>Port</th><th>Purpose</th></tr>
+        <tr><td>22</td><td>SSH access</td></tr>
+        <tr><td>80</td><td>HTTP (redirects to HTTPS)</td></tr>
+        <tr><td>443</td><td>HTTPS</td></tr>
+        <tr><td>5000</td><td>Application port (internal only)</td></tr>
+    </table>
+
+    <h2 id="initial-setup">3. Initial Server Setup</h2>
+    <h3>Step 1: Connect to Server via SSH</h3>
+    <pre><code>ssh root@103.74.92.174</code></pre>
+
+    <h3>Step 2: Update System Packages</h3>
+    <pre><code>sudo apt update && sudo apt upgrade -y</code></pre>
+
+    <h2 id="prerequisites">4. Installing Prerequisites</h2>
+    
+    <h3>Step 1: Install Node.js 20.x</h3>
+    <pre><code>curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs</code></pre>
+    <p>Verify installation:</p>
+    <pre><code>node --version  # Should show v20.x.x
+npm --version   # Should show 10.x.x</code></pre>
+
+    <h3>Step 2: Install PostgreSQL</h3>
+    <pre><code>sudo apt install postgresql postgresql-contrib -y
+sudo systemctl start postgresql
+sudo systemctl enable postgresql</code></pre>
+
+    <h3>Step 3: Install Nginx</h3>
+    <pre><code>sudo apt install nginx -y
+sudo systemctl start nginx
+sudo systemctl enable nginx</code></pre>
+
+    <h3>Step 4: Install PM2 (Process Manager)</h3>
+    <pre><code>sudo npm install -g pm2</code></pre>
+
+    <h3>Step 5: Install Certbot (SSL)</h3>
+    <pre><code>sudo apt install certbot python3-certbot-nginx -y</code></pre>
+
+    <h3>Step 6: Install Git</h3>
+    <pre><code>sudo apt install git -y</code></pre>
+
+    <h2 id="database">5. PostgreSQL Database Setup</h2>
+    
+    <h3>Step 1: Create Database User</h3>
+    <pre><code>sudo -u postgres psql</code></pre>
+    <p>In PostgreSQL prompt:</p>
+    <pre><code>CREATE USER crypto_user WITH PASSWORD 'MACt08140615640Tt';
+CREATE DATABASE crypto_trading_db OWNER crypto_user;
+GRANT ALL PRIVILEGES ON DATABASE crypto_trading_db TO crypto_user;
+\q</code></pre>
+
+    <div class="important-box">
+        <h4>Important Note on Passwords</h4>
+        <p>Avoid special characters like <code>+</code>, <code>/</code>, <code>@</code>, <code>#</code> in database passwords. These characters break URL parsing in connection strings. Use only alphanumeric characters and underscores.</p>
+    </div>
+
+    <h2 id="deployment">6. Application Deployment</h2>
+
+    <h3>Step 1: Create Application Directory</h3>
+    <pre><code>sudo mkdir -p /var/www/crypto-trading
+cd /var/www/crypto-trading</code></pre>
+
+    <h3>Step 2: Clone Repository</h3>
+    <pre><code>git clone https://github.com/YOUR_USERNAME/crypto-trading.git .</code></pre>
+
+    <h3>Step 3: Install Dependencies</h3>
+    <pre><code>npm install</code></pre>
+
+    <h3>Step 4: Create Environment File</h3>
+    <pre><code>nano .env</code></pre>
+    <p>Add the following content:</p>
+    <pre><code>DATABASE_URL=postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db
+PGHOST=localhost
+PGPORT=5432
+PGUSER=crypto_user
+PGPASSWORD=MACt08140615640Tt
+PGDATABASE=crypto_trading_db
+SESSION_SECRET=your-secure-session-secret-here
+NODE_ENV=production
+PORT=5000</code></pre>
+
+    <h3>Step 5: Run Database Migrations</h3>
+    <pre><code>npm run db:push</code></pre>
+
+    <h3>Step 6: Build the Application</h3>
+    <div class="important-box">
+        <h4>If build gets "Killed" due to memory issues, add swap space first:</h4>
+        <pre><code>sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile</code></pre>
+    </div>
+    <p>Then build:</p>
+    <pre><code>npm run build</code></pre>
+
+    <h2 id="nginx">7. Nginx Reverse Proxy Configuration</h2>
+
+    <h3>Step 1: Create Nginx Configuration</h3>
+    <pre><code>sudo nano /etc/nginx/sites-available/crypto-trading</code></pre>
+    <p>Add the following content:</p>
+    <pre><code>server {
+    listen 80;
+    server_name nakamotoshi.online www.nakamotoshi.online;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}</code></pre>
+
+    <h3>Step 2: Enable the Site</h3>
+    <pre><code>sudo ln -s /etc/nginx/sites-available/crypto-trading /etc/nginx/sites-enabled/</code></pre>
+
+    <h3>Step 3: Test and Reload Nginx</h3>
+    <pre><code>sudo nginx -t
+sudo systemctl reload nginx</code></pre>
+
+    <h2 id="ssl">8. SSL Certificate Setup</h2>
+
+    <h3>Obtain SSL Certificate</h3>
+    <pre><code>sudo certbot --nginx -d nakamotoshi.online -d www.nakamotoshi.online</code></pre>
+    <p>Follow the prompts to complete SSL setup.</p>
+
+    <h3>Verify Auto-Renewal</h3>
+    <pre><code>sudo certbot renew --dry-run</code></pre>
+
+    <h2 id="pm2">9. PM2 Process Manager Configuration</h2>
+
+    <h3>Step 1: Start Application with Environment Variables</h3>
+    <pre><code>cd /var/www/crypto-trading
+export NODE_ENV=production
+export DATABASE_URL="postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db"
+pm2 start dist/index.js --name crypto-trading -i 1</code></pre>
+
+    <h3>Step 2: Save PM2 Configuration</h3>
+    <pre><code>pm2 save</code></pre>
+
+    <h3>Step 3: Setup PM2 Startup Script</h3>
+    <pre><code>pm2 startup systemd</code></pre>
+    <p>Run the command it outputs.</p>
+
+    <h2 id="admin">10. Admin User Setup</h2>
+
+    <h3>Insert Admin User</h3>
+    <pre><code>sudo -u postgres psql -d crypto_trading_db -c "INSERT INTO admins (email, password, permissions, created_at) VALUES ('admin@admin.com', '\$2b\$10\$Iyfix/B4O9MAg6dRASevd.hP9akbTUi6gbBX9raMU9xd5umaEK0..', '[\"all\"]', NOW());"</code></pre>
+
+    <h3>Admin Login Credentials</h3>
+    <table>
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>URL</td><td>https://nakamotoshi.online/admin</td></tr>
+        <tr><td>Email</td><td>admin@admin.com</td></tr>
+        <tr><td>Password</td><td>MAC_T08140615640_Tt</td></tr>
+    </table>
+
+    <h2 id="challenges">11. Challenges Faced & Solutions</h2>
+
+    <div class="challenge-box">
+        <h4>Challenge 1: Database Connection String URL Parsing Error</h4>
+        <p><strong>Error:</strong> <code>TypeError: Invalid URL</code> - Password contained special characters (+, /) that broke URL parsing.</p>
+    </div>
+    <div class="solution-box">
+        <h4>Solution</h4>
+        <p>Changed the PostgreSQL password to one without special characters:</p>
+        <pre><code>sudo -u postgres psql -c "ALTER USER crypto_user WITH PASSWORD 'MACt08140615640Tt';"</code></pre>
+    </div>
+
+    <div class="challenge-box">
+        <h4>Challenge 2: PM2 Not Reading Updated .env File</h4>
+        <p><strong>Error:</strong> After updating .env file, PM2 continued using old environment variables.</p>
+    </div>
+    <div class="solution-box">
+        <h4>Solution</h4>
+        <p>Delete and restart PM2 with exported environment variables:</p>
+        <pre><code>pm2 delete crypto-trading
+export NODE_ENV=production
+export DATABASE_URL="postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db"
+pm2 start dist/index.js --name crypto-trading -i 1</code></pre>
+    </div>
+
+    <div class="challenge-box">
+        <h4>Challenge 3: Build Process Killed (Out of Memory)</h4>
+        <p><strong>Error:</strong> Build process was killed due to insufficient RAM.</p>
+    </div>
+    <div class="solution-box">
+        <h4>Solution</h4>
+        <p>Added 2GB swap space:</p>
+        <pre><code>sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile</code></pre>
+    </div>
+
+    <div class="challenge-box">
+        <h4>Challenge 4: App Running in Development Mode</h4>
+        <p><strong>Error:</strong> Blank page with Vite errors - app was trying to run dev server.</p>
+    </div>
+    <div class="solution-box">
+        <h4>Solution</h4>
+        <p>Set <code>NODE_ENV=production</code> before starting PM2.</p>
+    </div>
+
+    <div class="challenge-box">
+        <h4>Challenge 5: 502 Bad Gateway from Nginx</h4>
+        <p><strong>Error:</strong> Nginx was configured for port 3000, but app was on port 5000.</p>
+    </div>
+    <div class="solution-box">
+        <h4>Solution</h4>
+        <p>Updated Nginx configuration to use correct port:</p>
+        <pre><code>proxy_pass http://127.0.0.1:5000;</code></pre>
+    </div>
+
+    <h2 id="summary">12. Final Configuration Summary</h2>
+
+    <table>
+        <tr><th>Component</th><th>Configuration</th></tr>
+        <tr><td>IP Address</td><td>103.74.92.174</td></tr>
+        <tr><td>Domain</td><td>nakamotoshi.online</td></tr>
+        <tr><td>SSL</td><td>Let's Encrypt (auto-renewing)</td></tr>
+        <tr><td>Application Port</td><td>5000 (internal)</td></tr>
+        <tr><td>Node Environment</td><td>production</td></tr>
+        <tr><td>Database</td><td>crypto_trading_db</td></tr>
+        <tr><td>Database User</td><td>crypto_user</td></tr>
+        <tr><td>Application Directory</td><td>/var/www/crypto-trading</td></tr>
+    </table>
+
+    <h2 id="maintenance">13. Maintenance Commands</h2>
+
+    <h3>Application Management</h3>
+    <pre><code># View app status
+pm2 status
+
+# View logs
+pm2 logs crypto-trading --lines 50
+
+# Restart app
+pm2 restart crypto-trading
+
+# Stop app
+pm2 stop crypto-trading</code></pre>
+
+    <h3>Database Management</h3>
+    <pre><code># Connect to database
+sudo -u postgres psql -d crypto_trading_db
+
+# View users
+sudo -u postgres psql -d crypto_trading_db -c "SELECT id, username, first_name FROM users;"</code></pre>
+
+    <h3>Updating the Application</h3>
+    <pre><code>cd /var/www/crypto-trading
+git pull origin main
+npm install
+npm run build
+pm2 restart crypto-trading</code></pre>
+
+    <h2 id="troubleshooting">14. Troubleshooting Guide</h2>
+
+    <h3>Issue: App not responding</h3>
+    <ol>
+        <li>Check PM2 status: <code>pm2 status</code></li>
+        <li>Check logs: <code>pm2 logs crypto-trading --lines 30</code></li>
+        <li>Verify port: <code>curl http://localhost:5000</code></li>
+    </ol>
+
+    <h3>Issue: 502 Bad Gateway</h3>
+    <ol>
+        <li>Verify app is running: <code>pm2 status</code></li>
+        <li>Check Nginx config: <code>sudo nginx -t</code></li>
+        <li>Verify port match between Nginx and app</li>
+    </ol>
+
+    <h3>Issue: Database connection errors</h3>
+    <ol>
+        <li>Verify PostgreSQL is running: <code>sudo systemctl status postgresql</code></li>
+        <li>Test connection: <code>sudo -u postgres psql -d crypto_trading_db</code></li>
+        <li>Check DATABASE_URL in environment</li>
+    </ol>
+
+    <div class="footer">
+        <p><strong>Created:</strong> December 10, 2025 | <strong>Author:</strong> Replit Agent | <strong>Version:</strong> 1.0</p>
+        <p>Nakamotoshi Crypto Trading Platform Deployment Guide</p>
+    </div>
+
+</body>
+</html>
