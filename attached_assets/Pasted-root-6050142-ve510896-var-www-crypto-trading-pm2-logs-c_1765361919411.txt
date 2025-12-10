@@ -1,0 +1,74 @@
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 30
+[TAILING] Tailing last 30 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-out-0.log last 30 lines:
+0|crypto-t | 9:31:45 AM [express] GET /api/admin/stats 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 9:48:10 AM [express] GET /api/admin/stats 401 in 2ms :: {"error":"Unauthorized"}
+0|crypto-t | 9:48:10 AM [express] GET /api/admin/activity 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 9:59:12 AM [express] POST /api/users/register 500 in 2ms :: {"error":"Failed to register user"}
+0|crypto-t | 9:59:12 AM [express] POST /api/users/register 500 in 4ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:00:14 AM [express] POST /api/users/register 500 in 4ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:00:14 AM [express] POST /api/users/register 500 in 3ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:03:53 AM [express] GET /api/admin/stats 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:03:53 AM [express] GET /api/admin/activity 401 in 2ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:04:14 AM [express] POST /api/admin/login 500 in 3ms :: {"error":"Login failed"}
+0|crypto-t | 10:04:25 AM [express] GET /api/admin/activity 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:04:25 AM [express] GET /api/admin/stats 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:09:27 AM [express] serving on port 3000
+0|crypto-t | 10:10:09 AM [express] POST /api/users/register 500 in 25ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:26 AM [express] POST /api/users/register 500 in 6ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:27 AM [express] POST /api/users/register 500 in 3ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:27 AM [express] POST /api/users/register 500 in 5ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:27 AM [express] POST /api/users/register 500 in 4ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:27 AM [express] POST /api/users/register 500 in 3ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:27 AM [express] POST /api/users/register 500 in 5ms :: {"error":"Failed to register user"}
+0|crypto-t | 10:10:36 AM [express] GET /api/admin/stats 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:10:36 AM [express] GET /api/admin/activity 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:10:40 AM [express] GET /api/balances 401 in 2ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:10:40 AM [express] GET /api/admin/users 401 in 2ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:11:26 AM [express] GET /api/balances 401 in 2ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:11:26 AM [express] GET /api/admin/users 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:11:32 AM [express] GET /api/balances 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:11:32 AM [express] GET /api/admin/users 401 in 2ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:13:56 AM [express] serving on port 3000
+0|crypto-t | 10:14:29 AM [express] serving on port 3000
+
+/root/.pm2/logs/crypto-trading-error-0.log last 30 lines:
+0|crypto-t |     at BoundPool.connect (/var/www/crypto-trading/node_modules/pg-pool/index.js:212:10)
+0|crypto-t |     at BoundPool.query (/var/www/crypto-trading/node_modules/pg-pool/index.js:399:10)
+0|crypto-t |     at file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:89:23
+0|crypto-t |     at Object.startActiveSpan (file:///var/www/crypto-trading/node_modules/drizzle-orm/tracing.js:8:14)
+0|crypto-t |     at file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:35 {
+0|crypto-t |   code: 'ERR_INVALID_URL',
+0|crypto-t |   input: 'postgresql://crypto_user:HGhOwL+YQ/eXlgIJkdTkBfUG+U+L4ibi@localhost:5432/crypto_trading_db',
+0|crypto-t |   base: 'postgres://base'
+0|crypto-t | }
+0|crypto-t | User registration error: TypeError: Invalid URL
+0|crypto-t |     at new URL (node:internal/url:806:29)
+0|crypto-t |     at parse (/var/www/crypto-trading/node_modules/pg-connection-string/index.js:29:14)
+0|crypto-t |     at new ConnectionParameters (/var/www/crypto-trading/node_modules/pg/lib/connection-parameters.js:56:42)
+0|crypto-t |     at new Client (/var/www/crypto-trading/node_modules/pg/lib/client.js:18:33)
+0|crypto-t |     at BoundPool.newClient (/var/www/crypto-trading/node_modules/pg-pool/index.js:218:20)
+0|crypto-t |     at BoundPool.connect (/var/www/crypto-trading/node_modules/pg-pool/index.js:212:10)
+0|crypto-t |     at BoundPool.query (/var/www/crypto-trading/node_modules/pg-pool/index.js:399:10)
+0|crypto-t |     at file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:89:23
+0|crypto-t |     at Object.startActiveSpan (file:///var/www/crypto-trading/node_modules/drizzle-orm/tracing.js:8:14)
+0|crypto-t |     at file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:35 {
+0|crypto-t |   code: 'ERR_INVALID_URL',
+0|crypto-t |   input: 'postgresql://crypto_user:HGhOwL+YQ/eXlgIJkdTkBfUG+U+L4ibi@localhost:5432/crypto_trading_db',
+0|crypto-t |   base: 'postgres://base'
+0|crypto-t | }
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+
+^C
+root@6050142-ve510896:/var/www/crypto-trading# pm2 status
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ cluster │ 618673   │ 3m     │ 4    │ online    │ 0%       │ 95.3mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# 
