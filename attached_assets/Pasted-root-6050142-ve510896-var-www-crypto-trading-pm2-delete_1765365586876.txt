@@ -1,0 +1,26 @@
+root@6050142-ve510896:/var/www/crypto-trading# pm2 delete crypto-trading
+export DATABASE_URL="postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db"
+pm2 start dist/index.js --name crypto-trading -i 1
+[PM2] Applying action deleteProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Starting /var/www/crypto-trading/dist/index.js in cluster_mode (1 instance)
+[PM2] Done.
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ cluster │ 619616   │ 0s     │ 0    │ online    │ 0%       │ 37.9mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 3
+[TAILING] Tailing last 3 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error-0.log last 3 lines:
+0|crypto-t |   input: 'postgresql://crypto_user:HGhOwL+YQ/eXlgIJkdTkBfUG+U+L4ibi@localhost:5432/crypto_trading_db',
+0|crypto-t |   base: 'postgres://base'
+0|crypto-t | }
+
+/root/.pm2/logs/crypto-trading-out-0.log last 3 lines:
+0|crypto-t | 11:09:41 AM [express] POST /api/users/register 500 in 3ms :: {"error":"Failed to register user"}
+0|crypto-t | 11:17:11 AM [express] serving on port 3000
+0|crypto-t | 11:18:47 AM [express] serving on port 5000

@@ -1,0 +1,32 @@
+root@6050142-ve510896:/var/www/crypto-trading# pm2 delete crypto-trading
+export NODE_ENV=production
+export DATABASE_URL="postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db"
+pm2 start dist/index.js --name crypto-trading -i 1
+[PM2] Applying action deleteProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Starting /var/www/crypto-trading/dist/index.js in cluster_mode (1 instance)
+[PM2] Done.
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ cluster │ 619903   │ 0s     │ 0    │ online    │ 0%       │ 37.9mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 5
+[TAILING] Tailing last 5 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error-0.log last 5 lines:
+0|crypto-t | 11:26:36 AM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=BMEZuAu-rUnx1KBHVisux (resolved id: /src/main.tsx?v=BMEZuAu-rUnx1KBHVisux). Does the file exist?
+0|crypto-t | 11:26:42 AM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=dnhBfBBUS-nUrGvQKvXTE (resolved id: /src/main.tsx?v=dnhBfBBUS-nUrGvQKvXTE). Does the file exist?
+0|crypto-t | 11:26:45 AM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=tZOVMDtHjVnaAO42Rc9gE (resolved id: /src/main.tsx?v=tZOVMDtHjVnaAO42Rc9gE). Does the file exist?
+0|crypto-t | 11:28:41 AM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=17fy1Ssyn4pyQvAtze49m (resolved id: /src/main.tsx?v=17fy1Ssyn4pyQvAtze49m). Does the file exist?
+0|crypto-t | 11:28:43 AM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=sfbEEywC_RuzMC2X7LZS0 (resolved id: /src/main.tsx?v=sfbEEywC_RuzMC2X7LZS0). Does the file exist?
+
+/root/.pm2/logs/crypto-trading-out-0.log last 5 lines:
+0|crypto-t | 11:26:43 AM [express] serving on port 5000
+0|crypto-t | 11:26:46 AM [express] serving on port 5000
+0|crypto-t | 11:28:42 AM [express] serving on port 5000
+0|crypto-t | 11:28:44 AM [express] serving on port 5000
+0|crypto-t | 11:31:22 AM [express] serving on port 5000
+

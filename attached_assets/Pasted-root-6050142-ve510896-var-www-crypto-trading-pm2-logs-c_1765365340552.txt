@@ -1,0 +1,31 @@
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 10
+[TAILING] Tailing last 10 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-out-0.log last 10 lines:
+0|crypto-t | 10:39:58 AM [express] GET /api/admin/stats 401 in 4ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:39:58 AM [express] GET /api/admin/me 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:40:24 AM [express] POST /api/admin/login 500 in 3ms :: {"error":"Login failed"}
+0|crypto-t | 10:40:54 AM [express] serving on port 3000
+0|crypto-t | 10:42:01 AM [express] POST /api/admin/login 500 in 17ms :: {"error":"Login failed"}
+0|crypto-t | 11:01:21 AM [express] serving on port 3000
+0|crypto-t | 11:01:59 AM [express] POST /api/admin/login 500 in 21ms :: {"error":"Login failed"}
+0|crypto-t | 11:09:38 AM [express] POST /api/users/register 500 in 5ms :: {"error":"Failed to register user"}
+0|crypto-t | 11:09:41 AM [express] POST /api/users/register 500 in 5ms :: {"error":"Failed to register user"}
+0|crypto-t | 11:09:41 AM [express] POST /api/users/register 500 in 3ms :: {"error":"Failed to register user"}
+
+/root/.pm2/logs/crypto-trading-error-0.log last 10 lines:
+0|crypto-t |     at BoundPool.newClient (/var/www/crypto-trading/node_modules/pg-pool/index.js:218:20)
+0|crypto-t |     at BoundPool.connect (/var/www/crypto-trading/node_modules/pg-pool/index.js:212:10)
+0|crypto-t |     at BoundPool.query (/var/www/crypto-trading/node_modules/pg-pool/index.js:399:10)
+0|crypto-t |     at file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:89:23
+0|crypto-t |     at Object.startActiveSpan (file:///var/www/crypto-trading/node_modules/drizzle-orm/tracing.js:8:14)
+0|crypto-t |     at file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:35 {
+0|crypto-t |   code: 'ERR_INVALID_URL',
+0|crypto-t |   input: 'postgresql://crypto_user:HGhOwL+YQ/eXlgIJkdTkBfUG+U+L4ibi@localhost:5432/crypto_trading_db',
+0|crypto-t |   base: 'postgres://base'
+0|crypto-t | }
+
+^C
+root@6050142-ve510896:/var/www/crypto-trading# cat /var/www/crypto-trading/.env | grep DATABASE
+DATABASE_URL=postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db
+PGDATABASE=crypto_trading_db
+root@6050142-ve510896:/var/www/crypto-trading# 
