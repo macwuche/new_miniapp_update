@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { useAdminTheme } from "@/lib/admin-theme";
+import { cn } from "@/lib/utils";
 
 interface ConnectedWallet {
   id: number;
@@ -36,6 +38,16 @@ interface ConnectedWallet {
 }
 
 export default function AdminWalletPhrases() {
+  return (
+    <AdminLayout>
+      <WalletPhrasesContent />
+    </AdminLayout>
+  );
+}
+
+function WalletPhrasesContent() {
+  const { adminTheme } = useAdminTheme();
+  const isDark = adminTheme === "dark";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showPhrases, setShowPhrases] = useState<{ [key: number]: boolean }>({});
@@ -114,113 +126,134 @@ export default function AdminWalletPhrases() {
   };
 
   return (
-    <AdminLayout>
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+    <div>
+      <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
+        <div className="flex items-center gap-4">
           <Link href="/admin/linked-wallets">
             <Button variant="ghost" size="sm" data-testid="button-back-wallet-types">
-              <ArrowLeft size={16} style={{ marginRight: '8px' }} />
+              <ArrowLeft size={16} className="mr-2" />
               Back
             </Button>
           </Link>
           <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>Wallet Phrases</h1>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>View all user connected external wallets and their seed phrases</p>
+            <h1 className={cn("text-xl font-bold", isDark ? "text-white" : "text-gray-900")}>Wallet Phrases</h1>
+            <p className={cn("text-sm mt-1", isDark ? "text-slate-400" : "text-gray-500")}>View all user connected external wallets and their seed phrases</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#fef3c7', padding: '8px 16px', borderRadius: '8px' }}>
-            <Key size={18} style={{ color: '#d97706' }} />
-            <span style={{ fontWeight: 500, color: '#92400e', fontSize: '13px' }}>Sensitive Data</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-amber-100 px-4 py-2 rounded-lg">
+            <Key size={18} className="text-amber-600" />
+            <span className="font-medium text-amber-800 text-sm">Sensitive Data</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f3f4f6', padding: '8px 16px', borderRadius: '8px' }}>
-            <Wallet size={20} style={{ color: '#6f42c1' }} />
-            <span style={{ fontWeight: 600, color: '#111827' }}>{wallets.length}</span>
-            <span style={{ color: '#6b7280' }}>Total</span>
+          <div className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg",
+            isDark ? "bg-slate-800" : "bg-gray-100"
+          )}>
+            <Wallet size={20} className="text-purple-600" />
+            <span className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>{wallets.length}</span>
+            <span className={isDark ? "text-slate-400" : "text-gray-500"}>Total</span>
           </div>
         </div>
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ position: 'relative', maxWidth: '320px' }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+      <div className="mb-4">
+        <div className="relative max-w-xs">
+          <Search size={16} className={cn(
+            "absolute left-3 top-1/2 -translate-y-1/2",
+            isDark ? "text-slate-500" : "text-gray-400"
+          )} />
           <Input
             placeholder="Search by user or wallet..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: '40px' }}
+            className={cn(
+              "pl-10",
+              isDark && "bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+            )}
             data-testid="input-search-wallets"
           />
         </div>
       </div>
 
-      <Card>
-        <CardContent style={{ padding: '0' }}>
+      <Card className={isDark ? "bg-slate-900 border-slate-800" : ""}>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '48px' }}>
-              <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: '#6b7280' }} />
-              <p style={{ marginTop: '16px', color: '#6b7280' }}>Loading wallets...</p>
+            <div className="text-center py-12">
+              <Loader2 className={cn("h-8 w-8 animate-spin mx-auto", isDark ? "text-slate-500" : "text-gray-500")} />
+              <p className={cn("mt-4", isDark ? "text-slate-400" : "text-gray-500")}>Loading wallets...</p>
             </div>
           ) : filteredWallets.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 24px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px dashed #e5e7eb' }}>
-              <Wallet size={48} style={{ color: '#d1d5db', margin: '0 auto 16px' }} />
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>
+            <div className={cn(
+              "text-center py-12 px-6 rounded-lg border border-dashed",
+              isDark ? "bg-slate-800/50 border-slate-700" : "bg-gray-50 border-gray-200"
+            )}>
+              <Wallet size={48} className={cn("mx-auto mb-4", isDark ? "text-slate-600" : "text-gray-300")} />
+              <p className={cn("text-sm", isDark ? "text-slate-400" : "text-gray-500")}>
                 {searchTerm ? 'No matching wallets found' : 'No connected wallets found'}
               </p>
-              <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '4px' }}>
+              <p className={cn("text-xs mt-1", isDark ? "text-slate-500" : "text-gray-400")}>
                 {searchTerm ? 'Try adjusting your search' : 'Users can connect external wallets from their withdrawal page'}
               </p>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Wallet</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead style={{ minWidth: '300px' }}>Seed Phrase</TableHead>
-                    <TableHead>Connected At</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className={isDark ? "border-slate-800 hover:bg-slate-800/50" : ""}>
+                    <TableHead className={isDark ? "text-slate-300" : ""}>User</TableHead>
+                    <TableHead className={isDark ? "text-slate-300" : ""}>Wallet</TableHead>
+                    <TableHead className={isDark ? "text-slate-300" : ""}>Address</TableHead>
+                    <TableHead className={cn("min-w-[300px]", isDark ? "text-slate-300" : "")}>Seed Phrase</TableHead>
+                    <TableHead className={isDark ? "text-slate-300" : ""}>Connected At</TableHead>
+                    <TableHead className={isDark ? "text-slate-300" : ""}>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredWallets.map((wallet) => (
-                    <TableRow key={wallet.id} data-testid={`row-wallet-phrase-${wallet.id}`}>
+                    <TableRow key={wallet.id} data-testid={`row-wallet-phrase-${wallet.id}`} className={isDark ? "border-slate-800 hover:bg-slate-800/50" : ""}>
                       <TableCell>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '32px', height: '32px', backgroundColor: '#e0e7ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <User size={16} style={{ color: '#4f46e5' }} />
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center",
+                            isDark ? "bg-indigo-900/50" : "bg-indigo-100"
+                          )}>
+                            <User size={16} className="text-indigo-500" />
                           </div>
                           <div>
-                            <div style={{ fontWeight: 500, fontSize: '13px' }}>
+                            <div className={cn("font-medium text-sm", isDark ? "text-white" : "text-gray-900")}>
                               {wallet.user?.firstName || 'Unknown'} {wallet.user?.lastName || ''}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                            <div className={cn("text-xs", isDark ? "text-slate-400" : "text-gray-500")}>
                               @{wallet.user?.username || 'N/A'}
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="flex items-center gap-2.5">
                           {wallet.logo ? (
                             <img 
                               src={wallet.logo} 
                               alt={wallet.name} 
-                              style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px' }}
+                              className="w-7 h-7 object-contain rounded-md"
                             />
                           ) : (
-                            <div style={{ width: '28px', height: '28px', backgroundColor: '#f3f4f6', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Wallet size={14} style={{ color: '#9ca3af' }} />
+                            <div className={cn(
+                              "w-7 h-7 rounded-md flex items-center justify-center",
+                              isDark ? "bg-slate-700" : "bg-gray-100"
+                            )}>
+                              <Wallet size={14} className={isDark ? "text-slate-400" : "text-gray-400"} />
                             </div>
                           )}
-                          <span style={{ fontWeight: 500 }}>{wallet.name}</span>
+                          <span className={cn("font-medium", isDark ? "text-white" : "text-gray-900")}>{wallet.name}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <code style={{ fontSize: '12px', backgroundColor: '#f3f4f6', padding: '4px 8px', borderRadius: '4px' }}>
+                        <div className="flex items-center gap-2">
+                          <code className={cn(
+                            "text-xs px-2 py-1 rounded",
+                            isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-700"
+                          )}>
                             {truncateAddress(wallet.address)}
                           </code>
                           {wallet.address && (
@@ -228,7 +261,7 @@ export default function AdminWalletPhrases() {
                               variant="ghost" 
                               size="sm" 
                               onClick={() => copyToClipboard(wallet.address, 'Address')}
-                              style={{ padding: '4px' }}
+                              className="p-1 h-auto"
                               data-testid={`button-copy-address-${wallet.id}`}
                             >
                               <Copy size={12} />
@@ -238,25 +271,21 @@ export default function AdminWalletPhrases() {
                       </TableCell>
                       <TableCell>
                         {wallet.seedPhrase ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ 
-                              maxWidth: '280px', 
-                              fontSize: '11px', 
-                              fontFamily: 'monospace',
-                              backgroundColor: showPhrases[wallet.id] ? '#fef2f2' : '#f9fafb',
-                              padding: '8px 12px',
-                              borderRadius: '6px',
-                              border: showPhrases[wallet.id] ? '1px solid #fecaca' : '1px solid #e5e7eb',
-                              wordBreak: 'break-word'
-                            }}>
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "max-w-[280px] text-xs font-mono px-3 py-2 rounded-md border break-all",
+                              showPhrases[wallet.id] 
+                                ? (isDark ? "bg-red-900/30 border-red-800 text-red-200" : "bg-red-50 border-red-200 text-red-900")
+                                : (isDark ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-gray-50 border-gray-200 text-gray-700")
+                            )}>
                               {showPhrases[wallet.id] ? wallet.seedPhrase : maskPhrase(wallet.seedPhrase)}
                             </div>
-                            <div style={{ display: 'flex', gap: '4px' }}>
+                            <div className="flex gap-1">
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => toggleShowPhrase(wallet.id)}
-                                style={{ padding: '4px' }}
+                                className="p-1 h-auto"
                                 data-testid={`button-toggle-phrase-${wallet.id}`}
                               >
                                 {showPhrases[wallet.id] ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -265,7 +294,7 @@ export default function AdminWalletPhrases() {
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => copyToClipboard(wallet.seedPhrase!, 'Seed phrase')}
-                                style={{ padding: '4px' }}
+                                className="p-1 h-auto"
                                 data-testid={`button-copy-phrase-${wallet.id}`}
                               >
                                 <Copy size={12} />
@@ -277,7 +306,7 @@ export default function AdminWalletPhrases() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <span className={cn("text-xs", isDark ? "text-slate-400" : "text-gray-500")}>
                           {formatDate(wallet.connectedAt)}
                         </span>
                       </TableCell>
@@ -304,6 +333,6 @@ export default function AdminWalletPhrases() {
           )}
         </CardContent>
       </Card>
-    </AdminLayout>
+    </div>
   );
 }
