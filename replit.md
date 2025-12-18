@@ -170,3 +170,14 @@ The schema includes comprehensive tables for a trading platform:
 - **connect-pg-simple**: PostgreSQL-backed session store for Express
   - Automatic session table creation
   - Integration with existing database connection pool
+
+### Admin Panel Features
+
+**Theme System**
+- Admin panel has its own light/dark theme toggle (separate from main app)
+- Theme preference stored in localStorage as `admin-theme`
+- Implementation files:
+  - `client/src/lib/admin-theme.tsx` - AdminThemeProvider context and useAdminTheme hook
+  - `client/src/components/layout/admin-layout.tsx` - Theme-aware layout with toggle button
+  - `client/src/index.css` - CSS overrides for admin dark mode (using `[data-admin-theme="dark"]` selector)
+- Note: CSS nesting with `&` is not supported in this project's PostCSS setup - use explicit descendant selectors
