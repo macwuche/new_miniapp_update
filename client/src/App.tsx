@@ -1,9 +1,11 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme";
+import { Preloader } from "@/components/preloader";
+import { useState, useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Markets from "@/pages/markets";
@@ -108,13 +110,44 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch settings to preload logo for preloader
+  const { isLoading: settingsLoading } = useQuery({
+    queryKey: ['/api/settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/settings');
+      if (!res.ok) return {};
+      return res.json();
+    },
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    // Wait for settings to load, then add a small delay for smooth transition
+    if (!settingsLoading) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [settingsLoading]);
+
+  if (isLoading) {
+    return <Preloader />;
+  }
+
+  return <Router />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
           {/* <Toaster /> */}
-          <Router />
+          <AppContent />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

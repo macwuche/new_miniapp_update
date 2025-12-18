@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 interface SystemSettings {
   id?: number;
   siteName: string;
+  mainLogo?: string | null;
   supportEmail: string;
   telegramSupportUrl?: string | null;
   depositEnabled: boolean;
@@ -31,6 +32,7 @@ export default function AdminSettings() {
   
   const [formData, setFormData] = useState<Partial<SystemSettings>>({
     siteName: 'Crypto Trading Platform',
+    mainLogo: null,
     supportEmail: 'support@example.com',
     telegramSupportUrl: '',
     depositEnabled: true,
@@ -53,6 +55,7 @@ export default function AdminSettings() {
     if (settings) {
       setFormData({
         siteName: settings.siteName || 'Crypto Trading Platform',
+        mainLogo: settings.mainLogo || null,
         supportEmail: settings.supportEmail || '',
         telegramSupportUrl: settings.telegramSupportUrl || '',
         depositEnabled: settings.depositEnabled ?? true,
@@ -61,6 +64,9 @@ export default function AdminSettings() {
         minWithdrawal: settings.minWithdrawal || '10',
         maintenanceMode: settings.maintenanceMode ?? false
       });
+      if (settings.mainLogo) {
+        setLogoPreview(settings.mainLogo);
+      }
     }
   }, [settings]);
 
@@ -69,10 +75,17 @@ export default function AdminSettings() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
+        const base64 = reader.result as string;
+        setLogoPreview(base64);
+        setFormData(prev => ({ ...prev, mainLogo: base64 }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleLogoRemove = () => {
+    setLogoPreview(null);
+    setFormData(prev => ({ ...prev, mainLogo: null }));
   };
 
   const handleSave = async () => {
@@ -172,7 +185,7 @@ export default function AdminSettings() {
                           variant="destructive" 
                           size="icon" 
                           className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                          onClick={() => setLogoPreview(null)}
+                          onClick={handleLogoRemove}
                         >
                           <span className="sr-only">Remove</span>
                           <span className="text-xs">×</span>

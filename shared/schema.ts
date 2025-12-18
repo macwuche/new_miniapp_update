@@ -308,6 +308,7 @@ export const supportTickets = pgTable("support_tickets", {
 export const systemSettings = pgTable("system_settings", {
   id: serial("id").primaryKey(),
   siteName: varchar("site_name", { length: 100 }).default('Crypto Trading Platform').notNull(),
+  mainLogo: text("main_logo"),
   supportEmail: varchar("support_email", { length: 255 }).notNull(),
   telegramSupportUrl: varchar("telegram_support_url", { length: 500 }),
   depositEnabled: boolean("deposit_enabled").default(true).notNull(),
