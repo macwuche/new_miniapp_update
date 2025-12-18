@@ -168,10 +168,13 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className={cn(
-      "min-h-screen flex",
-      adminTheme === "dark" ? "bg-slate-950" : "bg-gray-50"
-    )}>
+    <div 
+      className={cn(
+        "min-h-screen flex",
+        adminTheme === "dark" ? "bg-slate-950" : "bg-gray-50"
+      )}
+      data-admin-theme={adminTheme}
+    >
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 fixed inset-y-0 left-0 z-50">
         <SidebarContent />

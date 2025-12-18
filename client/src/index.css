@@ -179,3 +179,112 @@
     filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 24px rgba(59, 130, 246, 0.4));
   }
 }
+
+/* Admin Dark Theme Styles */
+[data-admin-theme="dark"] .border-none {
+  border-color: rgb(30, 41, 59);
+}
+
+/* Text colors for admin dark theme */
+[data-admin-theme="dark"] .text-gray-900 {
+  color: rgb(248, 250, 252);
+}
+[data-admin-theme="dark"] .text-gray-700 {
+  color: rgb(203, 213, 225);
+}
+[data-admin-theme="dark"] .text-gray-600 {
+  color: rgb(148, 163, 184);
+}
+[data-admin-theme="dark"] .text-gray-500 {
+  color: rgb(148, 163, 184);
+}
+[data-admin-theme="dark"] .text-gray-400 {
+  color: rgb(100, 116, 139);
+}
+
+/* Background colors for admin dark theme */
+[data-admin-theme="dark"] .bg-white {
+  background-color: rgb(15, 23, 42);
+}
+[data-admin-theme="dark"] .bg-gray-50 {
+  background-color: rgb(30, 41, 59);
+}
+[data-admin-theme="dark"] .bg-gray-100 {
+  background-color: rgb(30, 41, 59);
+}
+
+/* Hover states for admin dark theme */
+[data-admin-theme="dark"] .hover\:bg-gray-50:hover {
+  background-color: rgb(30, 41, 59);
+}
+
+/* Border colors for admin dark theme */
+[data-admin-theme="dark"] .border-gray-200 {
+  border-color: rgb(51, 65, 85);
+}
+[data-admin-theme="dark"] .border-gray-100 {
+  border-color: rgb(51, 65, 85);
+}
+
+/* Card styling for admin dark theme */
+[data-admin-theme="dark"] [class*="CardContent"],
+[data-admin-theme="dark"] [class*="card"] {
+  background-color: rgb(15, 23, 42);
+  border-color: rgb(30, 41, 59);
+}
+
+/* Table styling for admin dark theme */
+[data-admin-theme="dark"] table {
+  background-color: rgb(15, 23, 42);
+}
+[data-admin-theme="dark"] thead {
+  background-color: rgb(30, 41, 59);
+}
+[data-admin-theme="dark"] th {
+  color: rgb(203, 213, 225);
+  border-color: rgb(51, 65, 85);
+}
+[data-admin-theme="dark"] td {
+  border-color: rgb(51, 65, 85);
+  color: rgb(226, 232, 240);
+}
+[data-admin-theme="dark"] tbody tr:hover {
+  background-color: rgb(30, 41, 59);
+}
+
+/* Input styling for admin dark theme */
+[data-admin-theme="dark"] input:not([type="checkbox"]):not([type="radio"]) {
+  background-color: rgb(30, 41, 59);
+  border-color: rgb(51, 65, 85);
+  color: rgb(248, 250, 252);
+}
+[data-admin-theme="dark"] input::placeholder {
+  color: rgb(100, 116, 139);
+}
+
+/* Select styling for admin dark theme */
+[data-admin-theme="dark"] select {
+  background-color: rgb(30, 41, 59);
+  border-color: rgb(51, 65, 85);
+  color: rgb(248, 250, 252);
+}
+
+/* Badge/pill backgrounds for admin dark theme */
+[data-admin-theme="dark"] .bg-green-50 {
+  background-color: rgba(22, 101, 52, 0.3);
+}
+[data-admin-theme="dark"] .bg-red-50 {
+  background-color: rgba(153, 27, 27, 0.3);
+}
+[data-admin-theme="dark"] .bg-blue-50 {
+  background-color: rgba(30, 64, 175, 0.3);
+}
+[data-admin-theme="dark"] .bg-purple-50 {
+  background-color: rgba(88, 28, 135, 0.3);
+}
+[data-admin-theme="dark"] .bg-orange-50 {
+  background-color: rgba(154, 52, 18, 0.3);
+}
+[data-admin-theme="dark"] .bg-yellow-50 {
+  background-color: rgba(133, 77, 14, 0.3);
+}
