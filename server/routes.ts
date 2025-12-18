@@ -1843,10 +1843,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const balance = await storage.getUserBalance(userId);
         const totalBalance = parseFloat(balance?.totalBalanceUsd || '0');
+        const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
         const newTotalBalance = totalBalance + tradeValue;
+        const newAvailableBalance = availableBalance + tradeValue;
         
         await storage.updateUserBalance(userId, {
           totalBalanceUsd: newTotalBalance.toString(),
+          availableBalanceUsd: newAvailableBalance.toString(),
         });
 
         await storage.createTransaction({
