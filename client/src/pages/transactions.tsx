@@ -30,22 +30,21 @@ export default function Transactions() {
   const { data: dbUser } = useQuery({
     queryKey: ['/api/users/register', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
       const res = await fetch('/api/users/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegramId: user.id?.toString(),
-          username: user.username || 'user',
-          firstName: user.first_name,
-          lastName: user.last_name,
-          profilePicture: user.photo_url
+          telegramId: user?.id?.toString() || "123456789",
+          username: user?.username || 'alextrader',
+          firstName: user?.first_name || 'Alex',
+          lastName: user?.last_name || 'Trader',
+          profilePicture: user?.photo_url || null
         })
       });
       if (!res.ok) return null;
       return res.json();
     },
-    enabled: !!user?.id,
+    enabled: true,
   });
 
   const { data: deposits = [], isLoading: depositsLoading } = useQuery({

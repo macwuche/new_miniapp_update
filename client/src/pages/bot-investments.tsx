@@ -62,17 +62,17 @@ export default function BotInvestments() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegramId: user?.id?.toString() || null,
-          username: user?.username || 'demo_user',
-          firstName: user?.first_name || 'Demo',
-          lastName: user?.last_name || 'User',
+          telegramId: user?.id?.toString() || "123456789",
+          username: user?.username || 'alextrader',
+          firstName: user?.first_name || 'Alex',
+          lastName: user?.last_name || 'Trader',
           profilePicture: user?.photo_url || null,
         }),
       });
       if (!res.ok) throw new Error('Failed to register user');
       return res.json();
     },
-    enabled: !!user,
+    enabled: true,
     staleTime: 1000 * 60,
   });
 

@@ -28,11 +28,12 @@ export default function BotStatus() {
           profilePicture: userData.photo_url
         }) as Promise<{ id: number }>;
       } else {
+        // Use consistent mock user data to match existing deposits/balances
         return usersAPI.register({
-          telegramId: null,
-          username: "demo_user",
-          firstName: "Demo",
-          lastName: "User",
+          telegramId: "123456789",
+          username: "alextrader",
+          firstName: "Alex",
+          lastName: "Trader",
           profilePicture: null
         }) as Promise<{ id: number }>;
       }

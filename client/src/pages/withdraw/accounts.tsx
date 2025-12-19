@@ -61,10 +61,10 @@ export default function PaymentAccounts() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegramId: tgUser?.id?.toString() || null,
-          username: tgUser?.username || 'demo_user',
-          firstName: tgUser?.first_name || 'Demo',
-          lastName: tgUser?.last_name || 'User',
+          telegramId: tgUser?.id?.toString() || "123456789",
+          username: tgUser?.username || 'alextrader',
+          firstName: tgUser?.first_name || 'Alex',
+          lastName: tgUser?.last_name || 'Trader',
           profilePicture: tgUser?.photo_url || null
         })
       });
