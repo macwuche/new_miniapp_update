@@ -984,6 +984,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/crypto-addresses/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const address = await storage.getCryptoAddress(id);
+      if (!address) {
+        return res.status(404).json({ error: "Address not found" });
+      }
+      res.json(address);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch crypto address" });
+    }
+  });
+
   app.delete("/api/crypto-addresses/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

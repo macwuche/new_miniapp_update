@@ -10,12 +10,20 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, CheckCircle2, XCircle, Loader2, Wallet, Link2 } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Loader2, Wallet, Link2, Copy, Check } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface CryptoAddress {
+  id: number;
+  label: string;
+  address: string;
+  network: string;
+  currency: string | null;
+}
 
 interface Withdrawal {
   id: number;
@@ -25,6 +33,7 @@ interface Withdrawal {
   currency: string;
   method: string;
   destinationAddress: string | null;
+  cryptoAddressId: number | null;
   status: string;
   approvedBy: number | null;
   approvedAt: string | null;
@@ -35,6 +44,7 @@ interface Withdrawal {
     firstName: string;
     lastName: string;
   };
+  cryptoAddress?: CryptoAddress;
 }
 
 export default function AdminWithdrawals() {
@@ -42,25 +52,48 @@ export default function AdminWithdrawals() {
   const queryClient = useQueryClient();
   const [processingId, setProcessingId] = useState<number | null>(null);
 
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  const copyToClipboard = async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedAddress(address);
+      toast({ title: "Copied!", description: "Wallet address copied to clipboard" });
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to copy address", variant: "destructive" });
+    }
+  };
+
   const { data: pendingWithdrawals = [], isLoading: pendingLoading } = useQuery<Withdrawal[]>({
     queryKey: ['/api/withdrawals', 'pending'],
     queryFn: async () => {
       const res = await fetch('/api/withdrawals?status=pending');
       if (!res.ok) throw new Error('Failed to fetch withdrawals');
       const withdrawals = await res.json();
-      const withdrawalsWithUsers = await Promise.all(
+      const withdrawalsWithDetails = await Promise.all(
         withdrawals.map(async (w: Withdrawal) => {
+          let enrichedWithdrawal = { ...w };
           try {
             const userRes = await fetch(`/api/users/${w.userId}`);
             if (userRes.ok) {
               const user = await userRes.json();
-              return { ...w, user };
+              enrichedWithdrawal.user = user;
             }
           } catch (e) {}
-          return w;
+          if (w.cryptoAddressId) {
+            try {
+              const addrRes = await fetch(`/api/crypto-addresses/${w.cryptoAddressId}`);
+              if (addrRes.ok) {
+                const cryptoAddress = await addrRes.json();
+                enrichedWithdrawal.cryptoAddress = cryptoAddress;
+              }
+            } catch (e) {}
+          }
+          return enrichedWithdrawal;
         })
       );
-      return withdrawalsWithUsers;
+      return withdrawalsWithDetails;
     }
   });
 
@@ -70,19 +103,29 @@ export default function AdminWithdrawals() {
       const res = await fetch('/api/withdrawals?status=approved');
       if (!res.ok) throw new Error('Failed to fetch withdrawals');
       const withdrawals = await res.json();
-      const withdrawalsWithUsers = await Promise.all(
+      const withdrawalsWithDetails = await Promise.all(
         withdrawals.map(async (w: Withdrawal) => {
+          let enrichedWithdrawal = { ...w };
           try {
             const userRes = await fetch(`/api/users/${w.userId}`);
             if (userRes.ok) {
               const user = await userRes.json();
-              return { ...w, user };
+              enrichedWithdrawal.user = user;
             }
           } catch (e) {}
-          return w;
+          if (w.cryptoAddressId) {
+            try {
+              const addrRes = await fetch(`/api/crypto-addresses/${w.cryptoAddressId}`);
+              if (addrRes.ok) {
+                const cryptoAddress = await addrRes.json();
+                enrichedWithdrawal.cryptoAddress = cryptoAddress;
+              }
+            } catch (e) {}
+          }
+          return enrichedWithdrawal;
         })
       );
-      return withdrawalsWithUsers;
+      return withdrawalsWithDetails;
     }
   });
 
@@ -92,19 +135,29 @@ export default function AdminWithdrawals() {
       const res = await fetch('/api/withdrawals?status=rejected');
       if (!res.ok) throw new Error('Failed to fetch withdrawals');
       const withdrawals = await res.json();
-      const withdrawalsWithUsers = await Promise.all(
+      const withdrawalsWithDetails = await Promise.all(
         withdrawals.map(async (w: Withdrawal) => {
+          let enrichedWithdrawal = { ...w };
           try {
             const userRes = await fetch(`/api/users/${w.userId}`);
             if (userRes.ok) {
               const user = await userRes.json();
-              return { ...w, user };
+              enrichedWithdrawal.user = user;
             }
           } catch (e) {}
-          return w;
+          if (w.cryptoAddressId) {
+            try {
+              const addrRes = await fetch(`/api/crypto-addresses/${w.cryptoAddressId}`);
+              if (addrRes.ok) {
+                const cryptoAddress = await addrRes.json();
+                enrichedWithdrawal.cryptoAddress = cryptoAddress;
+              }
+            } catch (e) {}
+          }
+          return enrichedWithdrawal;
         })
       );
-      return withdrawalsWithUsers;
+      return withdrawalsWithDetails;
     }
   });
 
@@ -217,15 +270,59 @@ export default function AdminWithdrawals() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6b7280' }}>
-                    {withdrawal.destinationAddress 
-                      ? `${withdrawal.destinationAddress.slice(0, 12)}...${withdrawal.destinationAddress.slice(-6)}`
-                      : 'N/A'}
-                  </span>
+                  {withdrawal.cryptoAddress ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Badge 
+                          style={{ 
+                            fontSize: '10px', 
+                            textTransform: 'uppercase',
+                            backgroundColor: '#dbeafe',
+                            color: '#1e40af',
+                            border: 'none'
+                          }}
+                        >
+                          {withdrawal.cryptoAddress.network}
+                        </Badge>
+                        {withdrawal.cryptoAddress.currency && (
+                          <Badge 
+                            variant="outline" 
+                            style={{ fontSize: '10px', textTransform: 'uppercase' }}
+                          >
+                            {withdrawal.cryptoAddress.currency}
+                          </Badge>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6b7280' }}>
+                          {withdrawal.cryptoAddress.address.slice(0, 12)}...{withdrawal.cryptoAddress.address.slice(-6)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(withdrawal.cryptoAddress!.address)}
+                          style={{ padding: '2px 6px', height: 'auto' }}
+                          data-testid={`button-copy-address-${withdrawal.id}`}
+                        >
+                          {copiedAddress === withdrawal.cryptoAddress.address ? (
+                            <Check size={12} style={{ color: '#22c55e' }} />
+                          ) : (
+                            <Copy size={12} style={{ color: '#6b7280' }} />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6b7280' }}>
+                      {withdrawal.destinationAddress 
+                        ? `${withdrawal.destinationAddress.slice(0, 12)}...${withdrawal.destinationAddress.slice(-6)}`
+                        : 'N/A'}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
-                    {withdrawal.method || 'crypto'}
+                    {withdrawal.cryptoAddress?.network || withdrawal.method || 'crypto'}
                   </Badge>
                 </TableCell>
                 <TableCell style={{ fontSize: '12px', color: '#6b7280' }}>
