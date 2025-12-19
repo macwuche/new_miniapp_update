@@ -109,12 +109,13 @@ export default function Home() {
           profilePicture: userData.photo_url
         }) as Promise<{ id: number }>;
       } else {
+        // Use mock Telegram user for development (matches telegram-mock.ts)
         return usersAPI.register({
-          telegramId: null,
-          username: "demo_user",
-          firstName: "Demo",
-          lastName: "User",
-          profilePicture: null
+          telegramId: "123456789",
+          username: "alextrader",
+          firstName: "Alex",
+          lastName: "Trader",
+          profilePicture: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
         }) as Promise<{ id: number }>;
       }
     },
