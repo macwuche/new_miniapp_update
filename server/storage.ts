@@ -141,6 +141,7 @@ export interface IStorage {
   listDeposits(status?: string): Promise<Deposit[]>;
   listUserDeposits(userId: number): Promise<Deposit[]>;
   approveDeposit(id: number, adminId: number): Promise<Deposit | undefined>;
+  approveDepositWithBalance(depositId: number, adminId: number, transactionId: number, userId: number, creditAmountStr: string): Promise<Deposit>;
   updateDepositStatus(id: number, status: string): Promise<Deposit | undefined>;
   
   // Withdrawals
@@ -559,6 +560,80 @@ export class DatabaseStorage implements IStorage {
     return deposit || undefined;
   }
 
+  async approveDepositWithBalance(
+    depositId: number, 
+    adminId: number, 
+    transactionId: number, 
+    userId: number, 
+    creditAmountStr: string
+  ): Promise<Deposit> {
+    return await db.transaction(async (tx) => {
+      // 1. Update deposit status
+      const [approvedDeposit] = await tx
+        .update(deposits)
+        .set({ 
+          status: 'approved', 
+          approvedBy: adminId,
+          approvedAt: new Date()
+        })
+        .where(eq(deposits.id, depositId))
+        .returning();
+      
+      if (!approvedDeposit) {
+        throw new Error('Failed to update deposit status');
+      }
+
+      // 2. Update transaction status
+      await tx
+        .update(transactions)
+        .set({ status: 'approved', updatedAt: new Date() })
+        .where(eq(transactions.id, transactionId));
+
+      // 3. Update or create user balance using SQL for precise decimal arithmetic
+      const [existingBalance] = await tx
+        .select()
+        .from(userBalances)
+        .where(eq(userBalances.userId, userId));
+
+      if (existingBalance) {
+        // Use typed SQL template for precise decimal arithmetic in PostgreSQL
+        const [updated] = await tx
+          .update(userBalances)
+          .set({
+            totalBalanceUsd: drizzleSql<string>`(${userBalances.totalBalanceUsd} + ${creditAmountStr}::numeric)`,
+            availableBalanceUsd: drizzleSql<string>`(${userBalances.availableBalanceUsd} + ${creditAmountStr}::numeric)`,
+            updatedAt: new Date()
+          })
+          .where(eq(userBalances.userId, userId))
+          .returning({
+            total: userBalances.totalBalanceUsd,
+            available: userBalances.availableBalanceUsd
+          });
+        
+        console.log(`[Deposit Approval TX] Updated balance for user ${userId}:`, {
+          previousTotal: existingBalance.totalBalanceUsd,
+          previousAvailable: existingBalance.availableBalanceUsd,
+          added: creditAmountStr,
+          newTotal: updated?.total,
+          newAvailable: updated?.available
+        });
+      } else {
+        await tx
+          .insert(userBalances)
+          .values({
+            userId,
+            totalBalanceUsd: creditAmountStr,
+            availableBalanceUsd: creditAmountStr,
+            lockedBalanceUsd: "0"
+          });
+        
+        console.log(`[Deposit Approval TX] Created balance for user ${userId}: ${creditAmountStr}`);
+      }
+
+      return approvedDeposit;
+    });
+  }
+
   async updateDepositStatus(id: number, status: string): Promise<Deposit | undefined> {
     const [deposit] = await db.update(deposits).set({ status: status as any }).where(eq(deposits.id, id)).returning();
     return deposit || undefined;
@@ -838,7 +913,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserBalance(userId: number, balance: Partial<InsertUserBalance>): Promise<UserBalance | undefined> {
-    const [updated] = await db.update(userBalances).set(balance).where(eq(userBalances.userId, userId)).returning();
+    const [updated] = await db.update(userBalances).set({
+      ...balance,
+      updatedAt: new Date()
+    }).where(eq(userBalances.userId, userId)).returning();
     return updated || undefined;
   }
 

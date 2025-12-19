@@ -618,32 +618,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use amountAfterCharges if available, otherwise use original amount
       const creditAmount = deposit.amountAfterCharges || deposit.amount;
-      const creditAmountNum = parseFloat(creditAmount);
 
-      // Update deposit status
-      const approved = await storage.approveDeposit(depositId, req.session.adminId!);
-
-      // Update the linked transaction status to approved
-      await storage.updateTransactionStatus(deposit.transactionId, 'approved');
-
-      // Update user balance
-      const balance = await storage.getUserBalance(deposit.userId);
-      if (balance) {
-        const newTotal = parseFloat(balance.totalBalanceUsd) + creditAmountNum;
-        const newAvailable = parseFloat(balance.availableBalanceUsd) + creditAmountNum;
-
-        await storage.updateUserBalance(deposit.userId, {
-          totalBalanceUsd: newTotal.toString(),
-          availableBalanceUsd: newAvailable.toString()
-        });
-      } else {
-        await storage.createUserBalance({
-          userId: deposit.userId,
-          totalBalanceUsd: creditAmount,
-          availableBalanceUsd: creditAmount,
-          lockedBalanceUsd: "0"
-        });
-      }
+      // Use transactional method for atomic deposit approval with balance update
+      const approved = await storage.approveDepositWithBalance(
+        depositId,
+        req.session.adminId!,
+        deposit.transactionId,
+        deposit.userId,
+        creditAmount
+      );
 
       res.json(approved);
     } catch (error) {
