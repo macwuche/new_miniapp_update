@@ -191,6 +191,7 @@ export const aiBots = pgTable("ai_bots", {
   description: text("description").notNull(),
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
   durationDays: integer("duration_days").notNull(),
+  durationUnit: varchar("duration_unit", { length: 20 }).default('days').notNull(),
   expectedRoi: varchar("expected_roi", { length: 50 }).notNull(),
   minInvestment: decimal("min_investment", { precision: 18, scale: 8 }).default('100').notNull(),
   maxInvestment: decimal("max_investment", { precision: 18, scale: 8 }).default('10000').notNull(),

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -51,6 +52,7 @@ interface AiBot {
   description: string;
   price: string;
   durationDays: number;
+  durationUnit: 'minutes' | 'days' | 'weeks' | 'months';
   expectedRoi: string;
   minInvestment: string;
   maxInvestment: string;
@@ -84,6 +86,7 @@ interface BotFormData {
   description: string;
   price: string;
   durationDays: string;
+  durationUnit: 'minutes' | 'days' | 'weeks' | 'months';
   minInvestment: string;
   maxInvestment: string;
   minProfitPercent: string;
@@ -98,6 +101,7 @@ const defaultFormData: BotFormData = {
   description: "",
   price: "",
   durationDays: "",
+  durationUnit: "days",
   minInvestment: "",
   maxInvestment: "",
   minProfitPercent: "",
@@ -215,6 +219,7 @@ export default function BotManagement() {
       description: bot.description,
       price: bot.price,
       durationDays: bot.durationDays.toString(),
+      durationUnit: bot.durationUnit || 'days',
       minInvestment: bot.minInvestment,
       maxInvestment: bot.maxInvestment,
       minProfitPercent: bot.minProfitPercent,
@@ -240,6 +245,7 @@ export default function BotManagement() {
       description: formData.description,
       price: formData.price,
       durationDays: parseInt(formData.durationDays),
+      durationUnit: formData.durationUnit,
       minInvestment: formData.minInvestment,
       maxInvestment: formData.maxInvestment,
       minProfitPercent: formData.minProfitPercent,
@@ -410,7 +416,7 @@ export default function BotManagement() {
                       </div>
                     </TableCell>
                     <TableCell className="font-mono font-medium">${parseFloat(bot.price).toLocaleString()}</TableCell>
-                    <TableCell>{bot.durationDays} days</TableCell>
+                    <TableCell>{bot.durationDays} {bot.durationUnit || 'days'}</TableCell>
                     <TableCell>
                       <span className="text-sm">
                         ${parseFloat(bot.minInvestment).toLocaleString()} - ${parseFloat(bot.maxInvestment).toLocaleString()}
@@ -535,16 +541,33 @@ export default function BotManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="durationDays">Duration (days)</Label>
-                  <Input 
-                    id="durationDays" 
-                    type="number" 
-                    placeholder="e.g., 30" 
-                    value={formData.durationDays}
-                    onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                    required
-                    data-testid="input-bot-duration"
-                  />
+                  <Label htmlFor="durationDays">Duration</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="durationDays" 
+                      type="number" 
+                      placeholder="e.g., 30" 
+                      value={formData.durationDays}
+                      onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                      required
+                      className="flex-1"
+                      data-testid="input-bot-duration"
+                    />
+                    <Select 
+                      value={formData.durationUnit} 
+                      onValueChange={(value: 'minutes' | 'days' | 'weeks' | 'months') => setFormData({ ...formData, durationUnit: value })}
+                    >
+                      <SelectTrigger className="w-[120px]" data-testid="select-duration-unit">
+                        <SelectValue placeholder="Unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minutes">Minutes</SelectItem>
+                        <SelectItem value="days">Days</SelectItem>
+                        <SelectItem value="weeks">Weeks</SelectItem>
+                        <SelectItem value="months">Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
