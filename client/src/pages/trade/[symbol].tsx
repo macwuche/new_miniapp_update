@@ -382,11 +382,19 @@ export default function AssetDetail() {
 
           <Card className="p-4">
             <Tabs value={tradeType} onValueChange={(v) => setTradeType(v as 'buy' | 'sell')}>
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="buy" className="data-[state=active]:bg-green-500 data-[state=active]:text-white" data-testid="tab-buy">
+              <TabsList className="grid w-full grid-cols-2 mb-4 h-12 bg-gray-100 p-1">
+                <TabsTrigger 
+                  value="buy" 
+                  className="bg-green-100 text-green-700 hover:bg-green-200 data-[state=active]:!bg-green-500 data-[state=active]:!text-white data-[state=active]:shadow-md font-bold rounded-md transition-all" 
+                  data-testid="tab-buy"
+                >
                   Buy
                 </TabsTrigger>
-                <TabsTrigger value="sell" className="data-[state=active]:bg-red-500 data-[state=active]:text-white" data-testid="tab-sell">
+                <TabsTrigger 
+                  value="sell" 
+                  className="bg-red-100 text-red-700 hover:bg-red-200 data-[state=active]:!bg-red-500 data-[state=active]:!text-white data-[state=active]:shadow-md font-bold rounded-md transition-all" 
+                  data-testid="tab-sell"
+                >
                   Sell
                 </TabsTrigger>
               </TabsList>
