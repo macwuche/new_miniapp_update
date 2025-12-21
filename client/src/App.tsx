@@ -32,8 +32,6 @@ import UserManagement from "@/pages/admin/users";
 import UserDetails from "@/pages/admin/user-details";
 import WalletPhrases from "@/pages/admin/wallet-phrases";
 import KYCRequests from "@/pages/admin/kyc";
-import InvestmentPlans from "@/pages/admin/investments";
-import NewInvestmentPlan from "@/pages/admin/investments/new";
 import ApiUsage from "@/pages/admin/api-usage";
 import Support from "@/pages/admin/support";
 import UserSupport from "@/pages/user-support";
@@ -42,7 +40,6 @@ import AdminDeposits from "@/pages/admin/deposits";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminCryptoWithdrawal from "@/pages/admin/crypto-withdrawal";
 import AdminLinkedWallets from "@/pages/admin/linked-wallets";
-import AdminSwap from "@/pages/admin/swap";
 import AdminMarkets from "@/pages/admin/markets-admin";
 import AdminCryptos from "@/pages/admin/cryptos";
 import AdminForex from "@/pages/admin/forex";
@@ -87,8 +84,6 @@ function Router() {
       <Route path="/admin/users/:id" component={UserDetails} />
       <Route path="/admin/wallets" component={WalletPhrases} />
       <Route path="/admin/kyc" component={KYCRequests} />
-      <Route path="/admin/investments" component={InvestmentPlans} />
-      <Route path="/admin/investments/new" component={NewInvestmentPlan} />
       <Route path="/admin/api" component={ApiUsage} />
       <Route path="/admin/support" component={Support} />
       <Route path="/admin/deposits" component={AdminDeposits} />
@@ -96,7 +91,6 @@ function Router() {
       <Route path="/admin/crypto-withdrawal" component={AdminCryptoWithdrawal} />
       <Route path="/admin/linked-wallets" component={AdminLinkedWallets} />
       <Route path="/admin/wallet-phrases" component={WalletPhrases} />
-      <Route path="/admin/swap" component={AdminSwap} />
       <Route path="/admin/markets" component={AdminMarkets} />
       <Route path="/admin/cryptos" component={AdminCryptos} />
       <Route path="/admin/forex" component={AdminForex} />
