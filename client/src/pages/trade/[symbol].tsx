@@ -74,7 +74,12 @@ export default function AssetDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+  // Check for action query param to pre-select trade type
+  const urlParams = new URLSearchParams(window.location.search);
+  const actionParam = urlParams.get('action');
+  const initialTradeType = actionParam === 'sell' ? 'sell' : 'buy';
+
+  const [tradeType, setTradeType] = useState<'buy' | 'sell'>(initialTradeType);
   const [amount, setAmount] = useState("");
   const [inputMode, setInputMode] = useState<'usd' | 'asset'>('usd');
   const [isTrading, setIsTrading] = useState(false);
