@@ -1773,9 +1773,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (action === 'buy') {
         const balance = await storage.getUserBalance(userId);
         const totalBalance = parseFloat(balance?.totalBalanceUsd || '0');
+        const availableBalance = parseFloat(balance?.availableBalanceUsd || '0');
         
-        if (tradeValue > totalBalance) {
-          return res.status(400).json({ error: "Insufficient balance" });
+        // Validate against available balance (not locked funds)
+        if (tradeValue > availableBalance) {
+          return res.status(400).json({ error: "Insufficient available balance" });
         }
 
         if (existingPosition) {
@@ -1803,8 +1805,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const newTotalBalance = totalBalance - tradeValue;
+        const newAvailableBalance = availableBalance - tradeValue;
         await storage.updateUserBalance(userId, {
           totalBalanceUsd: newTotalBalance.toString(),
+          availableBalanceUsd: newAvailableBalance.toString(),
         });
 
         await storage.createTransaction({
