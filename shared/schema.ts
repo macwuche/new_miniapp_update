@@ -23,7 +23,9 @@ export const depositMethodEnum = pgEnum('deposit_method', ['crypto_address']);
 export const withdrawalMethodEnum = pgEnum('withdrawal_method', ['crypto_address', 'connected_wallet']);
 export const investmentStatusEnum = pgEnum('investment_status', ['active', 'completed', 'cancelled']);
 export const riskLevelEnum = pgEnum('risk_level', ['low', 'medium', 'high']);
-export const botStatusEnum = pgEnum('bot_status', ['active', 'expired']);
+export const botStatusEnum = pgEnum('bot_status', ['active', 'paused', 'expired', 'completed']);
+export const botCategoryEnum = pgEnum('bot_category', ['crypto', 'forex', 'stock']);
+export const tradeResultEnum = pgEnum('trade_result', ['win', 'loss']);
 export const ticketStatusEnum = pgEnum('ticket_status', ['pending', 'open', 'resolved', 'closed']);
 export const ticketPriorityEnum = pgEnum('ticket_priority', ['low', 'medium', 'high']);
 export const gatewayStatusEnum = pgEnum('gateway_status', ['enabled', 'disabled']);
@@ -189,14 +191,23 @@ export const aiBots = pgTable("ai_bots", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description").notNull(),
+  category: botCategoryEnum("category").default('crypto').notNull(),
+  subscriptionFee: decimal("subscription_fee", { precision: 18, scale: 8 }).default('0').notNull(),
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
   durationDays: integer("duration_days").notNull(),
   durationUnit: varchar("duration_unit", { length: 20 }).default('days').notNull(),
   expectedRoi: varchar("expected_roi", { length: 50 }).notNull(),
   minInvestment: decimal("min_investment", { precision: 18, scale: 8 }).default('100').notNull(),
   maxInvestment: decimal("max_investment", { precision: 18, scale: 8 }).default('10000').notNull(),
+  minWinPercent: decimal("min_win_percent", { precision: 5, scale: 2 }).default('50').notNull(),
+  maxWinPercent: decimal("max_win_percent", { precision: 5, scale: 2 }).default('70').notNull(),
+  minLossPercent: decimal("min_loss_percent", { precision: 5, scale: 2 }).default('10').notNull(),
+  maxLossPercent: decimal("max_loss_percent", { precision: 5, scale: 2 }).default('20').notNull(),
   minProfitPercent: decimal("min_profit_percent", { precision: 5, scale: 2 }).default('2').notNull(),
   maxProfitPercent: decimal("max_profit_percent", { precision: 5, scale: 2 }).default('4').notNull(),
+  reactivationFee: decimal("reactivation_fee", { precision: 18, scale: 8 }).default('0').notNull(),
+  tradingAssets: jsonb("trading_assets").$type<string[]>().default([]).notNull(),
+  assetDistribution: jsonb("asset_distribution").$type<Record<string, number>>().default({}).notNull(),
   totalGains: decimal("total_gains", { precision: 18, scale: 8 }).default('0').notNull(),
   totalLosses: decimal("total_losses", { precision: 18, scale: 8 }).default('0').notNull(),
   winRate: decimal("win_rate", { precision: 5, scale: 2 }).default('0').notNull(),
@@ -210,13 +221,35 @@ export const userBots = pgTable("user_bots", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   botId: integer("bot_id").references(() => aiBots.id).notNull(),
+  subscriptionFee: decimal("subscription_fee", { precision: 18, scale: 8 }).notNull(),
+  allocatedAmount: decimal("allocated_amount", { precision: 18, scale: 8 }).notNull(),
+  remainingAllocation: decimal("remaining_allocation", { precision: 18, scale: 8 }).notNull(),
   investmentAmount: decimal("investment_amount", { precision: 18, scale: 8 }).notNull(),
   purchaseDate: timestamp("purchase_date").defaultNow().notNull(),
   expiryDate: timestamp("expiry_date").notNull(),
   status: botStatusEnum("status").default('active').notNull(),
+  isPaused: boolean("is_paused").default(false).notNull(),
+  pausedAt: timestamp("paused_at"),
   isStopped: boolean("is_stopped").default(false).notNull(),
   currentProfit: decimal("current_profit", { precision: 18, scale: 8 }).default('0').notNull(),
+  totalProfitDistributed: decimal("total_profit_distributed", { precision: 18, scale: 8 }).default('0').notNull(),
   lastProfitDate: timestamp("last_profit_date"),
+  lastTradeDate: timestamp("last_trade_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Bot Trades table (trading history)
+export const botTrades = pgTable("bot_trades", {
+  id: serial("id").primaryKey(),
+  userBotId: integer("user_bot_id").references(() => userBots.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  assetSymbol: varchar("asset_symbol", { length: 20 }).notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull(),
+  tradeResult: tradeResultEnum("trade_result").notNull(),
+  tradeAmount: decimal("trade_amount", { precision: 18, scale: 8 }).notNull(),
+  profitAmount: decimal("profit_amount", { precision: 18, scale: 8 }).default('0').notNull(),
+  lossAmount: decimal("loss_amount", { precision: 18, scale: 8 }).default('0').notNull(),
+  assetPriceAtTrade: decimal("asset_price_at_trade", { precision: 18, scale: 8 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -452,7 +485,7 @@ export const userInvestmentsRelations = relations(userInvestments, ({ one }) => 
   }),
 }));
 
-export const userBotsRelations = relations(userBots, ({ one }) => ({
+export const userBotsRelations = relations(userBots, ({ one, many }) => ({
   user: one(users, {
     fields: [userBots.userId],
     references: [users.id],
@@ -460,6 +493,18 @@ export const userBotsRelations = relations(userBots, ({ one }) => ({
   bot: one(aiBots, {
     fields: [userBots.botId],
     references: [aiBots.id],
+  }),
+  trades: many(botTrades),
+}));
+
+export const botTradesRelations = relations(botTrades, ({ one }) => ({
+  userBot: one(userBots, {
+    fields: [botTrades.userBotId],
+    references: [userBots.id],
+  }),
+  user: one(users, {
+    fields: [botTrades.userId],
+    references: [users.id],
   }),
 }));
 
@@ -477,6 +522,7 @@ export const insertInvestmentPlanSchema = createInsertSchema(investmentPlans).om
 export const insertUserInvestmentSchema = createInsertSchema(userInvestments).omit({ id: true, createdAt: true });
 export const insertAiBotSchema = createInsertSchema(aiBots).omit({ id: true, createdAt: true });
 export const insertUserBotSchema = createInsertSchema(userBots).omit({ id: true, createdAt: true });
+export const insertBotTradeSchema = createInsertSchema(botTrades).omit({ id: true, createdAt: true });
 export const insertLinkedWalletTypeSchema = createInsertSchema(linkedWalletTypes).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertConnectedWalletSchema = createInsertSchema(connectedWallets).omit({ id: true, connectedAt: true });
 export const insertCryptoAddressSchema = createInsertSchema(cryptoAddresses).omit({ id: true, createdAt: true });
@@ -517,6 +563,8 @@ export type InsertAiBot = z.infer<typeof insertAiBotSchema>;
 export type AiBot = typeof aiBots.$inferSelect;
 export type InsertUserBot = z.infer<typeof insertUserBotSchema>;
 export type UserBot = typeof userBots.$inferSelect;
+export type InsertBotTrade = z.infer<typeof insertBotTradeSchema>;
+export type BotTrade = typeof botTrades.$inferSelect;
 export type InsertLinkedWalletType = z.infer<typeof insertLinkedWalletTypeSchema>;
 export type LinkedWalletType = typeof linkedWalletTypes.$inferSelect;
 export type InsertConnectedWallet = z.infer<typeof insertConnectedWalletSchema>;

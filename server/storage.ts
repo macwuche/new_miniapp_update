@@ -12,6 +12,7 @@ import {
   userInvestments,
   aiBots,
   userBots,
+  botTrades,
   linkedWalletTypes,
   connectedWallets,
   cryptoAddresses,
@@ -50,6 +51,8 @@ import {
   type InsertAiBot,
   type UserBot,
   type InsertUserBot,
+  type BotTrade,
+  type InsertBotTrade,
   type LinkedWalletType,
   type InsertLinkedWalletType,
   type ConnectedWallet,
@@ -181,8 +184,15 @@ export interface IStorage {
   getUserBot(id: number): Promise<UserBot | undefined>;
   listUserBots(userId: number): Promise<UserBot[]>;
   listActiveUserBots(): Promise<UserBot[]>;
+  listActiveUserBotsForTrading(): Promise<UserBot[]>;
   listUserBotsByBotId(botId: number): Promise<UserBot[]>;
   updateUserBot(id: number, userBot: Partial<InsertUserBot>): Promise<UserBot | undefined>;
+  
+  // Bot Trades
+  createBotTrade(trade: InsertBotTrade): Promise<BotTrade>;
+  getBotTrade(id: number): Promise<BotTrade | undefined>;
+  listUserBotTrades(userBotId: number): Promise<BotTrade[]>;
+  listUserAllBotTrades(userId: number): Promise<BotTrade[]>;
   
   // Connected Wallets
   createConnectedWallet(wallet: InsertConnectedWallet): Promise<ConnectedWallet>;
@@ -731,7 +741,7 @@ export class DatabaseStorage implements IStorage {
 
   // AI Bots
   async createAiBot(bot: InsertAiBot): Promise<AiBot> {
-    const [created] = await db.insert(aiBots).values(bot).returning();
+    const [created] = await db.insert(aiBots).values(bot as any).returning();
     return created;
   }
 
@@ -749,7 +759,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAiBot(id: number, bot: Partial<InsertAiBot>): Promise<AiBot | undefined> {
-    const [updated] = await db.update(aiBots).set(bot).where(eq(aiBots.id, id)).returning();
+    const [updated] = await db.update(aiBots).set(bot as any).where(eq(aiBots.id, id)).returning();
     return updated || undefined;
   }
 
@@ -791,6 +801,37 @@ export class DatabaseStorage implements IStorage {
   async updateUserBot(id: number, userBot: Partial<InsertUserBot>): Promise<UserBot | undefined> {
     const [updated] = await db.update(userBots).set(userBot).where(eq(userBots.id, id)).returning();
     return updated || undefined;
+  }
+
+  async listActiveUserBotsForTrading(): Promise<UserBot[]> {
+    const now = new Date();
+    return await db.select().from(userBots).where(
+      and(
+        eq(userBots.status, 'active'),
+        eq(userBots.isPaused, false),
+        eq(userBots.isStopped, false),
+        drizzleSql`${userBots.expiryDate} > ${now}`
+      )
+    );
+  }
+
+  // Bot Trades
+  async createBotTrade(trade: InsertBotTrade): Promise<BotTrade> {
+    const [created] = await db.insert(botTrades).values(trade).returning();
+    return created;
+  }
+
+  async getBotTrade(id: number): Promise<BotTrade | undefined> {
+    const [trade] = await db.select().from(botTrades).where(eq(botTrades.id, id));
+    return trade || undefined;
+  }
+
+  async listUserBotTrades(userBotId: number): Promise<BotTrade[]> {
+    return await db.select().from(botTrades).where(eq(botTrades.userBotId, userBotId)).orderBy(desc(botTrades.createdAt));
+  }
+
+  async listUserAllBotTrades(userId: number): Promise<BotTrade[]> {
+    return await db.select().from(botTrades).where(eq(botTrades.userId, userId)).orderBy(desc(botTrades.createdAt));
   }
 
   // Connected Wallets
