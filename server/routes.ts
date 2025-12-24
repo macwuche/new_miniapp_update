@@ -1403,10 +1403,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             firstName: user?.firstName || '',
             lastName: user?.lastName || '',
             investmentAmount: userBot.investmentAmount,
+            allocatedAmount: userBot.allocatedAmount,
+            remainingAllocation: userBot.remainingAllocation,
             currentProfit: userBot.currentProfit,
             purchaseDate: userBot.purchaseDate,
             expiryDate: userBot.expiryDate,
             status: userBot.status,
+            isPaused: userBot.isPaused,
             isStopped: userBot.isStopped,
             lastProfitDate: userBot.lastProfitDate,
           };
@@ -1417,6 +1420,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to fetch bot subscribers:", error);
       res.status(500).json({ error: "Failed to fetch bot subscribers" });
+    }
+  });
+
+  // Admin endpoint to update a user bot subscription
+  app.patch("/api/admin/user-bots/:id", requireAdmin, async (req, res) => {
+    try {
+      const userBotId = parseInt(req.params.id);
+      const { currentProfit, allocatedAmount, remainingAllocation, isPaused, isStopped, status } = req.body;
+      
+      const updateData: Record<string, any> = {};
+      if (currentProfit !== undefined) updateData.currentProfit = currentProfit;
+      if (allocatedAmount !== undefined) updateData.allocatedAmount = allocatedAmount;
+      if (remainingAllocation !== undefined) updateData.remainingAllocation = remainingAllocation;
+      if (isPaused !== undefined) {
+        updateData.isPaused = isPaused;
+        if (isPaused) {
+          updateData.pausedAt = new Date();
+        } else {
+          updateData.pausedAt = null;
+        }
+      }
+      if (isStopped !== undefined) updateData.isStopped = isStopped;
+      if (status !== undefined) updateData.status = status;
+      
+      const updated = await storage.updateUserBot(userBotId, updateData as any);
+      if (!updated) {
+        return res.status(404).json({ error: "User bot subscription not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Failed to update user bot:", error);
+      res.status(500).json({ error: "Failed to update user bot subscription" });
     }
   });
 
@@ -1560,8 +1596,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userBot = await storage.createUserBot({
         userId,
         botId,
+        subscriptionFee: bot.subscriptionFee || bot.price,
+        allocatedAmount: investmentAmount.toString(),
+        remainingAllocation: investmentAmount.toString(),
         investmentAmount: investmentAmount.toString(),
-        purchaseDate,
         expiryDate,
         status: 'active',
         currentProfit: "0"

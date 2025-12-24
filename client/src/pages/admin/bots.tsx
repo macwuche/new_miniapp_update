@@ -83,11 +83,23 @@ interface Subscriber {
   lastName: string;
   investmentAmount: string;
   currentProfit: string;
+  allocatedAmount: string;
+  remainingAllocation: string;
   purchaseDate: string;
   expiryDate: string;
-  status: 'active' | 'expired';
+  status: 'active' | 'paused' | 'expired' | 'completed';
+  isPaused: boolean;
   isStopped: boolean;
   lastProfitDate: string | null;
+}
+
+interface SubscriberFormData {
+  currentProfit: string;
+  allocatedAmount: string;
+  remainingAllocation: string;
+  isPaused: boolean;
+  isStopped: boolean;
+  status: 'active' | 'paused' | 'expired' | 'completed';
 }
 
 interface BotFormData {
@@ -145,10 +157,20 @@ export default function BotManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubscribersDialogOpen, setIsSubscribersDialogOpen] = useState(false);
+  const [editSubscriberDialogOpen, setEditSubscriberDialogOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<AiBot | null>(null);
   const [deletingBot, setDeletingBot] = useState<AiBot | null>(null);
   const [viewingBot, setViewingBot] = useState<AiBot | null>(null);
+  const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null);
   const [formData, setFormData] = useState<BotFormData>(defaultFormData);
+  const [subscriberFormData, setSubscriberFormData] = useState<SubscriberFormData>({
+    currentProfit: "",
+    allocatedAmount: "",
+    remainingAllocation: "",
+    isPaused: false,
+    isStopped: false,
+    status: "active",
+  });
 
   const { data: bots = [], isLoading } = useQuery<AiBot[]>({
     queryKey: ['/api/admin/bots'],
@@ -226,6 +248,27 @@ export default function BotManagement() {
       return res.json();
     },
     enabled: !!viewingBot?.id && isSubscribersDialogOpen,
+  });
+
+  const updateSubscriberMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<SubscriberFormData> }) => {
+      const res = await fetch(`/api/admin/user-bots/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error("Failed to update subscriber");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/bots', viewingBot?.id, 'subscribers'] });
+      toast({ title: "Subscriber Updated", description: "The subscription has been updated successfully." });
+      closeEditSubscriberDialog();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update subscriber.", variant: "destructive" });
+    },
   });
 
   const filteredBots = bots.filter(bot =>
@@ -348,6 +391,63 @@ export default function BotManagement() {
   const closeSubscribersDialog = () => {
     setIsSubscribersDialogOpen(false);
     setViewingBot(null);
+  };
+
+  const openEditSubscriberDialog = (subscriber: Subscriber) => {
+    setEditingSubscriber(subscriber);
+    setSubscriberFormData({
+      currentProfit: subscriber.currentProfit,
+      allocatedAmount: subscriber.allocatedAmount || "0",
+      remainingAllocation: subscriber.remainingAllocation || "0",
+      isPaused: subscriber.isPaused || false,
+      isStopped: subscriber.isStopped,
+      status: subscriber.status,
+    });
+    setEditSubscriberDialogOpen(true);
+  };
+
+  const closeEditSubscriberDialog = () => {
+    setEditSubscriberDialogOpen(false);
+    setEditingSubscriber(null);
+    setSubscriberFormData({
+      currentProfit: "",
+      allocatedAmount: "",
+      remainingAllocation: "",
+      isPaused: false,
+      isStopped: false,
+      status: "active",
+    });
+  };
+
+  const handleSubscriberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const profit = parseFloat(subscriberFormData.currentProfit);
+    const allocated = parseFloat(subscriberFormData.allocatedAmount);
+    const remaining = parseFloat(subscriberFormData.remainingAllocation);
+    
+    if (isNaN(profit) || isNaN(allocated) || isNaN(remaining)) {
+      toast({ 
+        title: "Invalid Input", 
+        description: "Please enter valid numeric values for profit and allocation fields.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    if (editingSubscriber) {
+      updateSubscriberMutation.mutate({
+        id: editingSubscriber.id,
+        data: {
+          currentProfit: subscriberFormData.currentProfit,
+          allocatedAmount: subscriberFormData.allocatedAmount,
+          remainingAllocation: subscriberFormData.remainingAllocation,
+          isPaused: subscriberFormData.isPaused,
+          isStopped: subscriberFormData.isStopped,
+          status: subscriberFormData.status,
+        },
+      });
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -997,11 +1097,12 @@ export default function BotManagement() {
                   <TableHead>Subscribed</TableHead>
                   <TableHead>Expires</TableHead>
                   <TableHead>Last Profit</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {subscribers.map((subscriber) => (
-                  <TableRow key={subscriber.id}>
+                  <TableRow key={subscriber.id} data-testid={`row-subscriber-${subscriber.id}`}>
                     <TableCell>
                       <div>
                         <p className="font-medium">{subscriber.username}</p>
@@ -1018,12 +1119,20 @@ export default function BotManagement() {
                     </TableCell>
                     <TableCell>
                       {subscriber.isStopped ? (
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                           Stopped
+                        </Badge>
+                      ) : subscriber.isPaused ? (
+                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                          Paused
                         </Badge>
                       ) : subscriber.status === 'active' ? (
                         <Badge className="bg-green-100 text-green-700 border-green-200">
                           Active
+                        </Badge>
+                      ) : subscriber.status === 'completed' ? (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          Completed
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="bg-gray-50 text-gray-600">
@@ -1040,6 +1149,17 @@ export default function BotManagement() {
                     <TableCell className="text-sm text-gray-500">
                       {subscriber.lastProfitDate ? formatDate(subscriber.lastProfitDate) : '-'}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => openEditSubscriberDialog(subscriber)}
+                        data-testid={`button-edit-subscriber-${subscriber.id}`}
+                      >
+                        <Edit size={14} className="mr-1" />
+                        Edit
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -1051,6 +1171,116 @@ export default function BotManagement() {
               Close
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editSubscriberDialogOpen} onOpenChange={setEditSubscriberDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Subscription</DialogTitle>
+            <DialogDescription>
+              Adjust the subscription settings for this user.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingSubscriber && (
+            <form onSubmit={handleSubscriberSubmit}>
+              <div className="space-y-4 py-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-900">{editingSubscriber.firstName} {editingSubscriber.lastName}</p>
+                  <p className="text-sm text-gray-500">@{editingSubscriber.username}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currentProfit">Current Profit ($)</Label>
+                  <Input 
+                    id="currentProfit"
+                    type="number"
+                    step="0.01"
+                    value={subscriberFormData.currentProfit}
+                    onChange={(e) => setSubscriberFormData({ ...subscriberFormData, currentProfit: e.target.value })}
+                    data-testid="input-subscriber-profit"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="allocatedAmount">Allocated Amount ($)</Label>
+                  <Input 
+                    id="allocatedAmount"
+                    type="number"
+                    step="0.01"
+                    value={subscriberFormData.allocatedAmount}
+                    onChange={(e) => setSubscriberFormData({ ...subscriberFormData, allocatedAmount: e.target.value })}
+                    data-testid="input-subscriber-allocated"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="remainingAllocation">Remaining Allocation ($)</Label>
+                  <Input 
+                    id="remainingAllocation"
+                    type="number"
+                    step="0.01"
+                    value={subscriberFormData.remainingAllocation}
+                    onChange={(e) => setSubscriberFormData({ ...subscriberFormData, remainingAllocation: e.target.value })}
+                    data-testid="input-subscriber-remaining"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isPaused"
+                    checked={subscriberFormData.isPaused}
+                    onCheckedChange={(checked) => setSubscriberFormData({ ...subscriberFormData, isPaused: !!checked })}
+                    data-testid="checkbox-subscriber-paused"
+                  />
+                  <Label htmlFor="isPaused" className="cursor-pointer">Is Paused</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isStopped"
+                    checked={subscriberFormData.isStopped}
+                    onCheckedChange={(checked) => setSubscriberFormData({ ...subscriberFormData, isStopped: !!checked })}
+                    data-testid="checkbox-subscriber-stopped"
+                  />
+                  <Label htmlFor="isStopped" className="cursor-pointer">Is Stopped</Label>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select 
+                    value={subscriberFormData.status} 
+                    onValueChange={(value: 'active' | 'paused' | 'expired' | 'completed') => setSubscriberFormData({ ...subscriberFormData, status: value })}
+                  >
+                    <SelectTrigger data-testid="select-subscriber-status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeEditSubscriberDialog}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={updateSubscriberMutation.isPending}
+                  data-testid="button-save-subscriber"
+                >
+                  {updateSubscriberMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </AdminLayout>
