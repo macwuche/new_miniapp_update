@@ -1742,6 +1742,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== BOT TRADES ====================
+  app.get("/api/user-bots/:id/trades", async (req, res) => {
+    try {
+      const trades = await storage.listUserBotTrades(parseInt(req.params.id));
+      res.json(trades);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch bot trades" });
+    }
+  });
+
+  app.get("/api/users/:userId/bot-trades", async (req, res) => {
+    try {
+      const trades = await storage.listUserAllBotTrades(parseInt(req.params.userId));
+      res.json(trades);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch bot trades" });
+    }
+  });
+
   // ==================== WALLETS ====================
   app.get("/api/users/:userId/wallets", async (req, res) => {
     try {
