@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/mobile-layout";
-import { ArrowLeft, Bot, Loader2, Calendar, DollarSign, TrendingUp, Clock, Square, Plus, Play } from "lucide-react";
+import { ArrowLeft, Bot, Loader2, Calendar, DollarSign, TrendingUp, Clock, Square, Plus, Play, Pause, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +35,10 @@ interface AiBot {
   maxProfitPercent: string;
   logo: string | null;
   isActive: boolean;
+  category: 'crypto' | 'forex' | 'stock';
+  subscriptionFee: string;
+  reactivationFee: string;
+  tradingAssets: string[];
 }
 
 interface UserBot {
@@ -49,6 +53,12 @@ interface UserBot {
   currentProfit: string;
   lastProfitDate: string | null;
   createdAt: string;
+  allocatedAmount: string;
+  remainingAllocation: string;
+  isPaused: boolean;
+  pausedAt: string | null;
+  totalProfitDistributed: string;
+  lastTradeDate: string | null;
 }
 
 export default function BotInvestments() {
@@ -153,25 +163,91 @@ export default function BotInvestments() {
     },
   });
 
+  const pauseBotMutation = useMutation({
+    mutationFn: async (userBotId: number) => {
+      const res = await fetch(`/api/user-bots/${userBotId}/pause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: dbUser?.id }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to pause bot');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Bot Paused",
+        description: "The bot has been paused. You can resume it anytime.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/bots`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to pause bot",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resumeBotMutation = useMutation({
+    mutationFn: async (userBotId: number) => {
+      const res = await fetch(`/api/user-bots/${userBotId}/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: dbUser?.id }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to resume bot');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Bot Resumed",
+        description: "The bot is now active and will resume trading.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${dbUser?.id}/bots`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to resume bot",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const getBotDetails = (botId: number): AiBot | undefined => {
     return allBots.find(b => b.id === botId);
   };
 
-  const getStatus = (userBot: UserBot): 'active' | 'stopped' | 'expired' => {
+  const getStatus = (userBot: UserBot): 'active' | 'stopped' | 'expired' | 'paused' => {
     const now = new Date();
     const expiry = new Date(userBot.expiryDate);
     if (expiry < now) return 'expired';
     if (userBot.isStopped) return 'stopped';
+    if (userBot.isPaused) return 'paused';
     return 'active';
   };
 
-  const getStatusBadge = (status: 'active' | 'stopped' | 'expired') => {
+  const getStatusBadge = (status: 'active' | 'stopped' | 'expired' | 'paused') => {
     switch (status) {
       case 'active':
         return (
           <Badge className="bg-green-100 text-green-700 hover:bg-green-100" data-testid="badge-status-active">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
             Active
+          </Badge>
+        );
+      case 'paused':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100" data-testid="badge-status-paused">
+            <Pause className="w-3 h-3 mr-1.5" />
+            Paused
           </Badge>
         );
       case 'stopped':
@@ -188,6 +264,20 @@ export default function BotInvestments() {
           </Badge>
         );
     }
+  };
+
+  const getCategoryBadge = (category: 'crypto' | 'forex' | 'stock' | undefined) => {
+    if (!category) return null;
+    const colors = {
+      crypto: 'bg-purple-100 text-purple-700',
+      forex: 'bg-blue-100 text-blue-700',
+      stock: 'bg-emerald-100 text-emerald-700',
+    };
+    return (
+      <Badge className={`${colors[category]} hover:${colors[category]} text-xs`}>
+        {category.charAt(0).toUpperCase() + category.slice(1)}
+      </Badge>
+    );
   };
 
   const getDaysRemaining = (expiryDate: string): number => {
@@ -217,7 +307,7 @@ export default function BotInvestments() {
 
   const activeBots = userBots.filter(ub => {
     const status = getStatus(ub);
-    return status === 'active' || status === 'stopped';
+    return status === 'active' || status === 'stopped' || status === 'paused';
   });
 
   const historyBots = userBots.filter(ub => {
@@ -263,9 +353,12 @@ export default function BotInvestments() {
               <h3 className="font-bold text-gray-900 dark:text-white" data-testid={`text-bot-name-${userBot.id}`}>
                 {bot?.name || 'Unknown Bot'}
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {bot?.description?.slice(0, 50)}...
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                {getCategoryBadge(bot?.category)}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {bot?.description?.slice(0, 30)}...
+                </p>
+              </div>
             </div>
           </div>
           {getStatusBadge(status)}
@@ -288,6 +381,42 @@ export default function BotInvestments() {
             </div>
             <p className={`font-bold ${parseFloat(userBot.currentProfit) >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid={`text-profit-${userBot.id}`}>
               {parseFloat(userBot.currentProfit) >= 0 ? '+' : ''}${parseFloat(userBot.currentProfit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <DollarSign size={12} />
+              Allocated Amount
+            </div>
+            <p className="font-bold text-gray-900 dark:text-white" data-testid={`text-allocated-${userBot.id}`}>
+              ${parseFloat(userBot.allocatedAmount || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <DollarSign size={12} />
+              Remaining Allocation
+            </div>
+            <p className="font-bold text-gray-900 dark:text-white" data-testid={`text-remaining-${userBot.id}`}>
+              ${parseFloat(userBot.remainingAllocation || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <TrendingUp size={12} />
+              Total Profit Distributed
+            </div>
+            <p className="font-bold text-green-600" data-testid={`text-profit-distributed-${userBot.id}`}>
+              +${parseFloat(userBot.totalProfitDistributed || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <Calendar size={12} />
+              Last Trade Date
+            </div>
+            <p className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+              {userBot.lastTradeDate ? formatDate(userBot.lastTradeDate) : 'No trades yet'}
             </p>
           </div>
           <div className="space-y-1">
@@ -323,6 +452,30 @@ export default function BotInvestments() {
           <Progress value={progress} className="h-2" />
         </div>
 
+        {status === 'paused' && (
+          <div className="space-y-3 mb-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+              <p className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">
+                This bot is paused. Trading is temporarily suspended. You can resume it anytime.
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
+              data-testid={`button-resume-bot-${userBot.id}`}
+              onClick={() => resumeBotMutation.mutate(userBot.id)}
+              disabled={resumeBotMutation.isPending}
+            >
+              {resumeBotMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Play size={14} className="mr-2" />
+              )}
+              Resume Bot
+            </Button>
+          </div>
+        )}
+
         {status === 'stopped' && (
           <div className="space-y-3 mb-4">
             <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
@@ -347,42 +500,71 @@ export default function BotInvestments() {
           </div>
         )}
 
-        {status === 'active' && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+        <div className="flex flex-col gap-2">
+          <Link href={`/bot-trades/${userBot.id}`}>
+            <Button 
+              variant="outline" 
+              className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+              data-testid={`button-view-trades-${userBot.id}`}
+            >
+              <Eye size={14} className="mr-2" />
+              View Trades
+            </Button>
+          </Link>
+
+          {status === 'active' && (
+            <div className="flex gap-2">
               <Button 
                 variant="outline" 
-                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                data-testid={`button-stop-bot-${userBot.id}`}
+                className="flex-1 border-yellow-200 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700"
+                data-testid={`button-pause-bot-${userBot.id}`}
+                onClick={() => pauseBotMutation.mutate(userBot.id)}
+                disabled={pauseBotMutation.isPending}
               >
-                <Square size={14} className="mr-2" />
-                Stop Bot
+                {pauseBotMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Pause size={14} className="mr-2" />
+                )}
+                Pause
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="w-[90%] rounded-2xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle>Stop this bot?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will stop the bot from accumulating profits. The subscription will continue until its expiry date ({formatDate(userBot.expiryDate)}), but you won't earn any more profits.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel data-testid="button-cancel-stop">Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => stopBotMutation.mutate(userBot.id)}
-                  className="bg-red-600 hover:bg-red-700"
-                  disabled={stopBotMutation.isPending}
-                  data-testid="button-confirm-stop"
-                >
-                  {stopBotMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : null}
-                  Stop Bot
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    data-testid={`button-stop-bot-${userBot.id}`}
+                  >
+                    <Square size={14} className="mr-2" />
+                    Stop
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="w-[90%] rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Stop this bot?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will stop the bot from accumulating profits. The subscription will continue until its expiry date ({formatDate(userBot.expiryDate)}), but you won't earn any more profits.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel data-testid="button-cancel-stop">Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => stopBotMutation.mutate(userBot.id)}
+                      className="bg-red-600 hover:bg-red-700"
+                      disabled={stopBotMutation.isPending}
+                      data-testid="button-confirm-stop"
+                    >
+                      {stopBotMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : null}
+                      Stop Bot
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+        </div>
       </Card>
     );
   };

@@ -1581,7 +1581,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check balance (subscription fee + investment amount)
-      const totalCost = parseFloat(bot.price) + investment;
+      const subFee = parseFloat(bot.subscriptionFee) || parseFloat(bot.price);
+      const totalCost = subFee + investment;
       const balance = await storage.getUserBalance(userId);
       if (!balance || parseFloat(balance.totalBalanceUsd) < totalCost) {
         return res.status(400).json({ error: "Insufficient balance" });
@@ -1618,7 +1619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: totalCost.toString(),
         currency: 'USD',
         status: 'completed',
-        description: `AI Bot: ${bot.name} (Fee: $${bot.price}, Investment: $${investmentAmount})`
+        description: `AI Bot: ${bot.name} (Fee: $${subFee.toFixed(2)}, Investment: $${investmentAmount})`
       });
 
       res.json(userBot);
@@ -1672,6 +1673,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to reactivate bot" });
+    }
+  });
+
+  // Pause bot subscription
+  app.post("/api/user-bots/:id/pause", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const userBot = await storage.getUserBot(parseInt(req.params.id));
+      
+      if (!userBot) {
+        return res.status(404).json({ error: "Bot subscription not found" });
+      }
+      
+      if (userBot.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You do not own this subscription" });
+      }
+      
+      if (userBot.isStopped) {
+        return res.status(400).json({ error: "Cannot pause a stopped bot" });
+      }
+      
+      if (new Date(userBot.expiryDate) < new Date()) {
+        return res.status(400).json({ error: "Cannot pause an expired subscription" });
+      }
+      
+      const updated = await storage.updateUserBot(parseInt(req.params.id), { 
+        isPaused: true, 
+        pausedAt: new Date() 
+      } as any);
+      res.json(updated);
+    } catch (error) {
+      console.error("Failed to pause bot:", error);
+      res.status(500).json({ error: "Failed to pause bot" });
+    }
+  });
+
+  // Resume paused bot subscription
+  app.post("/api/user-bots/:id/resume", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const userBot = await storage.getUserBot(parseInt(req.params.id));
+      
+      if (!userBot) {
+        return res.status(404).json({ error: "Bot subscription not found" });
+      }
+      
+      if (userBot.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You do not own this subscription" });
+      }
+      
+      if (!userBot.isPaused) {
+        return res.status(400).json({ error: "Bot is not paused" });
+      }
+      
+      if (new Date(userBot.expiryDate) < new Date()) {
+        return res.status(400).json({ error: "Cannot resume an expired subscription" });
+      }
+      
+      const updated = await storage.updateUserBot(parseInt(req.params.id), { 
+        isPaused: false, 
+        pausedAt: null 
+      } as any);
+      res.json(updated);
+    } catch (error) {
+      console.error("Failed to resume bot:", error);
+      res.status(500).json({ error: "Failed to resume bot" });
     }
   });
 
