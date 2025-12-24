@@ -6,6 +6,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 import rateLimit from "express-rate-limit";
+import { processHourlyTrades, startBotEngine } from "./bot-engine";
 
 // Password validation helper
 function validatePassword(password: string): { valid: boolean; message: string } {
@@ -1552,6 +1553,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/trigger-trades", requireAdmin, async (req, res) => {
+    try {
+      console.log("[Admin] Manually triggering bot trades...");
+      const results = await processHourlyTrades();
+      res.json({
+        success: true,
+        message: `Processed ${results.processed} trades`,
+        trades: results.trades,
+        errors: results.errors,
+      });
+    } catch (error) {
+      console.error("Manual trade trigger error:", error);
+      res.status(500).json({ error: "Failed to trigger trades" });
+    }
+  });
+
   // ==================== USER BOT SUBSCRIPTIONS ====================
   app.get("/api/users/:userId/bots", async (req, res) => {
     try {
@@ -2389,5 +2406,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  startBotEngine();
+  
   return httpServer;
 }
