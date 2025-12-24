@@ -50,6 +50,8 @@ interface AiBot {
   id: number;
   name: string;
   description: string;
+  category: 'crypto' | 'forex' | 'stock';
+  subscriptionFee: string;
   price: string;
   durationDays: number;
   durationUnit: 'minutes' | 'days' | 'weeks' | 'months';
@@ -58,6 +60,13 @@ interface AiBot {
   maxInvestment: string;
   minProfitPercent: string;
   maxProfitPercent: string;
+  minWinPercent: string;
+  maxWinPercent: string;
+  minLossPercent: string;
+  maxLossPercent: string;
+  reactivationFee: string;
+  tradingAssets: string[];
+  assetDistribution: Record<string, number>;
   totalGains: string;
   totalLosses: string;
   winRate: string;
@@ -84,6 +93,8 @@ interface Subscriber {
 interface BotFormData {
   name: string;
   description: string;
+  category: 'crypto' | 'forex' | 'stock';
+  subscriptionFee: string;
   price: string;
   durationDays: string;
   durationUnit: 'minutes' | 'days' | 'weeks' | 'months';
@@ -91,6 +102,13 @@ interface BotFormData {
   maxInvestment: string;
   minProfitPercent: string;
   maxProfitPercent: string;
+  minWinPercent: string;
+  maxWinPercent: string;
+  minLossPercent: string;
+  maxLossPercent: string;
+  reactivationFee: string;
+  tradingAssets: string[];
+  assetDistribution: Record<string, number>;
   expectedRoi: string;
   logo: string;
   isActive: boolean;
@@ -99,6 +117,8 @@ interface BotFormData {
 const defaultFormData: BotFormData = {
   name: "",
   description: "",
+  category: "crypto",
+  subscriptionFee: "",
   price: "",
   durationDays: "",
   durationUnit: "days",
@@ -106,6 +126,13 @@ const defaultFormData: BotFormData = {
   maxInvestment: "",
   minProfitPercent: "",
   maxProfitPercent: "",
+  minWinPercent: "50",
+  maxWinPercent: "70",
+  minLossPercent: "10",
+  maxLossPercent: "20",
+  reactivationFee: "",
+  tradingAssets: [],
+  assetDistribution: {},
   expectedRoi: "",
   logo: "",
   isActive: true,
@@ -217,6 +244,8 @@ export default function BotManagement() {
     setFormData({
       name: bot.name,
       description: bot.description,
+      category: bot.category || 'crypto',
+      subscriptionFee: bot.subscriptionFee || "",
       price: bot.price,
       durationDays: bot.durationDays.toString(),
       durationUnit: bot.durationUnit || 'days',
@@ -224,6 +253,13 @@ export default function BotManagement() {
       maxInvestment: bot.maxInvestment,
       minProfitPercent: bot.minProfitPercent,
       maxProfitPercent: bot.maxProfitPercent,
+      minWinPercent: bot.minWinPercent || "50",
+      maxWinPercent: bot.maxWinPercent || "70",
+      minLossPercent: bot.minLossPercent || "10",
+      maxLossPercent: bot.maxLossPercent || "20",
+      reactivationFee: bot.reactivationFee || "",
+      tradingAssets: bot.tradingAssets || [],
+      assetDistribution: bot.assetDistribution || {},
       expectedRoi: bot.expectedRoi,
       logo: bot.logo || "",
       isActive: bot.isActive,
@@ -240,9 +276,35 @@ export default function BotManagement() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (formData.tradingAssets.length > 0) {
+      const totalDistribution = Object.values(formData.assetDistribution).reduce((a, b) => a + b, 0);
+      if (totalDistribution !== 100) {
+        toast({ 
+          title: "Invalid Asset Distribution", 
+          description: `Asset distribution must equal 100%. Current total: ${totalDistribution}%`, 
+          variant: "destructive" 
+        });
+        return;
+      }
+      
+      const hasZeroDistribution = formData.tradingAssets.some(asset => 
+        !formData.assetDistribution[asset] || formData.assetDistribution[asset] === 0
+      );
+      if (hasZeroDistribution) {
+        toast({ 
+          title: "Invalid Asset Distribution", 
+          description: "Each trading asset must have a distribution percentage greater than 0%.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+    }
+    
     const data = {
       name: formData.name,
       description: formData.description,
+      category: formData.category,
+      subscriptionFee: formData.subscriptionFee || "0",
       price: formData.price,
       durationDays: parseInt(formData.durationDays),
       durationUnit: formData.durationUnit,
@@ -250,6 +312,13 @@ export default function BotManagement() {
       maxInvestment: formData.maxInvestment,
       minProfitPercent: formData.minProfitPercent,
       maxProfitPercent: formData.maxProfitPercent,
+      minWinPercent: formData.minWinPercent,
+      maxWinPercent: formData.maxWinPercent,
+      minLossPercent: formData.minLossPercent,
+      maxLossPercent: formData.maxLossPercent,
+      reactivationFee: formData.reactivationFee || "0",
+      tradingAssets: formData.tradingAssets,
+      assetDistribution: formData.assetDistribution,
       expectedRoi: formData.expectedRoi,
       logo: formData.logo || null,
       isActive: formData.isActive,
@@ -389,6 +458,7 @@ export default function BotManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Investment Range</TableHead>
@@ -414,6 +484,19 @@ export default function BotManagement() {
                           <p className="text-xs text-gray-500 truncate max-w-[200px]">{bot.description}</p>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline"
+                        className={
+                          bot.category === 'crypto' ? "bg-orange-50 text-orange-700 border-orange-200" :
+                          bot.category === 'forex' ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          "bg-purple-50 text-purple-700 border-purple-200"
+                        }
+                        data-testid={`badge-category-${bot.id}`}
+                      >
+                        {bot.category?.toUpperCase() || 'CRYPTO'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-mono font-medium">${parseFloat(bot.price).toLocaleString()}</TableCell>
                     <TableCell>{bot.durationDays} {bot.durationUnit || 'days'}</TableCell>
@@ -526,6 +609,49 @@ export default function BotManagement() {
                 />
               </div>
 
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(value: 'crypto' | 'forex' | 'stock') => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger data-testid="select-bot-category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="crypto">Crypto</SelectItem>
+                      <SelectItem value="forex">Forex</SelectItem>
+                      <SelectItem value="stock">Stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subscriptionFee">Subscription Fee ($)</Label>
+                  <Input 
+                    id="subscriptionFee" 
+                    type="number" 
+                    step="0.01"
+                    placeholder="e.g., 50" 
+                    value={formData.subscriptionFee}
+                    onChange={(e) => setFormData({ ...formData, subscriptionFee: e.target.value })}
+                    data-testid="input-bot-subscription-fee"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reactivationFee">Reactivation Fee ($)</Label>
+                  <Input 
+                    id="reactivationFee" 
+                    type="number" 
+                    step="0.01"
+                    placeholder="e.g., 25" 
+                    value={formData.reactivationFee}
+                    onChange={(e) => setFormData({ ...formData, reactivationFee: e.target.value })}
+                    data-testid="input-bot-reactivation-fee"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">Subscription Price ($)</Label>
@@ -628,6 +754,121 @@ export default function BotManagement() {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minWinPercent">Min Win Rate (%)</Label>
+                  <Input 
+                    id="minWinPercent" 
+                    type="number" 
+                    step="0.01"
+                    placeholder="e.g., 50" 
+                    value={formData.minWinPercent}
+                    onChange={(e) => setFormData({ ...formData, minWinPercent: e.target.value })}
+                    data-testid="input-bot-min-win"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxWinPercent">Max Win Rate (%)</Label>
+                  <Input 
+                    id="maxWinPercent" 
+                    type="number" 
+                    step="0.01"
+                    placeholder="e.g., 70" 
+                    value={formData.maxWinPercent}
+                    onChange={(e) => setFormData({ ...formData, maxWinPercent: e.target.value })}
+                    data-testid="input-bot-max-win"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minLossPercent">Min Loss Rate (%)</Label>
+                  <Input 
+                    id="minLossPercent" 
+                    type="number" 
+                    step="0.01"
+                    placeholder="e.g., 10" 
+                    value={formData.minLossPercent}
+                    onChange={(e) => setFormData({ ...formData, minLossPercent: e.target.value })}
+                    data-testid="input-bot-min-loss"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxLossPercent">Max Loss Rate (%)</Label>
+                  <Input 
+                    id="maxLossPercent" 
+                    type="number" 
+                    step="0.01"
+                    placeholder="e.g., 20" 
+                    value={formData.maxLossPercent}
+                    onChange={(e) => setFormData({ ...formData, maxLossPercent: e.target.value })}
+                    data-testid="input-bot-max-loss"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tradingAssets">Trading Assets (comma-separated)</Label>
+                <Input 
+                  id="tradingAssets" 
+                  placeholder="e.g., BTC,ETH,SOL" 
+                  value={formData.tradingAssets.join(',')}
+                  onChange={(e) => {
+                    const assets = e.target.value.split(',').map(a => a.trim().toUpperCase()).filter(a => a);
+                    const newDistribution = { ...formData.assetDistribution };
+                    assets.forEach(asset => {
+                      if (!(asset in newDistribution)) {
+                        newDistribution[asset] = 0;
+                      }
+                    });
+                    Object.keys(newDistribution).forEach(key => {
+                      if (!assets.includes(key)) {
+                        delete newDistribution[key];
+                      }
+                    });
+                    setFormData({ ...formData, tradingAssets: assets, assetDistribution: newDistribution });
+                  }}
+                  data-testid="input-bot-trading-assets"
+                />
+                <p className="text-xs text-gray-500">Enter asset symbols separated by commas</p>
+              </div>
+
+              {formData.tradingAssets.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Asset Distribution (%)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {formData.tradingAssets.map((asset) => (
+                      <div key={asset} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <span className="font-medium text-sm min-w-[50px]">{asset}</span>
+                        <Input 
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="1"
+                          className="h-8 text-sm"
+                          value={formData.assetDistribution[asset] || 0}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+                            setFormData({
+                              ...formData,
+                              assetDistribution: { ...formData.assetDistribution, [asset]: value }
+                            });
+                          }}
+                          data-testid={`input-distribution-${asset.toLowerCase()}`}
+                        />
+                        <span className="text-xs text-gray-500">%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className={`text-xs ${
+                    Object.values(formData.assetDistribution).reduce((a, b) => a + b, 0) === 100 
+                      ? "text-green-600" 
+                      : "text-orange-500"
+                  }`}>
+                    Total: {Object.values(formData.assetDistribution).reduce((a, b) => a + b, 0)}% 
+                    {Object.values(formData.assetDistribution).reduce((a, b) => a + b, 0) !== 100 && " (should equal 100%)"}
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="expectedRoi">Expected ROI Display Text</Label>
