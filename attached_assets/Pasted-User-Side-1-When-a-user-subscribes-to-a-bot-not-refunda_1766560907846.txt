@@ -1,0 +1,31 @@
+User Side:
+
+1. When a user subscribes to a bot(not refundable), the bot will prompt the user that his/her have to allocate a specific amount upfront. The user can use a slider to select the amount for trading or just type the amount they want to allocate (please note the subscription fee is what will allow the user to move into the next stage of selecting the amount the bot can trade for them and the admin will be the one to set the subscription fee and also set the range the users can users can allocate to the bot)
+
+2. profits/losses will follow an algorithm where the trading bot will be making profits/losses randomly, the percntage of winning trades and and lossing trades will be determined by the admin( for example : the admin can set the system to alsoways have 50% - 70% winning trades and 10% - 20% lossing trades and visevvasal). now when the admin is setting up the trading bot the admin will select the differrent asset that the users will receive as profite or losses in the portfolio page (for example: on the /admin/bots page, while creating the trading bot the admin can select the kind of asset that will be added to the user portfolio page after the bot is done with its trading section (bitcoin, solana, tesla stock, gold, us dollar, GBP, ETC. now all this asset will be fetched from the apis or from the asset that was create by the admin in the asset pages (/admin/cryptos, /admin/forex & /admin/stocks) ) now note that all this asset will be in their respective categories (crypto, stock, forex), now during the bot set up the admin can set each win rate for each bot, lossing rate, trading cycle( how may times in a day), trade volume ( how many times the bot will trade an asset(s) in an hour, the bot subscription fee, the tradable amount( the amount the user will allocate for his/her trade, the reactivation fee if the bot is stopped by the user (also unrefunable). if you have more questions about this answer i gave you can can ask me any question
+
+3.Yes users can only pause their bot subscription and what happens when they do is that :
+ a-. The investment pause (but their subscription period will keep running)
+  b-. The profit will stop increasing or reducing 
+  c-. If the bot period elapse and the user try's to activate the bot again, they will be prompted to pay a reactivation fee (which will be set buy the admin on the bot management page) the fee will be deducted from their account balance 
+ d -. If the fee is paid then the bot can continue trading for them, and if they stop the bot again and they want to reactivate , they will pay that reactivation fee again and the cycle repeats it self
+
+
+Admin Side:
+
+
+4.it’s calculated automatically but the admin will have the privilege to add profits/losses  manually when the admin clcik on "edit this user bot profit/loss" (this calculation will be done by an algorithm that works with percentages rage to give more gain or more losses / less gain or less losses
+
+
+5. the bot profit/loss will have a range and its done automatically 
+
+Balance & Integration:
+
+6. the subscription amount will come from total balance 
+
+7. NO, the profits will be added as assets on the portfolio page ( for example if the user subscribe for a crypto bot, and the bot trades  BTC,USDT,SOL etc(as set by the admin)  the profits will be added to each of dose asset in the user portfolio page using a ratio (the ratio will be set by the admin when creating the trading bot in the crypto category, this also applys to other categories)
+
+
+8. Yes they can have 
+
+if you need more clarity dont hesitate to as me any question 
