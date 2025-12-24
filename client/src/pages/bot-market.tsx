@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTelegram } from "@/lib/telegram-mock";
@@ -19,6 +20,7 @@ interface AiBot {
   description: string;
   price: string;
   durationDays: number;
+  durationUnit: string;
   expectedRoi: string;
   minInvestment: string;
   maxInvestment: string;
@@ -29,6 +31,10 @@ interface AiBot {
   winRate: string;
   logo: string | null;
   isActive: boolean;
+  category: 'crypto' | 'forex' | 'stock';
+  subscriptionFee: string;
+  tradingAssets: string[];
+  assetDistribution: Record<string, number>;
 }
 
 export default function BotMarket() {
@@ -131,20 +137,14 @@ export default function BotMarket() {
 
   const availableBalance = parseFloat(balance?.availableBalanceUsd || balance?.totalBalanceUsd || '0');
   const investmentNum = parseFloat(investmentAmount) || 0;
-  const subscriptionFee = selectedBot ? parseFloat(selectedBot.price) : 0;
+  const subscriptionFee = selectedBot ? parseFloat(selectedBot.subscriptionFee) : 0;
   const totalCost = subscriptionFee + investmentNum;
   const hasInsufficientBalance = totalCost > availableBalance;
   
   const minInv = selectedBot ? parseFloat(selectedBot.minInvestment) : 0;
   const maxInv = selectedBot ? parseFloat(selectedBot.maxInvestment) : 0;
   const isInvestmentValid = investmentNum >= minInv && investmentNum <= maxInv;
-
-  const getBotCategory = (description: string): 'forex' | 'crypto' | 'stocks' => {
-    const lowerDesc = description.toLowerCase();
-    if (lowerDesc.includes('forex') || lowerDesc.includes('currency')) return 'forex';
-    if (lowerDesc.includes('crypto') || lowerDesc.includes('bitcoin') || lowerDesc.includes('ethereum')) return 'crypto';
-    return 'stocks';
-  };
+  const sliderPercentage = maxInv > 0 ? Math.round((investmentNum / maxInv) * 100) : 0;
 
   if (botsLoading) {
     return (
@@ -260,21 +260,20 @@ export default function BotMarket() {
                   Crypto
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="stocks" 
+                  value="stock" 
                   className="rounded-full px-5 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 shadow-sm"
-                  data-testid="tab-stocks"
+                  data-testid="tab-stock"
                 >
                   Stocks
                 </TabsTrigger>
               </TabsList>
 
-              {["all", "forex", "crypto", "stocks"].map((tab) => (
+              {["all", "forex", "crypto", "stock"].map((tab) => (
                 <TabsContent key={tab} value={tab} className="mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {activeBots
-                      .filter(b => tab === "all" || getBotCategory(b.description) === tab)
+                      .filter(b => tab === "all" || b.category === tab)
                       .map((bot) => {
-                        const category = getBotCategory(bot.description);
                         return (
                           <Card 
                             key={bot.id} 
@@ -285,8 +284,8 @@ export default function BotMarket() {
                             <div className="flex justify-between items-start mb-4">
                               <div className="flex gap-3">
                                 <Avatar className={`w-12 h-12 rounded-xl shadow-md ${
-                                  category === 'forex' ? 'bg-blue-500' : 
-                                  category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'
+                                  bot.category === 'forex' ? 'bg-blue-500' : 
+                                  bot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'
                                 }`}>
                                   {bot.logo ? (
                                     <AvatarImage src={bot.logo} alt={bot.name} />
@@ -297,7 +296,7 @@ export default function BotMarket() {
                                 </Avatar>
                                 <div>
                                   <h3 className="font-bold text-gray-900 dark:text-white text-lg" data-testid={`text-bot-name-${bot.id}`}>{bot.name}</h3>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium capitalize">{category} Trading</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium capitalize">{bot.category} Trading</p>
                                 </div>
                               </div>
                               <Badge className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800 px-2 py-1">
@@ -324,7 +323,7 @@ export default function BotMarket() {
 
                             <div className="flex justify-between items-center mb-4 text-sm">
                               <span className="text-gray-500 dark:text-gray-400 font-medium">Subscription Fee:</span>
-                              <span className="font-bold text-blue-600 dark:text-blue-400" data-testid={`text-bot-price-${bot.id}`}>${parseFloat(bot.price).toLocaleString()}</span>
+                              <span className="font-bold text-blue-600 dark:text-blue-400" data-testid={`text-bot-price-${bot.id}`}>${parseFloat(bot.subscriptionFee || bot.price).toLocaleString()}</span>
                             </div>
 
                             <div className="flex justify-between items-center mb-6 text-sm">
@@ -359,8 +358,8 @@ export default function BotMarket() {
               <SheetHeader className="text-left mb-6">
                 <div className="flex items-center gap-3 mb-2">
                   <Avatar className={`w-12 h-12 rounded-xl shadow-md ${
-                    getBotCategory(selectedBot.description) === 'forex' ? 'bg-blue-500' : 
-                    getBotCategory(selectedBot.description) === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'
+                    selectedBot.category === 'forex' ? 'bg-blue-500' : 
+                    selectedBot.category === 'crypto' ? 'bg-purple-500' : 'bg-orange-500'
                   }`}>
                     {selectedBot.logo ? (
                       <AvatarImage src={selectedBot.logo} alt={selectedBot.name} />
@@ -371,7 +370,7 @@ export default function BotMarket() {
                   </Avatar>
                   <div>
                     <SheetTitle className="text-xl" data-testid="text-sheet-bot-name">{selectedBot.name}</SheetTitle>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{getBotCategory(selectedBot.description)} Trading Bot</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{selectedBot.category} Trading Bot</p>
                   </div>
                 </div>
                 <SheetDescription className="text-sm" data-testid="text-sheet-bot-description">
@@ -387,21 +386,33 @@ export default function BotMarket() {
                 </div>
                 <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
                   <Clock className="w-5 h-5 mx-auto text-blue-500 mb-1" />
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBot.durationDays} Days</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedBot.durationDays} {selectedBot.durationUnit || 'Days'}</p>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400">Duration</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl text-center">
                   <DollarSign className="w-5 h-5 mx-auto text-purple-500 mb-1" />
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">${parseFloat(selectedBot.price).toLocaleString()}</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">${parseFloat(selectedBot.subscriptionFee).toLocaleString()}</p>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400">Sub. Fee</p>
                 </div>
               </div>
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                    Investment Amount
-                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Investment Amount
+                    </label>
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{sliderPercentage}% of max</span>
+                  </div>
+                  <Slider
+                    value={[investmentNum]}
+                    min={minInv}
+                    max={maxInv}
+                    step={1}
+                    onValueChange={(values) => setInvestmentAmount(values[0].toString())}
+                    className="mb-3"
+                    data-testid="slider-investment-amount"
+                  />
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                     <Input
@@ -425,6 +436,22 @@ export default function BotMarket() {
                   )}
                 </div>
               </div>
+
+              {selectedBot.tradingAssets && selectedBot.tradingAssets.length > 0 && (
+                <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 mb-6" data-testid="text-trading-assets">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Trading Assets</h4>
+                  <div className="space-y-2">
+                    {selectedBot.tradingAssets.map((asset, index) => (
+                      <div key={index} className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600 dark:text-gray-300">{asset}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {selectedBot.assetDistribution?.[asset] ? `${selectedBot.assetDistribution[asset]}%` : '-'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 mb-6 space-y-3">
                 <div className="flex justify-between text-sm">
