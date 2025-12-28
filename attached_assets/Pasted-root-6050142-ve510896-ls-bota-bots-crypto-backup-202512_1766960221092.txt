@@ -1,0 +1,100 @@
+root@6050142-ve510896:~# ls
+bota  bots  crypto_backup_20251226.sql  minibot1  resize.log  snap
+root@6050142-ve510896:~# cd minibot1
+root@6050142-ve510896:~/minibot1# cd /var/www/crypto-trading
+root@6050142-ve510896:/var/www/crypto-trading# git pull origin main
+remote: Enumerating objects: 43, done.
+remote: Counting objects: 100% (43/43), done.
+remote: Compressing objects: 100% (11/11), done.
+remote: Total 30 (delta 19), reused 30 (delta 19), pack-reused 0 (from 0)
+Unpacking objects: 100% (30/30), 617.03 KiB | 7.34 MiB/s, done.
+From https://github.com/macwuche/new_miniapp_update
+ * branch            main       -> FETCH_HEAD
+   e954ee3..7b65773  main       -> origin/main
+Updating e954ee3..7b65773
+Fast-forward
+ attached_assets/4502E357-8660-464F-836F-B4C4C70A4917_1766816634350.png                           | Bin 0 -> 426557 bytes
+ attached_assets/E75E4400-4D34-4834-BFBB-C76F03241834_1766816779085.png                           | Bin 0 -> 202044 bytes
+ attached_assets/Pasted-root-6050142-ve510896-minibot1-cd-var-www-crypto-tradin_1766890851606.txt | 111 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-C-root-605_1766891101445.txt |  40 ++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-pm2-logs-c_1766872907940.txt | 109 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-pm2-logs-c_1766890362288.txt | 108 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-pm2-logs-c_1766891285415.txt |  25 +++++++++++++++++++++++++
+ client/public/opengraph.jpg                                                                      | Bin 42338 -> 52197 bytes
+ client/src/pages/admin/bots.tsx                                                                  |  10 +++++-----
+ replit.md                                                                                        |  38 +++++++++++++++++++++++++++++++++++++-
+ server/bot-engine.ts                                                                             |   6 +++---
+ server/routes.ts                                                                                 |  22 ++++++++++++++++++++--
+ 12 files changed, 458 insertions(+), 11 deletions(-)
+ create mode 100644 attached_assets/4502E357-8660-464F-836F-B4C4C70A4917_1766816634350.png
+ create mode 100644 attached_assets/E75E4400-4D34-4834-BFBB-C76F03241834_1766816779085.png
+ create mode 100644 attached_assets/Pasted-root-6050142-ve510896-minibot1-cd-var-www-crypto-tradin_1766890851606.txt
+ create mode 100644 attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-C-root-605_1766891101445.txt
+ create mode 100644 attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-pm2-logs-c_1766872907940.txt
+ create mode 100644 attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-pm2-logs-c_1766890362288.txt
+ create mode 100644 attached_assets/Pasted-root-6050142-ve510896-var-www-crypto-trading-pm2-logs-c_1766891285415.txt
+root@6050142-ve510896:/var/www/crypto-trading# npm install
+
+up to date, audited 449 packages in 3s
+
+44 packages are looking for funding
+  run `npm fund` for details
+
+4 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+root@6050142-ve510896:/var/www/crypto-trading# npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/var/www/crypto-trading/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+ Warning  Found data-loss statements:
+· You're about to delete session table with 11 items
+
+THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
+
+Do you still want to push changes?
+[✓] Changes applied
+root@6050142-ve510896:/var/www/crypto-trading# npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.1.12 building for production...
+✓ 2849 modules transformed.
+../dist/public/index.html                                                                          0.79 kB │ gzip:   0.43 kB
+../dist/public/assets/ai (1)_1764071986101-BGf8tvVX.png                                           25.16 kB
+../dist/public/assets/Abstract_trading_chart_background_with_blue_waves_f608156d-SX0rUNOE.png    882.59 kB
+../dist/public/assets/image-mJpsijxGqz7FlGXguHAG8f1zAYsu25_1764962504673-BEmlu2Fg.png          1,490.66 kB
+../dist/public/assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922-jWTIWnZh.png          1,506.38 kB
+../dist/public/assets/index-C8mVAzmy.css                                                         152.07 kB │ gzip:  23.99 kB
+../dist/public/assets/index-BFJTEWRJ.js                                                        1,373.20 kB │ gzip: 363.80 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 16.86s
+
+  dist/index.js  139.9kb
+
+⚡ Done in 26ms
+root@6050142-ve510896:/var/www/crypto-trading# pm2 restart crypto-trading
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ cluster │ 940125   │ 0s     │ 6    │ online    │ 0%       │ 36.9mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# UPDATE ai_bots SET duration_unit = 'hours' WHERE duration_unit = 'minutes';
+UPDATE: command not found
+root@6050142-ve510896:/var/www/crypto-trading# 
