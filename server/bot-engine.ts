@@ -240,16 +240,16 @@ export function startBotEngine() {
     return;
   }
 
-  console.log('[Bot Engine] Starting hourly trading engine');
+  console.log('[Bot Engine] Starting trading engine (runs every 5 minutes)');
   
   botEngineInterval = setInterval(async () => {
-    console.log('[Bot Engine] Running hourly trade processing...');
+    console.log('[Bot Engine] Running trade processing...');
     try {
       await processHourlyTrades();
     } catch (error) {
       console.error('[Bot Engine] Error during scheduled run:', error);
     }
-  }, 60 * 60 * 1000);
+  }, 5 * 60 * 1000);
 }
 
 export function stopBotEngine() {

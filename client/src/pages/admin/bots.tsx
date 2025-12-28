@@ -54,7 +54,7 @@ interface AiBot {
   subscriptionFee: string;
   price: string;
   durationDays: number;
-  durationUnit: 'minutes' | 'days' | 'weeks' | 'months';
+  durationUnit: 'hours' | 'days' | 'weeks' | 'months';
   expectedRoi: string;
   minInvestment: string;
   maxInvestment: string;
@@ -109,7 +109,7 @@ interface BotFormData {
   subscriptionFee: string;
   price: string;
   durationDays: string;
-  durationUnit: 'minutes' | 'days' | 'weeks' | 'months';
+  durationUnit: 'hours' | 'days' | 'weeks' | 'months';
   minInvestment: string;
   maxInvestment: string;
   minProfitPercent: string;
@@ -291,7 +291,7 @@ export default function BotManagement() {
       subscriptionFee: bot.subscriptionFee || "",
       price: bot.price,
       durationDays: bot.durationDays.toString(),
-      durationUnit: bot.durationUnit || 'days',
+      durationUnit: (bot.durationUnit as string) === 'minutes' ? 'hours' : (bot.durationUnit || 'days'),
       minInvestment: bot.minInvestment,
       maxInvestment: bot.maxInvestment,
       minProfitPercent: bot.minProfitPercent,
@@ -781,13 +781,13 @@ export default function BotManagement() {
                     />
                     <Select 
                       value={formData.durationUnit} 
-                      onValueChange={(value: 'minutes' | 'days' | 'weeks' | 'months') => setFormData({ ...formData, durationUnit: value })}
+                      onValueChange={(value: 'hours' | 'days' | 'weeks' | 'months') => setFormData({ ...formData, durationUnit: value })}
                     >
                       <SelectTrigger className="w-[120px]" data-testid="select-duration-unit">
                         <SelectValue placeholder="Unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="minutes">Minutes</SelectItem>
+                        <SelectItem value="hours">Hours</SelectItem>
                         <SelectItem value="days">Days</SelectItem>
                         <SelectItem value="weeks">Weeks</SelectItem>
                         <SelectItem value="months">Months</SelectItem>

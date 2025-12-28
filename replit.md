@@ -181,3 +181,39 @@ The schema includes comprehensive tables for a trading platform:
   - `client/src/components/layout/admin-layout.tsx` - Theme-aware layout with toggle button
   - `client/src/index.css` - CSS overrides for admin dark mode (using `[data-admin-theme="dark"]` selector)
 - Note: CSS nesting with `&` is not supported in this project's PostCSS setup - use explicit descendant selectors
+
+## Production VPS Deployment
+
+**Server Details:**
+- **IP Address:** 103.74.92.174
+- **Domain:** nakamotoshi.online
+- **Project Folder:** /var/www/crypto-trading
+- **Process Manager:** PM2
+- **App Name in PM2:** crypto-trading
+
+**Update Steps:**
+1. `ssh root@103.74.92.174`
+2. `cd /var/www/crypto-trading`
+3. `git pull origin main`
+4. `npm install`
+5. `npm run db:push` (if schema changes)
+6. `npm run build`
+7. `pm2 restart crypto-trading`
+8. `pm2 status` (verify running)
+
+**Useful PM2 Commands:**
+- `pm2 status` - Check if app is running
+- `pm2 logs crypto-trading` - View app logs
+- `pm2 restart crypto-trading` - Restart the app
+- `pm2 stop crypto-trading` - Stop the app
+
+**Database Connection:**
+```
+DATABASE_URL=postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db
+```
+
+**Migration Notes:**
+After updating code, run this SQL to convert any legacy 'minutes' bots to 'hours':
+```sql
+UPDATE ai_bots SET duration_unit = 'hours' WHERE duration_unit = 'minutes';
+```

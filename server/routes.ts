@@ -1605,10 +1605,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Insufficient balance" });
       }
 
-      // Calculate expiry date
+      // Calculate expiry date based on duration unit
       const purchaseDate = new Date();
       const expiryDate = new Date(purchaseDate);
-      expiryDate.setDate(expiryDate.getDate() + bot.durationDays);
+      const durationUnit = bot.durationUnit || 'days';
+      
+      switch (durationUnit) {
+        case 'hours':
+        case 'minutes': // Backwards compatibility: treat legacy 'minutes' as 'hours'
+          expiryDate.setHours(expiryDate.getHours() + bot.durationDays);
+          break;
+        case 'days':
+          expiryDate.setDate(expiryDate.getDate() + bot.durationDays);
+          break;
+        case 'weeks':
+          expiryDate.setDate(expiryDate.getDate() + (bot.durationDays * 7));
+          break;
+        case 'months':
+          expiryDate.setMonth(expiryDate.getMonth() + bot.durationDays);
+          break;
+        default:
+          expiryDate.setDate(expiryDate.getDate() + bot.durationDays);
+      }
 
       // Create bot subscription
       const userBot = await storage.createUserBot({
