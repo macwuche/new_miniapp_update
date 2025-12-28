@@ -1,0 +1,40 @@
+root@6050142-ve510896:/var/www/crypto-trading# ^C
+root@6050142-ve510896:/var/www/crypto-trading# psql "postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db" -c "CREATE TABLE IF NOT EXISTS session (sid VARCHAR PRIMARY KEY, sess JSON NOT NULL, expire TIMESTAMP(6) NOT NULL); CREATE INDEX IF NOT EXISTS idx_session_expire ON session(expire);"
+NOTICE:  relation "session" already exists, skipping
+CREATE INDEX
+root@6050142-ve510896:/var/www/crypto-trading# pm2 restart crypto-trading
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ cluster │ 930164   │ 0s     │ 5    │ online    │ 0%       │ 37.9mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 10
+[TAILING] Tailing last 10 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error-0.log last 10 lines:
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+
+/root/.pm2/logs/crypto-trading-out-0.log last 10 lines:
+0|crypto-t | 2:58:07 AM [express] GET /api/balances 200 in 10ms :: [{"userId":1,"totalBalanceUsd":"0.00000000","a…
+0|crypto-t | 2:58:07 AM [express] GET /api/admin/users 200 in 24ms :: [{"id":21,"telegramId":"5187364512","userna…
+0|crypto-t | 2:58:22 AM [express] GET /api/users/21 200 in 7ms :: {"id":21,"telegramId":"5187364512","username":"…
+0|crypto-t | 2:58:22 AM [express] GET /api/users/21/balance 200 in 10ms :: {"userId":21,"totalBalanceUsd":"0.0000…
+0|crypto-t | 2:58:22 AM [express] GET /api/admin/me 304 in 17ms :: {"id":1,"email":"admin@admin.com","permissions…
+0|crypto-t | 2:58:23 AM [express] GET /api/admin/users/21/wallets 200 in 5ms :: []
+0|crypto-t | 2:58:23 AM [express] GET /api/admin/users/21/transactions 200 in 6ms :: {"deposits":[],"withdrawals"…
+0|crypto-t | 2:58:45 AM [express] GET /api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php 200 in 2ms
+0|crypto-t | [Bot Engine] Starting hourly trading engine
+0|crypto-t | 3:03:35 AM [express] serving on port 5000
+
+
