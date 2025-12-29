@@ -8,18 +8,80 @@ interface SelectedAssetInfo {
   logoUrl: string;
 }
 
-async function fetchCryptoPrice(assetId: string): Promise<number | null> {
-  try {
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${assetId}&vs_currencies=usd`
-    );
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data[assetId]?.usd || null;
-  } catch (error) {
-    console.error(`[Bot Engine] Failed to fetch price for ${assetId}:`, error);
+const priceCache: Map<string, { price: number; timestamp: number }> = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+const SYMBOL_TO_COINGECKO_ID: Record<string, string> = {
+  'BTC': 'bitcoin',
+  'ETH': 'ethereum',
+  'SOL': 'solana',
+  'DOGE': 'dogecoin',
+  'XRP': 'ripple',
+  'ADA': 'cardano',
+  'DOT': 'polkadot',
+  'MATIC': 'matic-network',
+  'LINK': 'chainlink',
+  'AVAX': 'avalanche-2',
+  'SHIB': 'shiba-inu',
+  'LTC': 'litecoin',
+  'UNI': 'uniswap',
+  'ATOM': 'cosmos',
+  'XLM': 'stellar',
+  'ALGO': 'algorand',
+  'VET': 'vechain',
+  'FIL': 'filecoin',
+  'TRX': 'tron',
+  'ETC': 'ethereum-classic',
+  'NEAR': 'near',
+  'APT': 'aptos',
+  'ARB': 'arbitrum',
+  'OP': 'optimism',
+  'SUI': 'sui',
+  'PEPE': 'pepe',
+  'BNB': 'binancecoin',
+};
+
+async function fetchCryptoPrice(assetId: string, symbol?: string): Promise<number | null> {
+  const symbolMapped = symbol ? SYMBOL_TO_COINGECKO_ID[symbol.toUpperCase()] : null;
+  const idsToTry = [assetId, symbolMapped, assetId?.toLowerCase()].filter(Boolean) as string[];
+  
+  if (idsToTry.length === 0) {
+    console.warn(`[Bot Engine] No valid asset ID for price lookup`);
     return null;
   }
+  
+  const cacheKey = idsToTry[0];
+  const cached = priceCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.price;
+  }
+  
+  for (const lookupId of idsToTry) {
+    try {
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${lookupId}&vs_currencies=usd`
+      );
+      if (!response.ok) {
+        continue;
+      }
+      const data = await response.json();
+      const price = data[lookupId]?.usd;
+      if (price && price > 0) {
+        priceCache.set(cacheKey, { price, timestamp: Date.now() });
+        return price;
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+  
+  if (cached) {
+    console.warn(`[Bot Engine] Using stale cached price for ${cacheKey} due to API failure`);
+    return cached.price;
+  }
+  
+  console.warn(`[Bot Engine] Failed to fetch price for ${assetId}/${symbol} after trying: ${idsToTry.join(', ')}`);
+  return null;
 }
 
 export async function processHourlyTrades(): Promise<{
@@ -193,15 +255,21 @@ async function processUserBotTrade(
 
   try {
     if (profitAmount > 0) {
-      const assetPrice = await fetchCryptoPrice(selectedAssetInfo.id);
+      const assetPrice = await fetchCryptoPrice(selectedAssetInfo.id, selectedAsset);
       
-      const cryptoAmount = assetPrice && assetPrice > 0 
-        ? profitAmount / assetPrice 
-        : profitAmount;
-      
-      console.log(`[Bot Engine] Profit distribution: $${profitAmount.toFixed(2)} USD → ${cryptoAmount.toFixed(8)} ${selectedAsset} (price: $${assetPrice || 'unknown'})`);
-      
-      const existingPortfolio = await storage.getPortfolioBySymbol(userBot.userId, selectedAsset);
+      if (!assetPrice || assetPrice <= 0) {
+        console.warn(`[Bot Engine] Skipping portfolio distribution for ${selectedAsset} - no price available. Profit of $${profitAmount.toFixed(2)} added to USD balance only.`);
+        await storage.updateUserBalance(userBot.userId, {
+          totalBalanceUsd: (currentTotal + profitAmount).toFixed(8),
+          availableBalanceUsd: (currentAvailable + profitAmount).toFixed(8),
+          lockedBalanceUsd: currentLocked.toFixed(8),
+        });
+      } else {
+        const cryptoAmount = profitAmount / assetPrice;
+        
+        console.log(`[Bot Engine] Profit distribution: $${profitAmount.toFixed(2)} USD → ${cryptoAmount.toFixed(8)} ${selectedAsset} (price: $${assetPrice.toFixed(2)})`);
+        
+        const existingPortfolio = await storage.getPortfolioBySymbol(userBot.userId, selectedAsset);
       
       if (existingPortfolio) {
         const currentAmount = parseFloat(existingPortfolio.amount) || 0;
@@ -229,11 +297,12 @@ async function processUserBotTrade(
         });
       }
       
-      await storage.updateUserBalance(userBot.userId, {
-        totalBalanceUsd: (currentTotal + profitAmount).toFixed(8),
-        availableBalanceUsd: (currentAvailable + profitAmount).toFixed(8),
-        lockedBalanceUsd: currentLocked.toFixed(8),
-      });
+        await storage.updateUserBalance(userBot.userId, {
+          totalBalanceUsd: (currentTotal + profitAmount).toFixed(8),
+          availableBalanceUsd: (currentAvailable + profitAmount).toFixed(8),
+          lockedBalanceUsd: currentLocked.toFixed(8),
+        });
+      }
     } else if (lossAmount > 0) {
       let remainingLoss = lossAmount;
       let newLocked = currentLocked;
