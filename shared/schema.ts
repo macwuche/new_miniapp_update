@@ -14,6 +14,14 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Type for trading asset info (used in ai_bots.tradingAssets)
+export interface TradingAssetInfo {
+  id: string;
+  symbol: string;
+  name: string;
+  logoUrl: string;
+}
+
 // Enums
 export const roleEnum = pgEnum('role', ['user', 'admin']);
 export const assetTypeEnum = pgEnum('asset_type', ['crypto', 'forex', 'stock']);
@@ -206,7 +214,7 @@ export const aiBots = pgTable("ai_bots", {
   minProfitPercent: decimal("min_profit_percent", { precision: 5, scale: 2 }).default('2').notNull(),
   maxProfitPercent: decimal("max_profit_percent", { precision: 5, scale: 2 }).default('4').notNull(),
   reactivationFee: decimal("reactivation_fee", { precision: 18, scale: 8 }).default('0').notNull(),
-  tradingAssets: jsonb("trading_assets").$type<string[]>().default([]).notNull(),
+  tradingAssets: jsonb("trading_assets").$type<TradingAssetInfo[]>().default([]).notNull(),
   assetDistribution: jsonb("asset_distribution").$type<Record<string, number>>().default({}).notNull(),
   totalGains: decimal("total_gains", { precision: 18, scale: 8 }).default('0').notNull(),
   totalLosses: decimal("total_losses", { precision: 18, scale: 8 }).default('0').notNull(),
@@ -250,6 +258,8 @@ export const botTrades = pgTable("bot_trades", {
   profitAmount: decimal("profit_amount", { precision: 18, scale: 8 }).default('0').notNull(),
   lossAmount: decimal("loss_amount", { precision: 18, scale: 8 }).default('0').notNull(),
   assetPriceAtTrade: decimal("asset_price_at_trade", { precision: 18, scale: 8 }),
+  assetName: varchar("asset_name", { length: 100 }),
+  assetLogoUrl: text("asset_logo_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -301,6 +311,7 @@ export const portfolios = pgTable("portfolios", {
   assetType: varchar("asset_type", { length: 20 }).notNull().default('crypto'),
   name: varchar("name", { length: 100 }).notNull(),
   symbol: varchar("symbol", { length: 20 }).notNull(),
+  logoUrl: text("logo_url"),
   amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
   averageBuyPrice: decimal("average_buy_price", { precision: 18, scale: 8 }).notNull(),
   currentValue: decimal("current_value", { precision: 18, scale: 8 }).notNull(),
