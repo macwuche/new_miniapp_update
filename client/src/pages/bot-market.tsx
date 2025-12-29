@@ -448,14 +448,30 @@ export default function BotMarket() {
                 <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 mb-6" data-testid="text-trading-assets">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Trading Assets</h4>
                   <div className="space-y-2">
-                    {selectedBot.tradingAssets.map((asset, index) => (
-                      <div key={index} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600 dark:text-gray-300">{asset}</span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {selectedBot.assetDistribution?.[asset] ? `${selectedBot.assetDistribution[asset]}%` : '-'}
-                        </span>
-                      </div>
-                    ))}
+                    {selectedBot.tradingAssets.map((asset, index) => {
+                      const isObject = typeof asset === 'object' && asset !== null;
+                      const assetId = isObject ? (asset as TradingAssetInfo).id : undefined;
+                      const symbol = isObject ? (asset as TradingAssetInfo).symbol : (asset as string);
+                      const name = isObject ? (asset as TradingAssetInfo).name : symbol;
+                      const logoUrl = isObject ? (asset as TradingAssetInfo).logoUrl : undefined;
+                      const distKey = symbol.toUpperCase();
+                      const distKeyLower = symbol.toLowerCase();
+                      const distribution = (assetId && selectedBot.assetDistribution?.[assetId]) || selectedBot.assetDistribution?.[distKey] || selectedBot.assetDistribution?.[distKeyLower] || selectedBot.assetDistribution?.[symbol];
+                      
+                      return (
+                        <div key={index} className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2">
+                            {logoUrl && (
+                              <img src={logoUrl} alt={symbol} className="w-5 h-5 rounded-full" />
+                            )}
+                            <span className="text-gray-600 dark:text-gray-300">{name} ({symbol})</span>
+                          </div>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {distribution ? `${distribution}%` : '-'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
