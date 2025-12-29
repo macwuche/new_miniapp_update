@@ -8,6 +8,20 @@ interface SelectedAssetInfo {
   logoUrl: string;
 }
 
+async function fetchCryptoPrice(assetId: string): Promise<number | null> {
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${assetId}&vs_currencies=usd`
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data[assetId]?.usd || null;
+  } catch (error) {
+    console.error(`[Bot Engine] Failed to fetch price for ${assetId}:`, error);
+    return null;
+  }
+}
+
 export async function processHourlyTrades(): Promise<{
   processed: number;
   trades: Array<{
@@ -179,16 +193,26 @@ async function processUserBotTrade(
 
   try {
     if (profitAmount > 0) {
+      const assetPrice = await fetchCryptoPrice(selectedAssetInfo.id);
+      
+      const cryptoAmount = assetPrice && assetPrice > 0 
+        ? profitAmount / assetPrice 
+        : profitAmount;
+      
+      console.log(`[Bot Engine] Profit distribution: $${profitAmount.toFixed(2)} USD → ${cryptoAmount.toFixed(8)} ${selectedAsset} (price: $${assetPrice || 'unknown'})`);
+      
       const existingPortfolio = await storage.getPortfolioBySymbol(userBot.userId, selectedAsset);
       
       if (existingPortfolio) {
         const currentAmount = parseFloat(existingPortfolio.amount) || 0;
-        const newAmount = currentAmount + profitAmount;
-        const newValue = (parseFloat(existingPortfolio.currentValue) || 0) + profitAmount;
+        const newAmount = currentAmount + cryptoAmount;
+        const currentValue = parseFloat(existingPortfolio.currentValue) || 0;
+        const newValue = currentValue + profitAmount;
         
         await storage.updatePortfolio(existingPortfolio.id, {
           amount: newAmount.toFixed(8),
           currentValue: newValue.toFixed(8),
+          averageBuyPrice: assetPrice ? assetPrice.toFixed(8) : existingPortfolio.averageBuyPrice,
           logoUrl: selectedAssetInfo.logoUrl || existingPortfolio.logoUrl,
         });
       } else {
@@ -199,8 +223,8 @@ async function processUserBotTrade(
           name: selectedAssetInfo.name,
           symbol: selectedAsset,
           logoUrl: selectedAssetInfo.logoUrl,
-          amount: profitAmount.toFixed(8),
-          averageBuyPrice: '1',
+          amount: cryptoAmount.toFixed(8),
+          averageBuyPrice: assetPrice ? assetPrice.toFixed(8) : '1',
           currentValue: profitAmount.toFixed(8),
         });
       }
