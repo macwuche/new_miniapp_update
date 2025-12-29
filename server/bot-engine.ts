@@ -1,5 +1,12 @@
 import { storage } from "./storage";
-import type { AiBot, UserBot, BotTrade } from "@shared/schema";
+import type { AiBot, UserBot, BotTrade, TradingAssetInfo } from "@shared/schema";
+
+interface SelectedAssetInfo {
+  id: string;
+  symbol: string;
+  name: string;
+  logoUrl: string;
+}
 
 export async function processHourlyTrades(): Promise<{
   processed: number;
@@ -85,10 +92,11 @@ async function processUserBotTrade(
   
   const isWin = Math.random() * 100 < winRate;
 
-  const tradingAssets = bot.tradingAssets || ['BTC', 'ETH'];
+  const tradingAssets = bot.tradingAssets || [];
   const assetDistribution = (bot.assetDistribution || {}) as Record<string, number>;
   
-  const selectedAsset = selectAssetByDistribution(tradingAssets, assetDistribution);
+  const selectedAssetInfo = selectAssetByDistribution(tradingAssets, assetDistribution);
+  const selectedAsset = selectedAssetInfo.symbol;
 
   const remainingVal = parseFloat(userBot.remainingAllocation);
   const allocatedVal = parseFloat(userBot.allocatedAmount);
@@ -148,6 +156,8 @@ async function processUserBotTrade(
     profitAmount: profitAmount.toFixed(8),
     lossAmount: lossAmount.toFixed(8),
     assetPriceAtTrade: null,
+    assetName: selectedAssetInfo.name,
+    assetLogoUrl: selectedAssetInfo.logoUrl,
   } as any);
 
   const existingProfit = parseFloat(userBot.currentProfit) || 0;
@@ -169,10 +179,31 @@ async function processUserBotTrade(
 
   try {
     if (profitAmount > 0) {
-      await storage.updateUserBalance(userBot.userId, {
-        totalBalanceUsd: (currentTotal + profitAmount).toFixed(8),
-        availableBalanceUsd: (currentAvailable + profitAmount).toFixed(8),
-      });
+      const existingPortfolio = await storage.getPortfolioBySymbol(userBot.userId, selectedAsset);
+      
+      if (existingPortfolio) {
+        const currentAmount = parseFloat(existingPortfolio.amount) || 0;
+        const newAmount = currentAmount + profitAmount;
+        const newValue = (parseFloat(existingPortfolio.currentValue) || 0) + profitAmount;
+        
+        await storage.updatePortfolio(existingPortfolio.id, {
+          amount: newAmount.toFixed(8),
+          currentValue: newValue.toFixed(8),
+          logoUrl: selectedAssetInfo.logoUrl || existingPortfolio.logoUrl,
+        });
+      } else {
+        await storage.createPortfolio({
+          userId: userBot.userId,
+          assetId: selectedAssetInfo.id,
+          assetType: bot.category || 'crypto',
+          name: selectedAssetInfo.name,
+          symbol: selectedAsset,
+          logoUrl: selectedAssetInfo.logoUrl,
+          amount: profitAmount.toFixed(8),
+          averageBuyPrice: '1',
+          currentValue: profitAmount.toFixed(8),
+        });
+      }
     } else if (lossAmount > 0) {
       let remainingLoss = lossAmount;
       let newLocked = currentLocked;
@@ -195,7 +226,7 @@ async function processUserBotTrade(
       });
     }
   } catch (error: any) {
-    results.errors.push(`Balance update for user ${userBot.userId}: ${error.message}`);
+    results.errors.push(`Balance/Portfolio update for user ${userBot.userId}: ${error.message}`);
   }
 
   results.trades.push({
@@ -211,30 +242,54 @@ async function processUserBotTrade(
 }
 
 function selectAssetByDistribution(
-  assets: string[],
+  assets: TradingAssetInfo[] | string[],
   distribution: Record<string, number>
-): string {
+): SelectedAssetInfo {
+  const defaultAsset: SelectedAssetInfo = {
+    id: 'bitcoin',
+    symbol: 'BTC',
+    name: 'Bitcoin',
+    logoUrl: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
+  };
+  
   if (!assets || assets.length === 0) {
-    return 'BTC';
+    return defaultAsset;
   }
+
+  const normalizedAssets: SelectedAssetInfo[] = assets.map(asset => {
+    if (typeof asset === 'string') {
+      return {
+        id: asset.toLowerCase(),
+        symbol: asset.toUpperCase(),
+        name: asset,
+        logoUrl: '',
+      };
+    }
+    return {
+      id: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      logoUrl: asset.logoUrl || '',
+    };
+  });
 
   const hasDistribution = Object.keys(distribution).length > 0;
   
   if (!hasDistribution) {
-    return assets[Math.floor(Math.random() * assets.length)];
+    return normalizedAssets[Math.floor(Math.random() * normalizedAssets.length)];
   }
 
   const random = Math.random() * 100;
   let cumulative = 0;
 
-  for (const asset of assets) {
-    cumulative += distribution[asset] || 0;
+  for (const asset of normalizedAssets) {
+    cumulative += distribution[asset.symbol] || 0;
     if (random <= cumulative) {
       return asset;
     }
   }
 
-  return assets[assets.length - 1];
+  return normalizedAssets[normalizedAssets.length - 1];
 }
 
 async function handleExpiredSubscription(userBot: UserBot): Promise<void> {
