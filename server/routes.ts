@@ -1641,10 +1641,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentProfit: "0"
       });
 
-      // Update balance (deduct subscription fee + investment amount)
-      const newTotal = parseFloat(balance.totalBalanceUsd) - totalCost;
+      // Update balance: deduct subscription fee from available, move investment to locked
+      const currentTotal = parseFloat(balance.totalBalanceUsd) || 0;
+      const parsedAvailable = parseFloat(balance.availableBalanceUsd);
+      const currentAvailable = Number.isFinite(parsedAvailable) ? parsedAvailable : currentTotal;
+      const currentLocked = parseFloat(balance.lockedBalanceUsd) || 0;
+      
+      // Subscription fee is deducted entirely (non-refundable)
+      // Investment amount moves from available to locked (for trading)
+      const newAvailable = currentAvailable - totalCost;
+      const newLocked = currentLocked + investment;
+      const newTotal = newAvailable + newLocked;
+      
       await storage.updateUserBalance(userId, {
-        totalBalanceUsd: newTotal.toString()
+        totalBalanceUsd: newTotal.toFixed(8),
+        availableBalanceUsd: newAvailable.toFixed(8),
+        lockedBalanceUsd: newLocked.toFixed(8)
       });
 
       // Create transaction for subscription
@@ -1678,7 +1690,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: You do not own this subscription" });
       }
       
-      const updated = await storage.updateUserBot(parseInt(req.params.id), { isStopped: true });
+      // Unlock remaining allocation back to available balance
+      const remainingAllocation = parseFloat(userBot.remainingAllocation) || 0;
+      if (remainingAllocation > 0) {
+        const balance = await storage.getUserBalance(userId);
+        if (balance) {
+          const currentAvailable = parseFloat(balance.availableBalanceUsd) || 0;
+          const currentLocked = parseFloat(balance.lockedBalanceUsd) || 0;
+          
+          const amountToUnlock = Math.min(remainingAllocation, currentLocked);
+          const newLocked = currentLocked - amountToUnlock;
+          const newAvailable = currentAvailable + amountToUnlock;
+          const newTotal = newAvailable + newLocked;
+          
+          await storage.updateUserBalance(userId, {
+            totalBalanceUsd: newTotal.toFixed(8),
+            availableBalanceUsd: newAvailable.toFixed(8),
+            lockedBalanceUsd: newLocked.toFixed(8)
+          });
+        }
+      }
+      
+      const updated = await storage.updateUserBot(parseInt(req.params.id), { 
+        isStopped: true,
+        remainingAllocation: "0" // Clear remaining allocation since funds are unlocked
+      });
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to stop bot" });

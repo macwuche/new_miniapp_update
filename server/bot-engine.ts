@@ -43,7 +43,12 @@ export async function processHourlyTrades(): Promise<{
           try {
             if (userBot.isStopped || userBot.isPaused) continue;
             
-            if (new Date(userBot.expiryDate) < new Date()) continue;
+            // Check if subscription has expired
+            if (new Date(userBot.expiryDate) < new Date()) {
+              // Unlock remaining funds for expired subscriptions
+              await handleExpiredSubscription(userBot);
+              continue;
+            }
             
             if (userBot.status !== 'active') continue;
 
@@ -230,6 +235,43 @@ function selectAssetByDistribution(
   }
 
   return assets[assets.length - 1];
+}
+
+async function handleExpiredSubscription(userBot: UserBot): Promise<void> {
+  // Only process if there's remaining allocation and status is still active
+  const remainingAllocation = parseFloat(userBot.remainingAllocation) || 0;
+  if (remainingAllocation <= 0 || userBot.status !== 'active') return;
+  
+  try {
+    // Get user balance
+    const balance = await storage.getUserBalance(userBot.userId);
+    if (!balance) return;
+    
+    const currentAvailable = parseFloat(balance.availableBalanceUsd) || 0;
+    const currentLocked = parseFloat(balance.lockedBalanceUsd) || 0;
+    
+    // Unlock remaining allocation
+    const amountToUnlock = Math.min(remainingAllocation, currentLocked);
+    const newLocked = currentLocked - amountToUnlock;
+    const newAvailable = currentAvailable + amountToUnlock;
+    const newTotal = newAvailable + newLocked;
+    
+    await storage.updateUserBalance(userBot.userId, {
+      totalBalanceUsd: newTotal.toFixed(8),
+      availableBalanceUsd: newAvailable.toFixed(8),
+      lockedBalanceUsd: newLocked.toFixed(8)
+    });
+    
+    // Mark subscription as completed
+    await storage.updateUserBot(userBot.id, {
+      status: 'completed',
+      remainingAllocation: "0"
+    } as any);
+    
+    console.log(`[Bot Engine] Expired subscription ${userBot.id}: unlocked $${amountToUnlock.toFixed(2)} for user ${userBot.userId}`);
+  } catch (error: any) {
+    console.error(`[Bot Engine] Failed to handle expired subscription ${userBot.id}:`, error.message);
+  }
 }
 
 let botEngineInterval: NodeJS.Timeout | null = null;
