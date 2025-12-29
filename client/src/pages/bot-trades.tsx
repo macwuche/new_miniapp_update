@@ -19,6 +19,8 @@ interface BotTrade {
   profitAmount: string;
   lossAmount: string;
   assetPriceAtTrade: string | null;
+  assetName: string | null;
+  assetLogoUrl: string | null;
   createdAt: string;
 }
 
@@ -196,17 +198,34 @@ export default function BotTrades() {
                   <Card key={trade.id} className="p-3" data-testid={`card-trade-${trade.id}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${isWin ? 'bg-green-100' : 'bg-red-100'}`}>
-                          {isWin ? (
-                            <TrendingUp className="h-4 w-4 text-green-600" />
+                        <div className="relative">
+                          {trade.assetLogoUrl ? (
+                            <img 
+                              src={trade.assetLogoUrl} 
+                              alt={trade.assetName || trade.assetSymbol}
+                              className="w-10 h-10 rounded-full"
+                            />
                           ) : (
-                            <TrendingDown className="h-4 w-4 text-red-600" />
+                            <div className={`p-2 rounded-full ${isWin ? 'bg-green-100' : 'bg-red-100'}`}>
+                              {isWin ? (
+                                <TrendingUp className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <TrendingDown className="h-4 w-4 text-red-600" />
+                              )}
+                            </div>
                           )}
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center ${isWin ? 'bg-green-500' : 'bg-red-500'}`}>
+                            {isWin ? (
+                              <TrendingUp className="h-2.5 w-2.5 text-white" />
+                            ) : (
+                              <TrendingDown className="h-2.5 w-2.5 text-white" />
+                            )}
+                          </div>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium" data-testid={`text-asset-${trade.id}`}>
-                              {trade.assetSymbol.toUpperCase()}
+                              {trade.assetName || trade.assetSymbol.toUpperCase()}
                             </span>
                             <Badge 
                               variant={isWin ? "outline" : "destructive"} 
@@ -216,7 +235,7 @@ export default function BotTrades() {
                             </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {bot?.name || 'AI Bot'} • {trade.assetType}
+                            {bot?.name || 'AI Bot'} • {trade.assetSymbol.toUpperCase()}
                           </p>
                         </div>
                       </div>

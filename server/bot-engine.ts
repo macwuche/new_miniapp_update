@@ -204,6 +204,12 @@ async function processUserBotTrade(
           currentValue: profitAmount.toFixed(8),
         });
       }
+      
+      await storage.updateUserBalance(userBot.userId, {
+        totalBalanceUsd: (currentTotal + profitAmount).toFixed(8),
+        availableBalanceUsd: (currentAvailable + profitAmount).toFixed(8),
+        lockedBalanceUsd: currentLocked.toFixed(8),
+      });
     } else if (lossAmount > 0) {
       let remainingLoss = lossAmount;
       let newLocked = currentLocked;
@@ -283,7 +289,8 @@ function selectAssetByDistribution(
   let cumulative = 0;
 
   for (const asset of normalizedAssets) {
-    cumulative += distribution[asset.symbol] || 0;
+    const distValue = distribution[asset.symbol] || distribution[asset.symbol.toLowerCase()] || distribution[asset.symbol.toUpperCase()] || 0;
+    cumulative += distValue;
     if (random <= cumulative) {
       return asset;
     }
