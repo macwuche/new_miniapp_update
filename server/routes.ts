@@ -1653,11 +1653,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newLocked = currentLocked + investment;
       const newTotal = newAvailable + newLocked;
       
-      await storage.updateUserBalance(userId, {
+      console.log(`[Subscription] User ${userId}: fee=${subFee}, investment=${investment}, currentLocked=${currentLocked}, newLocked=${newLocked}, newAvailable=${newAvailable}, newTotal=${newTotal}`);
+      
+      const updatedBalance = await storage.updateUserBalance(userId, {
         totalBalanceUsd: newTotal.toFixed(8),
         availableBalanceUsd: newAvailable.toFixed(8),
         lockedBalanceUsd: newLocked.toFixed(8)
       });
+      
+      console.log(`[Subscription] Balance updated:`, JSON.stringify(updatedBalance));
 
       // Create transaction for subscription
       await storage.createTransaction({
