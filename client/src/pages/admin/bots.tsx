@@ -41,10 +41,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, MoreHorizontal, Edit, Trash2, Power, Bot, Loader2, Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { Search, Plus, MoreHorizontal, Edit, Trash2, Power, Bot, Loader2, Users, Calendar, DollarSign, TrendingUp, X, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+
+interface TradingAssetInfo {
+  id: string;
+  symbol: string;
+  name: string;
+  logoUrl: string;
+}
+
+interface CoinGeckoSearchResult {
+  id: string;
+  symbol: string;
+  name: string;
+  large: string;
+  thumb: string;
+}
 
 interface AiBot {
   id: number;
@@ -65,7 +80,7 @@ interface AiBot {
   minLossPercent: string;
   maxLossPercent: string;
   reactivationFee: string;
-  tradingAssets: string[];
+  tradingAssets: TradingAssetInfo[] | string[];
   assetDistribution: Record<string, number>;
   totalGains: string;
   totalLosses: string;
@@ -119,7 +134,7 @@ interface BotFormData {
   minLossPercent: string;
   maxLossPercent: string;
   reactivationFee: string;
-  tradingAssets: string[];
+  tradingAssets: TradingAssetInfo[];
   assetDistribution: Record<string, number>;
   expectedRoi: string;
   logo: string;
@@ -171,6 +186,84 @@ export default function BotManagement() {
     isStopped: false,
     status: "active",
   });
+  
+  const [cryptoSearchQuery, setCryptoSearchQuery] = useState("");
+  const [cryptoSearchResults, setCryptoSearchResults] = useState<CoinGeckoSearchResult[]>([]);
+  const [isCryptoSearchOpen, setIsCryptoSearchOpen] = useState(false);
+  const [isSearchingCrypto, setIsSearchingCrypto] = useState(false);
+  const cryptoSearchRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cryptoSearchRef.current && !cryptoSearchRef.current.contains(event.target as Node)) {
+        setIsCryptoSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  
+  useEffect(() => {
+    const searchCrypto = async () => {
+      if (cryptoSearchQuery.length < 2) {
+        setCryptoSearchResults([]);
+        return;
+      }
+      
+      setIsSearchingCrypto(true);
+      try {
+        const apiKey = localStorage.getItem("coingecko_api_key") || "CG-7Rc5Jh3xjgp1MT5J9vG5BsSk";
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(cryptoSearchQuery)}&x_cg_demo_api_key=${apiKey}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCryptoSearchResults(data.coins?.slice(0, 20) || []);
+        }
+      } catch (error) {
+        console.error("Crypto search error:", error);
+      } finally {
+        setIsSearchingCrypto(false);
+      }
+    };
+    
+    const debounce = setTimeout(searchCrypto, 300);
+    return () => clearTimeout(debounce);
+  }, [cryptoSearchQuery]);
+  
+  const addTradingAsset = (coin: CoinGeckoSearchResult) => {
+    const exists = formData.tradingAssets.some(a => a.id === coin.id);
+    if (exists) {
+      toast({ title: "Already Added", description: `${coin.name} is already in the trading assets.`, variant: "destructive" });
+      return;
+    }
+    
+    const newAsset: TradingAssetInfo = {
+      id: coin.id,
+      symbol: coin.symbol.toUpperCase(),
+      name: coin.name,
+      logoUrl: coin.large || coin.thumb,
+    };
+    
+    const newAssets = [...formData.tradingAssets, newAsset];
+    const newDistribution = { ...formData.assetDistribution, [newAsset.symbol]: 0 };
+    
+    setFormData({ ...formData, tradingAssets: newAssets, assetDistribution: newDistribution });
+    setCryptoSearchQuery("");
+    setCryptoSearchResults([]);
+    setIsCryptoSearchOpen(false);
+  };
+  
+  const removeTradingAsset = (assetId: string) => {
+    const asset = formData.tradingAssets.find(a => a.id === assetId);
+    if (!asset) return;
+    
+    const newAssets = formData.tradingAssets.filter(a => a.id !== assetId);
+    const newDistribution = { ...formData.assetDistribution };
+    delete newDistribution[asset.symbol];
+    
+    setFormData({ ...formData, tradingAssets: newAssets, assetDistribution: newDistribution });
+  };
 
   const { data: bots = [], isLoading } = useQuery<AiBot[]>({
     queryKey: ['/api/admin/bots'],
@@ -284,6 +377,21 @@ export default function BotManagement() {
 
   const openEditDialog = (bot: AiBot) => {
     setEditingBot(bot);
+    
+    let tradingAssets: TradingAssetInfo[] = [];
+    if (bot.tradingAssets && bot.tradingAssets.length > 0) {
+      if (typeof bot.tradingAssets[0] === 'string') {
+        tradingAssets = (bot.tradingAssets as string[]).map(symbol => ({
+          id: symbol.toLowerCase(),
+          symbol: symbol.toUpperCase(),
+          name: symbol,
+          logoUrl: '',
+        }));
+      } else {
+        tradingAssets = bot.tradingAssets as TradingAssetInfo[];
+      }
+    }
+    
     setFormData({
       name: bot.name,
       description: bot.description,
@@ -301,7 +409,7 @@ export default function BotManagement() {
       minLossPercent: bot.minLossPercent || "10",
       maxLossPercent: bot.maxLossPercent || "20",
       reactivationFee: bot.reactivationFee || "",
-      tradingAssets: bot.tradingAssets || [],
+      tradingAssets: tradingAssets,
       assetDistribution: bot.assetDistribution || {},
       expectedRoi: bot.expectedRoi,
       logo: bot.logo || "",
@@ -331,7 +439,7 @@ export default function BotManagement() {
       }
       
       const hasZeroDistribution = formData.tradingAssets.some(asset => 
-        !formData.assetDistribution[asset] || formData.assetDistribution[asset] === 0
+        !formData.assetDistribution[asset.symbol] || formData.assetDistribution[asset.symbol] === 0
       );
       if (hasZeroDistribution) {
         toast({ 
@@ -907,29 +1015,69 @@ export default function BotManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tradingAssets">Trading Assets (comma-separated)</Label>
-                <Input 
-                  id="tradingAssets" 
-                  placeholder="e.g., BTC,ETH,SOL" 
-                  value={formData.tradingAssets.join(',')}
-                  onChange={(e) => {
-                    const assets = e.target.value.split(',').map(a => a.trim().toUpperCase()).filter(a => a);
-                    const newDistribution = { ...formData.assetDistribution };
-                    assets.forEach(asset => {
-                      if (!(asset in newDistribution)) {
-                        newDistribution[asset] = 0;
-                      }
-                    });
-                    Object.keys(newDistribution).forEach(key => {
-                      if (!assets.includes(key)) {
-                        delete newDistribution[key];
-                      }
-                    });
-                    setFormData({ ...formData, tradingAssets: assets, assetDistribution: newDistribution });
-                  }}
-                  data-testid="input-bot-trading-assets"
-                />
-                <p className="text-xs text-gray-500">Enter asset symbols separated by commas</p>
+                <Label>Trading Assets</Label>
+                <div ref={cryptoSearchRef} className="relative">
+                  <div className="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] bg-white">
+                    {formData.tradingAssets.map((asset) => (
+                      <div 
+                        key={asset.id} 
+                        className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                      >
+                        {asset.logoUrl && (
+                          <img src={asset.logoUrl} alt={asset.name} className="w-4 h-4 rounded-full" />
+                        )}
+                        <span>{asset.symbol}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeTradingAsset(asset.id)}
+                          className="ml-1 hover:text-red-600"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    <input
+                      type="text"
+                      placeholder={formData.tradingAssets.length === 0 ? "Search and add cryptocurrencies..." : "Add more..."}
+                      value={cryptoSearchQuery}
+                      onChange={(e) => setCryptoSearchQuery(e.target.value)}
+                      onFocus={() => setIsCryptoSearchOpen(true)}
+                      className="flex-1 min-w-[150px] outline-none text-sm bg-transparent"
+                      data-testid="input-bot-trading-assets"
+                    />
+                  </div>
+                  
+                  {isCryptoSearchOpen && (cryptoSearchResults.length > 0 || isSearchingCrypto) && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-[300px] overflow-y-auto">
+                      {isSearchingCrypto ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                          <span className="ml-2 text-sm text-gray-500">Searching...</span>
+                        </div>
+                      ) : (
+                        cryptoSearchResults.map((coin) => (
+                          <button
+                            key={coin.id}
+                            type="button"
+                            onClick={() => addTradingAsset(coin)}
+                            className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0 text-left"
+                          >
+                            <img 
+                              src={coin.thumb} 
+                              alt={coin.name} 
+                              className="w-8 h-8 rounded-full"
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{coin.name}</div>
+                              <div className="text-xs text-gray-500">{coin.symbol.toUpperCase()}</div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">Search and select cryptocurrencies to trade with this bot</p>
               </div>
 
               {formData.tradingAssets.length > 0 && (
@@ -937,23 +1085,26 @@ export default function BotManagement() {
                   <Label>Asset Distribution (%)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {formData.tradingAssets.map((asset) => (
-                      <div key={asset} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                        <span className="font-medium text-sm min-w-[50px]">{asset}</span>
+                      <div key={asset.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        {asset.logoUrl && (
+                          <img src={asset.logoUrl} alt={asset.name} className="w-5 h-5 rounded-full" />
+                        )}
+                        <span className="font-medium text-sm min-w-[40px]">{asset.symbol}</span>
                         <Input 
                           type="number"
                           min="0"
                           max="100"
                           step="1"
-                          className="h-8 text-sm"
-                          value={formData.assetDistribution[asset] || 0}
+                          className="h-8 text-sm flex-1"
+                          value={formData.assetDistribution[asset.symbol] || 0}
                           onChange={(e) => {
                             const value = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
                             setFormData({
                               ...formData,
-                              assetDistribution: { ...formData.assetDistribution, [asset]: value }
+                              assetDistribution: { ...formData.assetDistribution, [asset.symbol]: value }
                             });
                           }}
-                          data-testid={`input-distribution-${asset.toLowerCase()}`}
+                          data-testid={`input-distribution-${asset.symbol.toLowerCase()}`}
                         />
                         <span className="text-xs text-gray-500">%</span>
                       </div>
