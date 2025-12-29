@@ -1,0 +1,50 @@
+root@6050142-ve510896:/var/www/crypto-trading# psql -h localhost -U crypto_user -d crypto_trading_db -c "SELECT id, name, is_active, category FROM ai_bots;"
+Password for user crypto_user: 
+ id |   name   | is_active | category 
+----+----------+-----------+----------
+  1 | X100 Bot | t         | crypto
+  2 | FX1001   | t         | crypto
+(2 rows)
+
+root@6050142-ve510896:/var/www/crypto-trading# psql -h localhost -U crypto_user -d crypto_trading_db -c "SELECT id, user_id, status, is_paused, is_stopped, expiry_date, remaining_allocation FROM user_bots WHERE status = 'active';"
+Password for user crypto_user: 
+ id | user_id | status | is_paused | is_stopped |       expiry_date       | remaining_allocation 
+----+---------+--------+-----------+------------+-------------------------+----------------------
+  6 |      16 | active | f         | f          | 2025-12-27 15:15:27.103 |       30000.00000000
+  5 |       2 | active | f         | f          | 2025-12-27 15:12:05.999 |        2557.00000000
+  7 |      18 | active | f         | f          | 2025-12-28 10:56:07.95  |         100.00000000
+  8 |      18 | active | f         | f          | 2025-12-28 10:56:25.931 |         100.00000000
+  9 |      16 | active | f         | f          | 2025-12-29 03:50:24.019 |       31766.00000000
+ 10 |       2 | active | f         | f          | 2025-12-29 04:07:16.957 |         250.00000000
+ 11 |       2 | active | f         | f          | 2025-12-28 23:25:39.154 |         384.00000000
+ 12 |       2 | active | f         | f          | 2025-12-29 00:08:30.335 |         156.00000000
+ 13 |       2 | active | f         | f          | 2025-12-29 05:42:33.775 |         100.00000000
+(9 rows)
+
+root@6050142-ve510896:/var/www/crypto-trading# psql -h localhost -U crypto_user -d crypto_trading_db -c "SELECT user_id, total_balance_usd, available_balance_usd, locked_balance_usd FROM user_balances;"
+Password for user crypto_user: 
+ user_id | total_balance_usd | available_balance_usd | locked_balance_usd 
+---------+-------------------+-----------------------+--------------------
+       1 |        0.00000000 |            0.00000000 |         0.00000000
+       3 |      500.00000000 |          500.00000000 |         0.00000000
+       5 |        0.00000000 |            0.00000000 |         0.00000000
+       6 |        0.00000000 |            0.00000000 |         0.00000000
+       7 |        0.00000000 |            0.00000000 |         0.00000000
+       8 |        0.00000000 |            0.00000000 |         0.00000000
+       9 |        0.00000000 |            0.00000000 |         0.00000000
+      10 |        0.00000000 |            0.00000000 |         0.00000000
+      11 |        0.00000000 |            0.00000000 |         0.00000000
+      12 |        0.00000000 |            0.00000000 |         0.00000000
+      13 |        0.00000000 |            0.00000000 |         0.00000000
+      14 |        0.00000000 |            0.00000000 |         0.00000000
+      15 |        0.00000000 |            0.00000000 |         0.00000000
+      20 |     5000.00000000 |         5000.00000000 |         0.00000000
+       2 |     2790.94000000 |         9798.06000018 |         0.00000000
+       4 |    28785.27000000 |        66270.55000000 |         0.00000000
+      19 |        0.00000000 |            0.00000000 |         0.00000000
+      18 |      740.00000000 |         1000.00000000 |         0.00000000
+      21 |        0.00000000 |            0.00000000 |         0.00000000
+      16 |   936674.00000000 |      1000000.00000000 |         0.00000000
+(20 rows)
+
+root@6050142-ve510896:/var/www/crypto-trading# 

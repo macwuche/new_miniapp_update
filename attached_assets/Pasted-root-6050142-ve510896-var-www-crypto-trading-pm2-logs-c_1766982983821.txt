@@ -1,0 +1,107 @@
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 50
+[TAILING] Tailing last 50 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error-0.log last 50 lines:
+0|crypto-t |   schema: undefined,
+0|crypto-t |   table: undefined,
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: undefined,
+0|crypto-t |   file: 'parse_relation.c',
+0|crypto-t |   line: '3647',
+0|crypto-t |   routine: 'errorMissingColumn'
+0|crypto-t | }
+0|crypto-t | [Bot Engine] Fatal error: error: column "category" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|crypto-t |     at async DatabaseStorage.listAiBots (file:///var/www/crypto-trading/dist/index.js:920:12)
+0|crypto-t |     at async processHourlyTrades (file:///var/www/crypto-trading/dist/index.js:1278:21)
+0|crypto-t |     at async Timeout._onTimeout (file:///var/www/crypto-trading/dist/index.js:1444:7) {
+0|crypto-t |   length: 108,
+0|crypto-t |   severity: 'ERROR',
+0|crypto-t |   code: '42703',
+0|crypto-t |   detail: undefined,
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: '37',
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: undefined,
+0|crypto-t |   table: undefined,
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: undefined,
+0|crypto-t |   file: 'parse_relation.c',
+0|crypto-t |   line: '3647',
+0|crypto-t |   routine: 'errorMissingColumn'
+0|crypto-t | }
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+
+/root/.pm2/logs/crypto-trading-out-0.log last 50 lines:
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 3:03:38 AM [express] GET /api/.env 200 in 3ms
+0|crypto-t | 3:03:49 AM [express] GET /api/phpinfo.php 200 in 2ms
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 4:20:42 AM [express] POST /api/users/register 200 in 13ms :: {"id":2,"telegramId":"8390393812","user…
+0|crypto-t | 4:20:58 AM [express] GET /api/settings 200 in 4ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-t | 4:21:00 AM [express] POST /api/users/register 200 in 3ms :: {"id":2,"telegramId":"8390393812","usern…
+0|crypto-t | 4:21:00 AM [express] POST /api/users/register 200 in 3ms :: {"id":2,"telegramId":"8390393812","usern…
+0|crypto-t | 4:21:00 AM [express] GET /api/users/2/balance 200 in 7ms :: {"userId":2,"totalBalanceUsd":"2910.9400…
+0|crypto-t | 4:21:00 AM [express] GET /api/users/2/bots 200 in 12ms :: [{"id":12,"userId":2,"botId":2,"subscripti…
+0|crypto-t | 4:21:03 AM [express] GET /api/users/2/bots 304 in 12ms :: [{"id":12,"userId":2,"botId":2,"subscripti…
+0|crypto-t | 4:21:03 AM [express] GET /api/bots 200 in 13ms :: [{"id":1,"name":"X100 Bot","description":"trade on…
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 4:26:20 AM [express] POST /api/users/register 200 in 12ms :: {"id":2,"telegramId":"8390393812","user…
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+
+
