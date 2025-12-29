@@ -22,6 +22,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+interface TradingAssetInfo {
+  id: string;
+  name: string;
+  symbol: string;
+  logoUrl?: string;
+}
+
 interface AiBot {
   id: number;
   name: string;
@@ -38,7 +45,7 @@ interface AiBot {
   category: 'crypto' | 'forex' | 'stock';
   subscriptionFee: string;
   reactivationFee: string;
-  tradingAssets: string[];
+  tradingAssets: TradingAssetInfo[] | string[];
 }
 
 interface UserBot {

@@ -14,6 +14,13 @@ import { useTelegram } from "@/lib/telegram-mock";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
+interface TradingAssetInfo {
+  id: string;
+  name: string;
+  symbol: string;
+  logoUrl?: string;
+}
+
 interface AiBot {
   id: number;
   name: string;
@@ -33,7 +40,7 @@ interface AiBot {
   isActive: boolean;
   category: 'crypto' | 'forex' | 'stock';
   subscriptionFee: string;
-  tradingAssets: string[];
+  tradingAssets: TradingAssetInfo[] | string[];
   assetDistribution: Record<string, number>;
 }
 
