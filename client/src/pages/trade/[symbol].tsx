@@ -163,8 +163,6 @@ export default function AssetDetail() {
   })) || [];
 
   const handleTrade = async () => {
-    console.log('[Trade] handleTrade called:', { tradeType, amount, inputAmount, assetAmount, usdValue, holdingAmount, dbUserId: dbUser?.id });
-    
     if (!dbUser?.id) {
       toast({ title: "Loading", description: "Please wait while we load your account", variant: "destructive" });
       return;
