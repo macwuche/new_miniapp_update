@@ -1,0 +1,38 @@
+root@srv1329180:/var/www/crypto-trading# pm2 delete crypto-trading
+chfsfhhp.supabase.co:5432/postgres" SESSION_SECRET="smartsp2p-crypto-session-secret-2026" NODE_ENV="production" pm2 start dist/index.js --name crypto-trading
+pm2 save
+pm2 logs crypto-trading --lines 15[PM2] Applying action deleteProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:/var/www/crypto-trading# DATABASE_URL="postgresql://postgres:MAC_T08140615640_Tt@db.djuxiymodxbxchfsfhhp.supabase.co:5432/postgres" SESSION_SECRET="smartsp2p-crypto-session-secret-2026" NODE_ENV="production" pm2 start dist/index.js --name crypto-trading
+[PM2] Starting /var/www/crypto-trading/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 14766    │ 0s     │ 0    │ online    │ 0%       │ 13.0mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:/var/www/crypto-trading# pm2 save
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+root@srv1329180:/var/www/crypto-trading# pm2 logs crypto-trading --lines 15
+[TAILING] Tailing last 15 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error.log last 15 lines:
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
+/root/.pm2/logs/crypto-trading-out.log last 15 lines:
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 8:23:18 PM [express] serving on port 5000
