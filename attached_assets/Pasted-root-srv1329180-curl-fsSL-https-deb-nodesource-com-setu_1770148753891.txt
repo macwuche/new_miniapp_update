@@ -1,0 +1,132 @@
+root@srv1329180:~# curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+2026-02-03 19:57:54 - Installing pre-requisites
+Hit:1 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:2 http://archive.ubuntu.com/ubuntu noble InRelease
+Hit:3 http://archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:4 https://repository.monarx.com/repository/ubuntu-noble noble InRelease
+Hit:5 http://archive.ubuntu.com/ubuntu noble-backports InRelease
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+3 packages can be upgraded. Run 'apt list --upgradable' to see them.
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+ca-certificates is already the newest version (20240203).
+ca-certificates set to manually installed.
+curl is already the newest version (8.5.0-2ubuntu10.6).
+gnupg is already the newest version (2.4.4-2ubuntu17.4).
+The following NEW packages will be installed:
+  apt-transport-https
+0 upgraded, 1 newly installed, 0 to remove and 3 not upgraded.
+Need to get 3970 B of archives.
+Selecting previously unselected package apt-transport-https.be used.
+(Reading database ... 106526 files and directories currently installed.)
+Preparing to unpack .../apt-transport-https_2.8.3_all.deb ...
+Unpacking apt-transport-https (2.8.3) ...
+Setting up apt-transport-https (2.8.3) ...
+Scanning processes...
+Scanning candidates...
+Scanning linux images...
+Fetched 3970 B in 0s (77.2 kB/s)
+Pending kernel upgrade!
+Running kernel version:
+  6.8.0-90-generic
+Diagnostics:
+  The currently running kernel version is not the expected kernel version 6.8.0-94-generic.
+
+Restarting the system to load the new kernel will not be handled automatically, so you should consider rebooting.
+
+Restarting services...
+
+Service restarts being deferred:
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart getty@tty1.service
+ systemctl restart serial-getty@ttyS0.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+No containers need to be restarted.
+
+User sessions running outdated binaries:
+ root @ session #1: sshd[2679]
+ root @ user manager service: systemd[2732]
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Hit:1 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:2 http://archive.ubuntu.com/ubuntu noble InRelease
+Get:3 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Hit:4 http://archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:5 https://repository.monarx.com/repository/ubuntu-noble noble InRelease
+Hit:6 http://archive.ubuntu.com/ubuntu noble-backports InRelease
+Get:7 https://deb.nodesource.com/node_20.x nodistro/main amd64 Packages [13.6 kB]
+Fetched 25.8 kB in 0s (82.6 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+3 packages can be upgraded. Run 'apt list --upgradable' to see them.
+2026-02-03 19:57:58 - Repository configured successfully.
+2026-02-03 19:57:58 - To install Node.js, run: apt install nodejs -y
+2026-02-03 19:57:58 - You can use N|solid Runtime as a node.js alternative
+2026-02-03 19:57:58 - To install N|solid Runtime, run: apt install nsolid -y
+
+root@srv1329180:~# apt install -y nodejs
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  nodejs
+0 upgraded, 1 newly installed, 0 to remove and 3 not upgraded.
+Need to get 32.0 MB of archives.
+After this operation, 197 MB of additional disk space will be used.
+Get:1 https://deb.nodesource.com/node_20.x nodistro/main amd64 nodejs amd64 20.20.0-1nodesource1 [32.0 MB]
+Fetched 32.0 MB in 1s (59.8 MB/s)
+Selecting previously unselected package nodejs.
+(Reading database ... 106530 files and directories currently installed.)
+Preparing to unpack .../nodejs_20.20.0-1nodesource1_amd64.deb ...
+Unpacking nodejs (20.20.0-1nodesource1) ...
+Setting up nodejs (20.20.0-1nodesource1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Scanning processes...
+Scanning candidates...
+Scanning linux images...
+
+Pending kernel upgrade!
+Running kernel version:
+  6.8.0-90-generic
+Diagnostics:
+  The currently running kernel version is not the expected kernel version 6.8.0-94-generic.
+
+Restarting the system to load the new kernel will not be handled automatically, so you should consider rebooting.
+
+Restarting services...
+
+Service restarts being deferred:
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart getty@tty1.service
+ systemctl restart serial-getty@ttyS0.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+No containers need to be restarted.
+
+User sessions running outdated binaries:
+ root @ session #1: sshd[2679]
+ root @ user manager service: systemd[2732]
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+root@srv1329180:~#
+v20.20.0
+10.8.2
+
+
+
+
+
+
+
+
+
+
+
+
