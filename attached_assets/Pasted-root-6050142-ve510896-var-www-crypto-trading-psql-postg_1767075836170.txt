@@ -1,0 +1,82 @@
+root@6050142-ve510896:/var/www/crypto-trading# psql postgresql://crypto_user:MACt08140615640Tt@localhost:5432/crypto_trading_db
+psql (14.20 (Ubuntu 14.20-0ubuntu0.22.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+crypto_trading_db=> CREATE TABLE IF NOT EXISTS "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL,
+  PRIMARY KEY ("sid")
+);
+
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+NOTICE:  relation "session" already exists, skipping
+CREATE TABLE
+NOTICE:  relation "IDX_session_expire" already exists, skipping
+CREATE INDEX
+crypto_trading_db=> \q
+root@6050142-ve510896:/var/www/crypto-trading# pm2 restart crypto-trading
+pm2 logs crypto-trading --lines 20
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ cluster │ 963939   │ 0s     │ 13   │ online    │ 0%       │ 37.7mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[TAILING] Tailing last 20 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error-0.log last 20 lines:
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21) {
+0|crypto-t |   length: 106,
+0|crypto-t |   severity: 'ERROR',
+0|crypto-t |   code: '42P01',
+0|crypto-t |   detail: undefined,
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: '13',
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: undefined,
+0|crypto-t |   table: undefined,
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: undefined,
+0|crypto-t |   file: 'parse_relation.c',
+0|crypto-t |   line: '1381',
+0|crypto-t |   routine: 'parserOpenTable'
+0|crypto-t | }
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+
+/root/.pm2/logs/crypto-trading-out-0.log last 20 lines:
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+
+0|crypto-trading  | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-trading  | 6:21:40 AM [express] serving on port 5000
+0|crypto-trading  | 6:22:10 AM [express] GET /api/settings 200 in 9ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-trading  | 6:22:12 AM [express] POST /api/users/register 200 in 11ms :: {"id":2,"telegramId":"8390393812","user…
+0|crypto-trading  | 6:22:12 AM [express] POST /api/users/register 200 in 5ms :: {"id":2,"telegramId":"8390393812","usern…
+0|crypto-trading  | 6:22:12 AM [express] GET /api/users/2/bots 200 in 7ms :: [{"id":18,"userId":2,"botId":3,"subscriptio…
+0|crypto-trading  | 6:22:12 AM [express] GET /api/users/2/balance 200 in 6ms :: {"userId":2,"totalBalanceUsd":"11250.400…
+0|crypto-trading  | 6:22:22 AM [express] GET /api/users/2/bots 304 in 10ms :: [{"id":18,"userId":2,"botId":3,"subscripti…
+0|crypto-trading  | 6:22:22 AM [express] GET /api/users/2/balance 304 in 5ms :: {"userId":2,"totalBalanceUsd":"11250.400…

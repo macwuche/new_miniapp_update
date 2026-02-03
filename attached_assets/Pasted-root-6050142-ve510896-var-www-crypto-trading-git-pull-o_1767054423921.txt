@@ -1,0 +1,204 @@
+root@6050142-ve510896:/var/www/crypto-trading# git pull origin main
+remote: Enumerating objects: 87, done.
+remote: Counting objects: 100% (87/87), done.
+remote: Compressing objects: 100% (23/23), done.
+remote: Total 70 (delta 53), reused 63 (delta 46), pack-reused 0 (from 0)
+Unpacking objects: 100% (70/70), 139.92 KiB | 3.11 MiB/s, done.
+From https://github.com/macwuche/new_miniapp_update
+ * branch            main       -> FETCH_HEAD
+   1be00cc..c4d23cc  main       -> origin/main
+Updating 1be00cc..c4d23cc
+Fast-forward
+ client/public/opengraph.jpg          | Bin 52470 -> 53055 bytes
+ client/src/pages/admin/bots.tsx      | 221 ++++++++++++++++++++++++++++++++++++++++++--------
+ client/src/pages/bot-investments.tsx |   9 +-
+ client/src/pages/bot-market.tsx      |  41 ++++++++--
+ client/src/pages/bot-trades.tsx      |  31 +++++--
+ server/bot-engine.ts                 | 185 ++++++++++++++++++++++++++++++++++++++----
+ shared/schema.ts                     |  13 ++-
+ 7 files changed, 433 insertions(+), 67 deletions(-)
+root@6050142-ve510896:/var/www/crypto-trading# npm install
+
+up to date, audited 449 packages in 2s
+
+44 packages are looking for funding
+  run `npm fund` for details
+
+4 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+root@6050142-ve510896:/var/www/crypto-trading# npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.1.12 building for production...
+✓ 2849 modules transformed.
+../dist/public/index.html                                                                          0.79 kB │ gzip:   0.43 kB
+../dist/public/assets/ai (1)_1764071986101-BGf8tvVX.png                                           25.16 kB
+../dist/public/assets/Abstract_trading_chart_background_with_blue_waves_f608156d-SX0rUNOE.png    882.59 kB
+../dist/public/assets/image-mJpsijxGqz7FlGXguHAG8f1zAYsu25_1764962504673-BEmlu2Fg.png          1,490.66 kB
+../dist/public/assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922-jWTIWnZh.png          1,506.38 kB
+../dist/public/assets/index-BrSUdJJ3.css                                                         152.23 kB │ gzip:  24.01 kB
+../dist/public/assets/index-BrRCmGx5.js                                                        1,376.88 kB │ gzip: 364.82 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 15.86s
+
+  dist/index.js  147.9kb
+
+⚡ Done in 38ms
+root@6050142-ve510896:/var/www/crypto-trading# pm2 restart crypto-trading
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ crypto-trading     │ cluster  │ 12   │ online    │ 0%       │ 37.4mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# pm2 status
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ crypto-trading     │ cluster  │ 12   │ online    │ 0%       │ 91.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@6050142-ve510896:/var/www/crypto-trading# npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/var/www/crypto-trading/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+ Warning  Found data-loss statements:
+· You're about to delete session table with 13 items
+
+THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
+
+Do you still want to push changes?
+[✓] Changes applied
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-tras
+[TAILING] Tailing last 15 lines for [crypto-tras] process (change the value with --lines option)
+^C
+root@6050142-ve510896:/var/www/crypto-trading# pm2 logs crypto-trading --lines 50
+[TAILING] Tailing last 50 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error-0.log last 50 lines:
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: undefined,
+0|crypto-t |   table: undefined,
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: undefined,
+0|crypto-t |   file: 'parse_relation.c',
+0|crypto-t |   line: '3647',
+0|crypto-t |   routine: 'errorMissingColumn'
+0|crypto-t | }
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21)
+0|crypto-t | Failed to prune sessions: error: relation "session" does not exist
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async PGStore._asyncQuery (/var/www/crypto-trading/node_modules/connect-pg-simple/index.js:322:21) {
+0|crypto-t |   length: 106,
+0|crypto-t |   severity: 'ERROR',
+0|crypto-t |   code: '42P01',
+0|crypto-t |   detail: undefined,
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: '13',
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: undefined,
+0|crypto-t |   table: undefined,
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: undefined,
+0|crypto-t |   file: 'parse_relation.c',
+0|crypto-t |   line: '1381',
+0|crypto-t |   routine: 'parserOpenTable'
+0|crypto-t | }
+0|crypto-t | Error: ENOENT: no such file or directory, stat '/var/www/crypto-trading/dist/public/index.html'
+
+/root/.pm2/logs/crypto-trading-out-0.log last 50 lines:
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 12:10:44 AM [express] GET /api/settings 200 in 15ms :: {"id":1,"siteName":"Crypto Trading Platform","…
+0|crypto-t | 12:10:45 AM [express] POST /api/users/register 200 in 5ms :: {"id":14,"telegramId":"123456789","usern…
+0|crypto-t | 12:10:45 AM [express] GET /api/users/14/bots 200 in 5ms :: []
+0|crypto-t | 12:10:45 AM [express] GET /api/users/14/balance 200 in 12ms :: {"userId":14,"totalBalanceUsd":"0.0000…
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 12:16:24 AM [express] GET /api/admin/bots 401 in 8ms :: {"error":"Unauthorized"}
+0|crypto-t | 12:16:24 AM [express] GET /api/admin/me 401 in 3ms :: {"error":"Unauthorized"}
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [AUDIT] 2025-12-30T00:19:07.288Z | ADMIN_LOGIN_SUCCESS | IP: 102.90.99.130 | {"adminId":1,"email":"admin@admin.com"}
+0|crypto-t | 12:19:07 AM [express] POST /api/admin/login 200 in 110ms :: {"id":1,"email":"admin@admin.com","permis…
+0|crypto-t | 12:19:07 AM [express] GET /api/admin/me 304 in 3ms :: {"id":1,"email":"admin@admin.com","permissions"…
+0|crypto-t | 12:19:07 AM [express] GET /api/admin/stats 200 in 7ms :: {"totalUsers":"20","totalDeposits":1037900,"…
+0|crypto-t | 12:19:07 AM [express] GET /api/admin/activity 304 in 6ms :: [{"type":"Withdrawal","userId":2,"userNam…
+0|crypto-t | 12:19:37 AM [express] GET /api/settings 304 in 3ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-t | 12:19:39 AM [express] GET /api/admin/me 304 in 5ms :: {"id":1,"email":"admin@admin.com","permissions"…
+0|crypto-t | 12:19:39 AM [express] GET /api/admin/stats 304 in 8ms :: {"totalUsers":"20","totalDeposits":1037900,"…
+0|crypto-t | 12:19:39 AM [express] GET /api/admin/activity 304 in 20ms :: [{"type":"Withdrawal","userId":2,"userNa…
+0|crypto-t | 12:19:55 AM [express] GET /api/settings 304 in 4ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-t | 12:19:56 AM [express] GET /api/admin/me 304 in 4ms :: {"id":1,"email":"admin@admin.com","permissions"…
+0|crypto-t | 12:19:56 AM [express] GET /api/admin/activity 304 in 10ms :: [{"type":"Withdrawal","userId":2,"userNa…
+0|crypto-t | 12:19:56 AM [express] GET /api/admin/stats 304 in 7ms :: {"totalUsers":"20","totalDeposits":1037900,"…
+0|crypto-t | 12:20:25 AM [express] GET /api/settings 304 in 3ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-t | 12:20:26 AM [express] GET /api/admin/activity 304 in 21ms :: [{"type":"Withdrawal","userId":2,"userNa…
+0|crypto-t | 12:20:26 AM [express] GET /api/admin/stats 304 in 26ms :: {"totalUsers":"20","totalDeposits":1037900,…
+0|crypto-t | 12:20:26 AM [express] GET /api/admin/me 304 in 30ms :: {"id":1,"email":"admin@admin.com","permissions…
+0|crypto-t | 12:20:29 AM [express] GET /api/settings 304 in 3ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-t | 12:20:30 AM [express] GET /api/admin/me 304 in 4ms :: {"id":1,"email":"admin@admin.com","permissions"…
+0|crypto-t | 12:20:30 AM [express] GET /api/admin/activity 304 in 11ms :: [{"type":"Withdrawal","userId":2,"userNa…
+0|crypto-t | 12:20:30 AM [express] GET /api/admin/stats 304 in 11ms :: {"totalUsers":"20","totalDeposits":1037900,…
+0|crypto-t | 12:20:39 AM [express] GET /api/settings 304 in 6ms :: {"id":1,"siteName":"Crypto Trading Platform","m…
+0|crypto-t | 12:20:41 AM [express] GET /api/admin/activity 304 in 14ms :: [{"type":"Withdrawal","userId":2,"userNa…
+0|crypto-t | 12:20:41 AM [express] GET /api/admin/stats 304 in 19ms :: {"totalUsers":"20","totalDeposits":1037900,…
+0|crypto-t | 12:20:41 AM [express] GET /api/admin/me 304 in 8ms :: {"id":1,"email":"admin@admin.com","permissions"…
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 12:21:12 AM [express] serving on port 5000
+0|crypto-t | 12:23:44 AM [express] GET /api/.env 200 in 16ms
+
+
+
+
+
+
+
+
+
