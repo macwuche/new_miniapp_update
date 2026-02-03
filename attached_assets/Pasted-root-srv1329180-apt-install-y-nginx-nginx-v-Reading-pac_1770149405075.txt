@@ -1,0 +1,104 @@
+root@srv1329180:~# apt install -y nginx && nginx -v
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  nginx-common
+Suggested packages:
+  fcgiwrap nginx-doc ssl-cert
+The following NEW packages will be installed:
+  nginx nginx-common
+0 upgraded, 2 newly installed, 0 to remove and 3 not upgraded.
+Need to get 564 kB of archives.
+After this operation, 1596 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 nginx-common all 1.24.0-2ubuntu7.5 [43.4 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 nginx amd64 1.24.0-2ubuntu7.5 [520 kB]
+Fetched 564 kB in 0s (1186 kB/s)
+Preconfiguring packages ...
+Selecting previously unselected package nginx-common.
+(Reading database ... 111893 files and directories currently installed.)
+Preparing to unpack .../nginx-common_1.24.0-2ubuntu7.5_all.deb ...
+Unpacking nginx-common (1.24.0-2ubuntu7.5) ...
+Selecting previously unselected package nginx.
+Preparing to unpack .../nginx_1.24.0-2ubuntu7.5_amd64.deb ...
+Unpacking nginx (1.24.0-2ubuntu7.5) ...
+Setting up nginx-common (1.24.0-2ubuntu7.5) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/nginx.service → /usr/lib/systemd/system/nginx.service.
+Setting up nginx (1.24.0-2ubuntu7.5) ...
+ * Upgrading binary nginx                                                                                                                                            [ OK ]
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for ufw (0.36.2-6) ...
+Scanning processes...
+Scanning candidates...
+Scanning linux images...
+
+Pending kernel upgrade!
+Running kernel version:
+  6.8.0-90-generic
+Diagnostics:
+  The currently running kernel version is not the expected kernel version 6.8.0-94-generic.
+
+Restarting the system to load the new kernel will not be handled automatically, so you should consider rebooting.
+
+Restarting services...
+
+Service restarts being deferred:
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart getty@tty1.service
+ systemctl restart serial-getty@ttyS0.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+No containers need to be restarted.
+
+User sessions running outdated binaries:
+ root @ session #1: sshd[2679]
+ root @ user manager service: systemd[2732]
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+nginx version: nginx/1.24.0 (Ubuntu)
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+
+added 447 packages, and audited 448 packages in 6s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+10 vulnerabilities (2 low, 5 moderate, 3 high)
+root@srv1329180:/var/www# cd crypto-trading
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+vite v7.1.12 building for production...
+✓ 2849 modules transformed.
+../dist/public/index.html                                                                          0.79 kB │ gzip:   0.43 kB
+../dist/public/assets/ai (1)_1764071986101-BGf8tvVX.png                                           25.16 kB
+../dist/public/assets/Abstract_trading_chart_background_with_blue_waves_f608156d-SX0rUNOE.png    882.59 kB
+../dist/public/assets/image-mJpsijxGqz7FlGXguHAG8f1zAYsu25_1764962504673-BEmlu2Fg.png          1,490.66 kB
+../dist/public/assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922-jWTIWnZh.png          1,506.38 kB
+../dist/public/assets/index-BrSUdJJ3.css                                                         152.23 kB │ gzip:  24.01 kB
+../dist/public/assets/index-BrRCmGx5.js                                                        1,376.88 kB │ gzip: 364.82 kB
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.46s
+
+  dist/index.js  147.9kb
+
+⚡ Done in 8ms
+root@srv1329180:/var/www/crypto-trading# pm2 start dist/index.js --name crypto-trading
+[PM2] Starting /var/www/crypto-trading/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 14541    │ 0s     │ 0    │ online    │ 0%       │ 29.4mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:/var/www/crypto-trading# pm2 status
