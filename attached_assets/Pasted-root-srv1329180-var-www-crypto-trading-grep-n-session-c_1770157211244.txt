@@ -1,0 +1,50 @@
+root@srv1329180:/var/www/crypto-trading# grep -n "session\|cookie\|secure" /var/www/crypto-trading/server/routes.ts | head -40
+5:import session from "express-session";
+76:// Extend Express Request to include session
+77:declare module "express-session" {
+84:const PgSession = connectPg(session);
+117:    session({
+125:      cookie: {
+128:        secure: process.env.NODE_ENV === "production",
+136:    if (!req.session.adminId) {
+174:      req.session.adminId = admin.id;
+189:    req.session.destroy((err) => {
+199:      const admin = await storage.getAdmin(req.session.adminId!);
+283:        adminId: req.session.adminId,
+325:        adminId: req.session.adminId,
+370:          adminId: req.session.adminId,
+393:          adminId: req.session.adminId,
+472:          req.session.userId = existing.id;
+480:          req.session.userId = existingByUsername.id;
+506:      req.session.userId = user.id;
+626:        req.session.adminId!,
+1163:      const approved = await storage.approveWithdrawal(withdrawalId, req.session.adminId!);
+2457:        reviewedBy: req.session.adminId,
+vite v7.1.12 building for production...
+✓ 2849 modules transformed.
+../dist/public/index.html                                                                          0.79 kB │ gzip:   0.43 kB
+../dist/public/assets/ai (1)_1764071986101-BGf8tvVX.png                                           25.16 kB
+../dist/public/assets/Abstract_trading_chart_background_with_blue_waves_f608156d-SX0rUNOE.png    882.59 kB
+../dist/public/assets/image-mJpsijxGqz7FlGXguHAG8f1zAYsu25_1764962504673-BEmlu2Fg.png          1,490.66 kB=dist
+../dist/public/assets/image-HAOP1Ww8vlmzgXdSYLJwF7bftOam04_1764962324922-jWTIWnZh.png          1,506.38 kB
+../dist/public/assets/index-BrSUdJJ3.css                                                         152.23 kB │ gzip:  24.01 kB
+../dist/public/assets/index-BrRCmGx5.js                                                        1,376.88 kB │ gzip: 364.82 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.51s
+
+  dist/index.js  147.9kb
+
+⚡ Done in 9ms
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [crypto-trading](ids: [ 0 ])
+[PM2] [crypto-trading](0) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 16277    │ 0s     │ 2    │ online    │ 0%       │ 19.1mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:/var/www/crypto-trading#

@@ -1,0 +1,95 @@
+root@srv1329180:~# echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+apt update
+Warning: apt-key is deprecated. Manage keyring files in trusted.gpg.d instead (see apt-key(8)).
+OK
+Get:1 http://apt.postgresql.org/pub/repos/apt noble-pgdg InRelease [107 kB]
+Hit:2 http://archive.ubuntu.com/ubuntu noble InRelease                                                                                                        
+Get:3 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]                                                         
+Hit:4 https://deb.nodesource.com/node_20.x nodistro InRelease                                        
+Get:5 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]                              
+Get:6 https://repository.monarx.com/repository/ubuntu-noble noble InRelease [1549 B]      
+Get:7 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]                 
+Get:8 http://apt.postgresql.org/pub/repos/apt noble-pgdg/main amd64 Packages [356 kB]
+Get:9 https://repository.monarx.com/repository/ubuntu-noble noble/main amd64 Packages [10.8 kB]
+Get:10 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1430 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1730 kB]
+Get:12 http://security.ubuntu.com/ubuntu noble-security/main amd64 Components [21.5 kB]
+Get:13 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [929 kB]
+Get:14 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Components [74.2 kB]  
+Get:15 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Components [212 B]
+Get:16 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [212 B]
+Get:17 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [175 kB]       
+Get:18 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1528 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [387 kB]
+Get:20 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+Get:21 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+Get:22 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7312 B]
+Get:23 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.5 kB]
+Get:24 http://archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [216 B]
+Get:25 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+Fetched 7147 kB in 2s (4653 kB/s)                             
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+23 packages can be upgraded. Run 'apt list --upgradable' to see them.
+W: http://apt.postgresql.org/pub/repos/apt/dists/noble-pgdg/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
+root@srv1329180:~# 
+root@srv1329180:~# 
+root@srv1329180:~# 
+root@srv1329180:~# 
+root@srv1329180:~# apt install -y postgresql-client-17
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  libpq5
+Suggested packages:
+  libpq-oauth postgresql-17 postgresql-doc-17
+The following NEW packages will be installed:
+  postgresql-client-17
+The following packages will be upgraded:
+  libpq5
+1 upgraded, 1 newly installed, 0 to remove and 22 not upgraded.
+Need to get 2275 kB of archives.
+After this operation, 10.8 MB of additional disk space will be used.
+Get:1 http://apt.postgresql.org/pub/repos/apt noble-pgdg/main amd64 libpq5 amd64 18.1-1.pgdg24.04+2 [245 kB]
+Get:2 http://apt.postgresql.org/pub/repos/apt noble-pgdg/main amd64 postgresql-client-17 amd64 17.7-3.pgdg24.04+1 [2030 kB]
+Fetched 2275 kB in 0s (51.9 MB/s)              
+(Reading database ... 112642 files and directories currently installed.)
+Preparing to unpack .../libpq5_18.1-1.pgdg24.04+2_amd64.deb ...
+Unpacking libpq5:amd64 (18.1-1.pgdg24.04+2) over (16.11-0ubuntu0.24.04.1) ...
+Selecting previously unselected package postgresql-client-17.
+Preparing to unpack .../postgresql-client-17_17.7-3.pgdg24.04+1_amd64.deb ...
+Unpacking postgresql-client-17 (17.7-3.pgdg24.04+1) ...
+Setting up libpq5:amd64 (18.1-1.pgdg24.04+2) ...
+Setting up postgresql-client-17 (17.7-3.pgdg24.04+1) ...
+update-alternatives: using /usr/share/postgresql/17/man/man1/psql.1.gz to provide /usr/share/man/man1/psql.1.gz (psql.1.gz) in auto mode
+Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
+Scanning processes...                                                                                                                                                                                                                         
+Scanning candidates...                                                                                                                                                                                                                        
+Scanning linux images...                                                                                                                                                                                                                      
+
+Pending kernel upgrade!
+Running kernel version:
+  6.8.0-90-generic
+Diagnostics:
+  The currently running kernel version is not the expected kernel version 6.8.0-94-generic.
+
+Restarting the system to load the new kernel will not be handled automatically, so you should consider rebooting.
+
+Restarting services...
+
+Service restarts being deferred:
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart getty@tty1.service
+ systemctl restart serial-getty@ttyS0.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+No containers need to be restarted.
+
+User sessions running outdated binaries:
+ root @ user manager service: systemd[2732]
+root@srv1329180:~# /usr/lib/postgresql/17/bin/pg_dump "postgresql://postgres:MAC_T08140615640_Tt@db.djuxiymodxbxchfsfhhp.supabase.co:5432/postgres" > /root/crypto_backup_$(date +%Y%m%d).sql
+root@srv1329180:~#

@@ -1,0 +1,40 @@
+root@srv1329180:/var/www/crypto-trading# psql "postgresql://postgres:MAC_T08140615640_Tt@db.djuxiymodxbxchfsfhhp.supabase.co:5432/postgres" -c "SELECT COUNT(*) FROM session;"
+ count
+-------
+   135
+(1 row)
+
+root@srv1329180:/var/www/crypto-trading# pm2 logs crypto-trading --lines 15 --nostream
+[TAILING] Tailing last 15 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error.log last 15 lines:
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
+/root/.pm2/logs/crypto-trading-out.log last 15 lines:
+0|crypto-t | 10:08:02 PM [express] GET /api/users/14/bots 304 in 4ms :: []
+0|crypto-t | [AUDIT] 2026-02-03T22:08:18.311Z | ADMIN_LOGIN_SUCCESS | IP: 102.90.98.170 | {"adminId":1,"email":"admin@admin.com"}
+0|crypto-t | 10:08:18 PM [express] POST /api/admin/login 200 in 60ms :: {"id":1,"email":"admin@admin.com","permiss…
+0|crypto-t | 10:08:18 PM [express] GET /api/admin/me 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:08:18 PM [express] GET /api/admin/stats 401 in 1ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:08:18 PM [express] GET /api/admin/activity 401 in 0ms :: {"error":"Unauthorized"}
+0|crypto-t | 10:08:35 PM [express] GET /api/users/14/balance 304 in 5ms :: {"userId":14,"totalBalanceUsd":"0.00000…
+0|crypto-t | 10:08:35 PM [express] GET /api/users/14/bots 304 in 4ms :: []
+0|crypto-t | 10:09:09 PM [express] POST /api/users/register 200 in 25ms :: {"id":14,"telegramId":"123456789","user…
+0|crypto-t | 10:09:09 PM [express] GET /api/users/14/balance 304 in 4ms :: {"userId":14,"totalBalanceUsd":"0.00000…
+0|crypto-t | 10:09:09 PM [express] GET /api/users/14/bots 304 in 19ms :: []
+0|crypto-t | 10:09:21 PM [express] GET /api/users/14/balance 304 in 4ms :: {"userId":14,"totalBalanceUsd":"0.00000…
+0|crypto-t | 10:09:21 PM [express] GET /api/users/14/bots 304 in 4ms :: []
+0|crypto-t | 10:09:26 PM [express] GET /api/users/14/balance 304 in 5ms :: {"userId":14,"totalBalanceUsd":"0.00000…
+0|crypto-t | 10:09:26 PM [express] GET /api/users/14/bots 304 in 5ms :: []
+
+root@srv1329180:/var/www/crypto-trading#
