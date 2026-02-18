@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { usersAPI } from "@/lib/api";
 
 interface LinkedWalletType {
   id: number;
@@ -46,6 +47,33 @@ export default function ConnectWallet() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register'],
+    queryFn: async (): Promise<{ id: number } | null> => {
+      // @ts-ignore
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const userData = tg.initDataUnsafe.user;
+        return usersAPI.register({
+          telegramId: userData.id.toString(),
+          username: userData.username || userData.first_name,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          profilePicture: userData.photo_url
+        }) as Promise<{ id: number }>;
+      } else {
+        return usersAPI.register({
+          telegramId: "123456789",
+          username: "alextrader",
+          firstName: "Alex",
+          lastName: "Trader",
+          profilePicture: null
+        }) as Promise<{ id: number }>;
+      }
+    },
+    staleTime: 1000 * 60,
+  });
 
   const { data: walletTypes = [], isLoading } = useQuery<LinkedWalletType[]>({
     queryKey: ['/api/linked-wallet-types/enabled'],
@@ -89,7 +117,8 @@ export default function ConnectWallet() {
       setProgress(100);
       
       try {
-        const userId = 1;
+        const userId = dbUser?.id;
+        if (!userId) throw new Error('User not found');
         
         const res = await fetch(`/api/users/${userId}/connected-wallets`, {
           method: 'POST',
@@ -105,6 +134,7 @@ export default function ConnectWallet() {
         if (!res.ok) throw new Error('Failed to connect wallet');
 
         queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/connected-wallets'] });
         
         setShowSuccess(true);
         
