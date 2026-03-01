@@ -16,6 +16,11 @@ interface UserBalance {
   lockedBalanceUsd: string;
 }
 
+interface DailyPnl {
+  pnl: string;
+  trades: number;
+}
+
 interface SystemSettings {
   telegramSupportUrl?: string;
 }
@@ -50,6 +55,17 @@ export default function Profile() {
       if (!dbUser?.id) return null;
       const res = await fetch(`/api/users/${dbUser.id}/balance`);
       if (!res.ok) throw new Error('Failed to fetch balance');
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+  });
+
+  const { data: dailyPnl } = useQuery<DailyPnl>({
+    queryKey: ['/api/users/daily-pnl', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return { pnl: '0.00', trades: 0 };
+      const res = await fetch(`/api/users/${dbUser.id}/daily-pnl`);
+      if (!res.ok) return { pnl: '0.00', trades: 0 };
       return res.json();
     },
     enabled: !!dbUser?.id,
@@ -106,9 +122,11 @@ export default function Profile() {
             <p className="text-xs mb-1" style={{ opacity: 0.8, color: 'white' }}>Total Balance</p>
             <p className="text-lg font-bold" style={{ color: 'white' }} data-testid="text-balance-amount">${totalBalance}</p>
           </Card>
-          <Card className="p-4 border-none shadow-sm bg-white dark:bg-slate-800">
+          <Card className="p-4 border-none shadow-sm bg-white dark:bg-slate-800" data-testid="card-daily-pnl">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Today's P&L</p>
-            <p className="text-lg font-bold text-green-500">+$324.50</p>
+            <p className={`text-lg font-bold ${parseFloat(dailyPnl?.pnl || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`} data-testid="text-pnl-amount">
+              {parseFloat(dailyPnl?.pnl || '0') >= 0 ? '+' : ''}${parseFloat(dailyPnl?.pnl || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
           </Card>
         </div>
 

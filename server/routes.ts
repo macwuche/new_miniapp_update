@@ -2085,6 +2085,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/users/:userId/daily-pnl", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const trades = await storage.listUserAllBotTrades(userId);
+      const todayTrades = trades.filter(t => new Date(t.createdAt) >= today);
+
+      let totalProfit = 0;
+      let totalLoss = 0;
+      for (const trade of todayTrades) {
+        totalProfit += parseFloat(trade.profitAmount || '0');
+        totalLoss += parseFloat(trade.lossAmount || '0');
+      }
+
+      const pnl = totalProfit - totalLoss;
+      res.json({ pnl: pnl.toFixed(2), trades: todayTrades.length });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch daily P&L" });
+    }
+  });
+
   app.get("/api/balances", requireAdmin, async (req, res) => {
     try {
       const balances = await storage.getAllUserBalances();
