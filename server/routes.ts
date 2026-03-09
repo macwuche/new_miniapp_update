@@ -2140,7 +2140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       otpStore.set(email.toLowerCase(), { code, expiresAt, userId });
 
       const { error } = await resend.emails.send({
-        from: "SmartSP2P <onboarding@resend.dev>",
+        from: "SmartSP2P <noreply@smartsp2p.com>",
         to: [email],
         subject: "Your Verification Code",
         html: `
