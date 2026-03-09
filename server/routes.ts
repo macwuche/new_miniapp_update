@@ -2126,7 +2126,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== EMAIL VERIFICATION ====================
   const otpStore = new Map<string, { code: string; expiresAt: number; userId: number }>();
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resendApiKey = process.env.RESEND_API_KEY || "";
+  const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
   app.post("/api/email/send-code", async (req, res) => {
     try {
@@ -2135,8 +2136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email and userId are required" });
       }
 
-      if (!process.env.RESEND_API_KEY) {
-        console.error("[Email] RESEND_API_KEY is not set");
+      if (!resend) {
+        console.error("[Email] RESEND_API_KEY is not set - email service unavailable");
         return res.status(500).json({ error: "Email service is not configured. Please contact support." });
       }
 
