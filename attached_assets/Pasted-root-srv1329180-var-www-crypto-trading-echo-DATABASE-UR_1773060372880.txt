@@ -1,0 +1,64 @@
+root@srv1329180:/var/www/crypto-trading# echo $DATABASE_URL
+echo $RESEND_API_KEY
+postgresql://postgres:MAC_T08140615640_Tt@db.djuxiymodxbxchfsfhhp.supabase.co:5432/postgres
+re_VWXDaBgM_GFiWo6mg4YGWov3awKWjNXkU
+root@srv1329180:/var/www/crypto-trading# pm2 delete crypto-trading
+DATABASE_URL="postgresql://postgres:MAC_T08140615640_Tt@db.djuxiymodxbxchfsfhhp.supabase.co:5432/postgres" RESEND_API_KEY="re_VWXDaBgM_GFiWo6mg4YGWov3awKWjNXkU" NODE_ENV="production" SESSION_SECRET="smartsp2p-session-secret-2026" pm2 start dist/index.js --name crypto-trading
+pm2 save
+pm2 logs crypto-trading --lines 10
+[PM2] Applying action deleteProcessId on app [crypto-trading](ids: [ 7 ])
+[PM2] [crypto-trading](7) ✓
+┌────┬─────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name        │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼─────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave    │ default     │ 1.0.0   │ cluster │ 478119   │ 21h    │ 29   │ online    │ 0%       │ 152.6mb  │ root     │ disabled │
+└────┴─────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Starting /var/www/crypto-trading/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave          │ default     │ 1.0.0   │ cluster │ 478119   │ 21h    │ 29   │ online    │ 0%       │ 152.6mb  │ root     │ disabled │
+│ 8  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 485932   │ 0s     │ 0    │ online    │ 0%       │ 18.1mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+[TAILING] Tailing last 10 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error.log last 10 lines:
+8|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+8|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+8|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+8|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+8|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+8|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+8|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+8|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+8|crypto-t | 12:43:50 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=1QCJ_pVG3en6rfQv25XQr (resolved id: /src/main.tsx?v=1QCJ_pVG3en6rfQv25XQr). Does the file exist?
+8|crypto-t | 12:44:14 PM [vite] (client) Pre-transform error: Failed to load url /src/main.tsx?v=ziKYeadsEXGWXrqt_uyE- (resolved id: /src/main.tsx?v=ziKYeadsEXGWXrqt_uyE-). Does the file exist?
+
+/root/.pm2/logs/crypto-trading-out.log last 10 lines:
+8|crypto-t | 12:33:43 PM [express] GET /api/admin/stats 200 in 43ms :: {"totalUsers":"37","totalDeposits":1037900,…
+8|crypto-t | 12:34:04 PM [express] GET /api/admin/users 200 in 12ms :: [{"id":45,"telegramId":"8373720675","userna…
+8|crypto-t | 12:34:04 PM [express] GET /api/admin/me 304 in 8ms :: {"id":1,"email":"admin@admin.com","permissions"…
+8|crypto-t | 12:34:04 PM [express] GET /api/balances 200 in 24ms :: [{"userId":1,"totalBalanceUsd":"0.00000000","a…
+8|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+8|crypto-t | 12:41:37 PM [express] serving on port 5000
+8|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+8|crypto-t | 12:43:51 PM [express] serving on port 5000
+8|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+8|crypto-t | 12:44:15 PM [express] serving on port 5000
+
+8|crypto-trading  | [Bot Engine] Starting trading engine (runs every 5 minutes)
+8|crypto-trading  | 12:44:48 PM [express] serving on port 5000
+8|crypto-trading  | 12:45:06 PM [express] GET /api/settings 304 in 66ms :: {"id":1,"siteName":"Crypto Trading Platform","…
+8|crypto-trading  | 12:45:08 PM [express] GET /api/balances 401 in 2ms :: {"error":"Unauthorized"}
+8|crypto-trading  | 12:45:08 PM [express] GET /api/admin/users 401 in 1ms :: {"error":"Unauthorized"}
+8|crypto-trading  | 12:45:08 PM [express] GET /api/admin/me 401 in 1ms :: {"error":"Unauthorized"}
+8|crypto-trading  | [AUDIT] 2026-03-09T12:45:16.092Z | ADMIN_LOGIN_SUCCESS | IP: 105.116.7.223 | {"adminId":1,"email":"admin@admin.com"}
+8|crypto-trading  | 12:45:16 PM [express] POST /api/admin/login 200 in 145ms :: {"id":1,"email":"admin@admin.com","permis…
+8|crypto-trading  | 12:45:16 PM [express] GET /api/admin/activity 304 in 42ms :: [{"type":"Deposit","userId":12,"userName…
+8|crypto-trading  | 12:45:16 PM [express] GET /api/admin/stats 304 in 49ms :: {"totalUsers":"37","totalDeposits":1037900,…
+8|crypto-trading  | 12:45:16 PM [express] GET /api/admin/me 304 in 23ms :: {"id":1,"email":"admin@admin.com","permissions…
+8|crypto-trading  | 12:45:20 PM [express] GET /api/balances 304 in 17ms :: [{"userId":1,"totalBalanceUsd":"0.00000000","a…
+8|crypto-trading  | 12:45:20 PM [express] GET /api/admin/users 304 in 12ms :: [{"id":45,"telegramId":"8373720675","userna…
+8|crypto-trading  | 12:45:20 PM [express] GET /api/admin/me 304 in 9ms :: {"id":1,"email":"admin@admin.com","permissions"…
