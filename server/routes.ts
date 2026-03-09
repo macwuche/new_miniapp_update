@@ -7,6 +7,7 @@ import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 import rateLimit from "express-rate-limit";
 import { processHourlyTrades, startBotEngine } from "./bot-engine";
+import { Resend } from "resend";
 
 // Password validation helper
 function validatePassword(password: string): { valid: boolean; message: string } {
@@ -2120,6 +2121,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(formatted);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch balances" });
+    }
+  });
+
+  // ==================== EMAIL VERIFICATION ====================
+  const otpStore = new Map<string, { code: string; expiresAt: number; userId: number }>();
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  app.post("/api/email/send-code", async (req, res) => {
+    try {
+      const { email, userId } = req.body;
+      if (!email || !userId) {
+        return res.status(400).json({ error: "Email and userId are required" });
+      }
+
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+      otpStore.set(email.toLowerCase(), { code, expiresAt, userId });
+
+      const { error } = await resend.emails.send({
+        from: "SmartSP2P <onboarding@resend.dev>",
+        to: [email],
+        subject: "Your Verification Code",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+            <h2 style="color: #1e40af; margin-bottom: 8px;">Email Verification</h2>
+            <p style="color: #374151; font-size: 15px;">Use the following code to verify your email address:</p>
+            <div style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+              <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1e40af;">${code}</span>
+            </div>
+            <p style="color: #6b7280; font-size: 13px;">This code expires in 10 minutes. If you didn't request this, please ignore this email.</p>
+          </div>
+        `,
+      });
+
+      if (error) {
+        console.error("Resend error:", error);
+        return res.status(500).json({ error: "Failed to send verification email" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Send code error:", error);
+      res.status(500).json({ error: "Failed to send verification code" });
+    }
+  });
+
+  app.post("/api/email/verify-code", async (req, res) => {
+    try {
+      const { email, code, userId } = req.body;
+      if (!email || !code || !userId) {
+        return res.status(400).json({ error: "Email, code, and userId are required" });
+      }
+
+      const stored = otpStore.get(email.toLowerCase());
+      if (!stored) {
+        return res.status(400).json({ error: "No verification code found. Please request a new one." });
+      }
+
+      if (Date.now() > stored.expiresAt) {
+        otpStore.delete(email.toLowerCase());
+        return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+      }
+
+      if (stored.userId !== userId) {
+        return res.status(400).json({ error: "Verification code mismatch. Please request a new one." });
+      }
+
+      if (stored.code !== code) {
+        return res.status(400).json({ error: "Incorrect verification code. Please try again." });
+      }
+
+      otpStore.delete(email.toLowerCase());
+
+      const existing = await storage.getUserEmailByEmail(email.toLowerCase());
+      if (existing) {
+        await storage.updateUserEmailVerification(existing.id, true);
+      } else {
+        await storage.createUserEmail({
+          userId,
+          email: email.toLowerCase(),
+          isPrimary: true,
+          verified: true,
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Verify code error:", error);
+      res.status(500).json({ error: "Failed to verify code" });
+    }
+  });
+
+  app.get("/api/users/:userId/verified-email", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const emails = await storage.listUserEmails(userId);
+      const verified = emails.find(e => e.verified);
+      if (verified) {
+        res.json({ email: verified.email, verified: true });
+      } else {
+        res.json({ email: null, verified: false });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch verified email" });
     }
   });
 

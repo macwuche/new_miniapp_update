@@ -241,6 +241,8 @@ export interface IStorage {
   // User Emails
   createUserEmail(email: InsertUserEmail): Promise<UserEmail>;
   listUserEmails(userId: number): Promise<UserEmail[]>;
+  getUserEmailByEmail(email: string): Promise<UserEmail | undefined>;
+  updateUserEmailVerification(id: number, verified: boolean): Promise<UserEmail | undefined>;
   
   // KYC Verifications
   createKycVerification(kyc: InsertKycVerification): Promise<KycVerification>;
@@ -1042,6 +1044,16 @@ export class DatabaseStorage implements IStorage {
 
   async listUserEmails(userId: number): Promise<UserEmail[]> {
     return await db.select().from(userEmails).where(eq(userEmails.userId, userId));
+  }
+
+  async getUserEmailByEmail(emailAddr: string): Promise<UserEmail | undefined> {
+    const [found] = await db.select().from(userEmails).where(eq(userEmails.email, emailAddr));
+    return found || undefined;
+  }
+
+  async updateUserEmailVerification(id: number, verified: boolean): Promise<UserEmail | undefined> {
+    const [updated] = await db.update(userEmails).set({ verified }).where(eq(userEmails.id, id)).returning();
+    return updated || undefined;
   }
 
   // KYC Verifications

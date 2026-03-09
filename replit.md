@@ -139,6 +139,10 @@ The schema includes comprehensive tables for a trading platform:
   - Default API key: `CG-7Rc5Jh3xjgp1MT5J9vG5BsSk` (demo key)
   - Supports custom API keys via environment variable `VITE_COINGECKO_API_KEY`
 - **Forex & Stock APIs**: Integration points exist but specific providers not yet configured
+- **Resend**: Email delivery service for OTP verification codes
+  - API key stored in `RESEND_API_KEY` environment variable
+  - Used in Security page email verification flow (send-code, verify-code endpoints)
+  - Sends from `onboarding@resend.dev` (Resend default sender)
 
 **Database Provider**
 - **Neon Serverless PostgreSQL**: Cloud-hosted PostgreSQL with serverless drivers

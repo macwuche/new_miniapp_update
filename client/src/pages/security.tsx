@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Shield, Mail, CheckCircle2, AlertTriangle, Lock, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTelegram } from "@/lib/telegram-mock";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +24,9 @@ import {
 
 export default function Security() {
   const { toast } = useToast();
-  const [step, setStep] = useState<"email" | "verify" | "verified">("email");
+  const { user } = useTelegram();
+  const queryClient = useQueryClient();
+  const [step, setStep] = useState<"loading" | "email" | "verify" | "verified">("loading");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -30,16 +34,51 @@ export default function Security() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [timer, setTimer] = useState(0);
 
-  // Check for existing verification
-  useEffect(() => {
-    const savedEmail = localStorage.getItem("verified_email");
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setStep("verified");
-    }
-  }, []);
+  const { data: dbUser } = useQuery({
+    queryKey: ['/api/users/register', user?.id],
+    queryFn: async () => {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.id?.toString() || "123456789",
+          username: user?.username || 'alextrader',
+          firstName: user?.first_name || 'Alex',
+          lastName: user?.last_name || 'Trader',
+          profilePicture: user?.photo_url || null
+        })
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: true,
+  });
 
-  // Timer countdown for resend
+  const { data: verifiedEmail, isLoading: isLoadingEmail } = useQuery({
+    queryKey: ['/api/users/verified-email', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return null;
+      const res = await fetch(`/api/users/${dbUser.id}/verified-email`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!dbUser?.id,
+  });
+
+  useEffect(() => {
+    if (isLoadingEmail) return;
+    if (!dbUser) {
+      setStep("email");
+      return;
+    }
+    if (verifiedEmail?.verified) {
+      setEmail(verifiedEmail.email);
+      setStep("verified");
+    } else {
+      setStep("email");
+    }
+  }, [verifiedEmail, isLoadingEmail, dbUser]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (timer > 0) {
@@ -60,18 +99,41 @@ export default function Security() {
       });
       return;
     }
+    if (!dbUser?.id) {
+      toast({
+        title: "Error",
+        description: "User not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSending(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSending(false);
-    
-    setStep("verify");
-    setTimer(60); // 60 seconds cooldown
-    toast({
-      title: "Code Sent",
-      description: "Please check your email (and spam folder) for the verification code.",
-    });
+    try {
+      const res = await fetch('/api/email/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, userId: dbUser.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send code');
+      }
+      setStep("verify");
+      setTimer(60);
+      toast({
+        title: "Code Sent",
+        description: "Please check your email (and spam folder) for the verification code.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to Send",
+        description: error.message || "Could not send verification code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleVerifyCode = async () => {
@@ -85,39 +147,61 @@ export default function Security() {
     }
 
     setIsVerifying(true);
-    // Simulate verification
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsVerifying(false);
-
-    if (otp === "123456" || otp.length === 6) { // Accept any 6 digit code for mockup
-      localStorage.setItem("verified_email", email);
+    try {
+      const res = await fetch('/api/email/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: otp, userId: dbUser?.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Verification failed');
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/users/verified-email', dbUser?.id] });
       setStep("verified");
       setShowSuccessDialog(true);
-    } else {
+    } catch (error: any) {
       toast({
         title: "Verification Failed",
-        description: "The code you entered is incorrect. Please try again.",
+        description: error.message || "The code you entered is incorrect. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  const handleResendCode = () => {
-    if (timer > 0) return;
+  const handleResendCode = async () => {
+    if (timer > 0 || !dbUser?.id) return;
     setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
+    try {
+      const res = await fetch('/api/email/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, userId: dbUser.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to resend code');
+      }
       setTimer(60);
       toast({
         title: "Code Resent",
         description: "A new verification code has been sent to your email.",
       });
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Failed to Resend",
+        description: error.message || "Could not resend code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleReset = () => {
     if (window.confirm("Are you sure you want to change your verified email? This will require re-verification.")) {
-      localStorage.removeItem("verified_email");
       setStep("email");
       setEmail("");
       setOtp("");
@@ -127,11 +211,10 @@ export default function Security() {
   return (
     <MobileLayout>
       <div className="px-6 pt-8 pb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Security</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-security-title">Security</h1>
       </div>
       
       <div className="px-4 space-y-6 pb-24">
-        {/* Header Info */}
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
           <div className="p-2 bg-blue-100 text-blue-600 rounded-lg mt-1">
             <Shield size={20} />
@@ -143,6 +226,12 @@ export default function Security() {
             </p>
           </div>
         </div>
+
+        {step === "loading" && (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
 
         {step === "email" && (
           <Card className="border-none shadow-sm">
@@ -166,6 +255,7 @@ export default function Security() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      data-testid="input-email"
                     />
                   </div>
                 </div>
@@ -173,6 +263,7 @@ export default function Security() {
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   disabled={isSending}
+                  data-testid="button-send-code"
                 >
                   {isSending ? "Sending Code..." : "Verify Email"}
                 </Button>
@@ -196,6 +287,7 @@ export default function Security() {
                   maxLength={6}
                   value={otp}
                   onChange={(value) => setOtp(value)}
+                  data-testid="input-otp"
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -212,6 +304,7 @@ export default function Security() {
                 onClick={handleVerifyCode} 
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={isVerifying || otp.length !== 6}
+                data-testid="button-verify-code"
               >
                 {isVerifying ? "Verifying..." : "Submit Code"}
               </Button>
@@ -223,6 +316,7 @@ export default function Security() {
                   onClick={handleResendCode}
                   disabled={timer > 0 || isSending}
                   className="text-gray-500 dark:text-gray-400"
+                  data-testid="button-resend-code"
                 >
                   {timer > 0 ? `Resend code in ${timer}s` : "Resend Code"}
                 </Button>
@@ -232,6 +326,7 @@ export default function Security() {
                 variant="link" 
                 className="w-full text-gray-400 dark:text-gray-500 h-auto p-0"
                 onClick={() => setStep("email")}
+                data-testid="button-change-email"
               >
                 Change Email
               </Button>
@@ -246,8 +341,8 @@ export default function Security() {
                 <CheckCircle2 size={32} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-green-900">Email Verified</h3>
-                <p className="text-green-700 mt-1">{email}</p>
+                <h3 className="text-xl font-bold text-green-900" data-testid="text-verified-status">Email Verified</h3>
+                <p className="text-green-700 mt-1" data-testid="text-verified-email">{email}</p>
               </div>
               <p className="text-sm text-green-600/80 max-w-xs">
                 Your account is secured. You will receive notifications for any suspicious activity.
@@ -258,6 +353,7 @@ export default function Security() {
                   variant="outline" 
                   className="w-full border-green-200 text-green-700 hover:bg-green-100 hover:text-green-800"
                   onClick={handleReset}
+                  data-testid="button-change-verified-email"
                 >
                   <RefreshCw size={16} className="mr-2" />
                   Change Email
@@ -267,7 +363,6 @@ export default function Security() {
           </Card>
         )}
 
-        {/* Additional Security Settings (Mock) */}
         <div className="space-y-3">
           <h3 className="font-bold text-gray-900 dark:text-white px-1">Advanced Security</h3>
           
@@ -285,7 +380,6 @@ export default function Security() {
           </div>
         </div>
 
-        {/* Success Dialog */}
         <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -302,6 +396,7 @@ export default function Security() {
                 type="button" 
                 className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                 onClick={() => setShowSuccessDialog(false)}
+                data-testid="button-success-understood"
               >
                 Understood
               </Button>
