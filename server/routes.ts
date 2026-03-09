@@ -2135,11 +2135,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email and userId are required" });
       }
 
+      if (!process.env.RESEND_API_KEY) {
+        console.error("[Email] RESEND_API_KEY is not set");
+        return res.status(500).json({ error: "Email service is not configured. Please contact support." });
+      }
+
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = Date.now() + 10 * 60 * 1000;
       otpStore.set(email.toLowerCase(), { code, expiresAt, userId });
 
-      const { error } = await resend.emails.send({
+      console.log(`[Email] Sending verification code to ${email} for user ${userId}`);
+
+      const { data, error } = await resend.emails.send({
         from: "SmartSP2P <noreply@smartsp2p.com>",
         to: [email],
         subject: "Your Verification Code",
@@ -2156,14 +2163,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (error) {
-        console.error("Resend error:", error);
-        return res.status(500).json({ error: "Failed to send verification email" });
+        console.error("[Email] Resend API error:", JSON.stringify(error));
+        return res.status(500).json({ error: "Failed to send verification email. Please try again." });
       }
 
+      console.log(`[Email] Successfully sent to ${email}, id: ${data?.id}`);
       res.json({ success: true });
-    } catch (error) {
-      console.error("Send code error:", error);
-      res.status(500).json({ error: "Failed to send verification code" });
+    } catch (error: any) {
+      console.error("[Email] Send code exception:", error?.message || error);
+      res.status(500).json({ error: "Failed to send verification code. Please try again." });
     }
   });
 
