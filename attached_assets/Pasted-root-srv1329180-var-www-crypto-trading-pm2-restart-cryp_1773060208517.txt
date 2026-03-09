@@ -1,0 +1,78 @@
+root@srv1329180:/var/www/crypto-trading# pm2 restart crypto-trading --update-env
+[PM2] Applying action restartProcessId on app [crypto-trading](ids: [ 6 ])
+[PM2] [crypto-trading](6) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave          │ default     │ 1.0.0   │ cluster │ 478119   │ 20h    │ 29   │ online    │ 0%       │ 151.9mb  │ root     │ disabled │
+│ 6  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 485816   │ 0s     │ 2    │ online    │ 0%       │ 23.4mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:/var/www/crypto-trading# source /etc/environment
+export DATABASE_URL=postgresql://postgres:MAC_T08140615640_Tt@db.djuxiymodxbxchfsfhhp.supabase.co:5432/postgres
+export RESEND_API_KEY=re_VWXDaBgM_GFiWo6mg4YGWov3awKWjNXkU
+export SESSION_SECRET=your_session_secret_here
+pm2 delete crypto-trading
+pm2 start dist/index.js --name crypto-trading
+pm2 save
+[PM2] Applying action deleteProcessId on app [crypto-trading](ids: [ 6 ])
+[PM2] [crypto-trading](6) ✓
+┌────┬─────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name        │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼─────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave    │ default     │ 1.0.0   │ cluster │ 478119   │ 20h    │ 29   │ online    │ 0%       │ 151.8mb  │ root     │ disabled │
+└────┴─────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Starting /var/www/crypto-trading/dist/index.js in fork_mode (1 instance)
+[PM2] Done.
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave          │ default     │ 1.0.0   │ cluster │ 478119   │ 20h    │ 29   │ online    │ 0%       │ 151.8mb  │ root     │ disabled │
+│ 7  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 485846   │ 0s     │ 0    │ online    │ 0%       │ 21.9mb   │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+root@srv1329180:/var/www/crypto-trading# pm2 logs crypto-trading --lines 20
+[TAILING] Tailing last 20 lines for [crypto-trading] process (change the value with --lines option)
+/root/.pm2/logs/crypto-trading-error.log last 20 lines:
+7|crypto-t |     at async Timeout._onTimeout (file:///var/www/crypto-trading/dist/index.js:1608:7)
+7|crypto-t | Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+7|crypto-t |     at new Resend (file:///var/www/crypto-trading/node_modules/resend/dist/index.mjs:903:25)
+7|crypto-t |     at registerRoutes (file:///var/www/crypto-trading/dist/index.js:3362:18)
+7|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:3918:24
+7|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:3938:3
+7|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+7|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+7|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+7|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+7|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+7|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+7|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+7|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+7|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+7|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+7|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+7|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+7|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+7|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+
+/root/.pm2/logs/crypto-trading-out.log last 20 lines:
+7|crypto-t | [Bot Engine] Processed 1 trades, 0 errors
+7|crypto-t | [Bot Engine] Running trade processing...
+7|crypto-t | [Bot Engine] Processed 1 trades, 0 errors
+7|crypto-t | [Bot Engine] Running trade processing...
+7|crypto-t | [Bot Engine] Profit distribution: $0.00 USD → 0.00000000 BTC (price: $68042.00)
+7|crypto-t | [Bot Engine] Processed 1 trades, 0 errors
+7|crypto-t | [Bot Engine] Running trade processing...
+7|crypto-t | [Bot Engine] Profit distribution: $0.00 USD → 0.00000000 BTC (price: $68042.00)
+7|crypto-t | [Bot Engine] Processed 1 trades, 0 errors
+7|crypto-t | 12:33:07 PM [express] GET /api/settings 200 in 23ms :: {"id":1,"siteName":"Crypto Trading Platform","…
+7|crypto-t | [AUDIT] 2026-03-09T12:33:43.369Z | ADMIN_LOGIN_SUCCESS | IP: 105.116.7.223 | {"adminId":1,"email":"admin@admin.com"}
+7|crypto-t | 12:33:43 PM [express] POST /api/admin/login 200 in 108ms :: {"id":1,"email":"admin@admin.com","permis…
+7|crypto-t | 12:33:43 PM [express] GET /api/admin/me 200 in 18ms :: {"id":1,"email":"admin@admin.com","permissions…
+7|crypto-t | 12:33:43 PM [express] GET /api/admin/activity 200 in 22ms :: [{"type":"Deposit","userId":12,"userName…
+7|crypto-t | 12:33:43 PM [express] GET /api/admin/stats 200 in 43ms :: {"totalUsers":"37","totalDeposits":1037900,…
+7|crypto-t | 12:34:04 PM [express] GET /api/admin/users 200 in 12ms :: [{"id":45,"telegramId":"8373720675","userna…
+7|crypto-t | 12:34:04 PM [express] GET /api/admin/me 304 in 8ms :: {"id":1,"email":"admin@admin.com","permissions"…
+7|crypto-t | 12:34:04 PM [express] GET /api/balances 200 in 24ms :: [{"userId":1,"totalBalanceUsd":"0.00000000","a…
+7|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+7|crypto-t | 12:41:37 PM [express] serving on port 5000
