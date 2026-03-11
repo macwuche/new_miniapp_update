@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTelegram } from "@/lib/telegram-mock";
+import { useTicketWebSocket } from "@/hooks/use-ticket-websocket";
 
 interface SupportTicketCategory {
   id: number;
@@ -74,6 +75,19 @@ export default function Support() {
   });
 
   const userId = dbUser?.id;
+
+  useTicketWebSocket({
+    ticketId: selectedTicket?.id ?? null,
+    role: "user",
+    onNewMessage: (message, ticket) => {
+      setSelectedTicket(ticket);
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/tickets`] });
+    },
+    onTicketUpdate: (ticket) => {
+      setSelectedTicket(ticket);
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/tickets`] });
+    },
+  });
 
   const { data: categories = [] } = useQuery<SupportTicketCategory[]>({
     queryKey: ['/api/ticket-categories?active=true'],

@@ -2283,34 +2283,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ticketId = parseInt(req.params.id);
       const { newMessage, status } = req.body;
       
-      // Get the current ticket to append the new message
       const currentTicket = await storage.getSupportTicket(ticketId);
       if (!currentTicket) {
         return res.status(404).json({ error: "Ticket not found" });
       }
+
+      const isAdmin = !!(req.session as any)?.adminId;
       
-      // Build updated data
       const updateData: any = { updatedAt: new Date() };
       
-      // If a new message is being added, append it atomically
-      if (newMessage && newMessage.sender && newMessage.text) {
+      let addedMessage: any = null;
+      if (newMessage && newMessage.text) {
         const existingMessages = currentTicket.messages || [];
-        updateData.messages = [
-          ...existingMessages,
-          {
-            sender: newMessage.sender,
-            text: newMessage.text,
-            timestamp: newMessage.timestamp || new Date().toISOString()
-          }
-        ];
+        addedMessage = {
+          sender: isAdmin ? "admin" : "user",
+          text: newMessage.text,
+          timestamp: new Date().toISOString()
+        };
+        updateData.messages = [...existingMessages, addedMessage];
       }
       
-      // Update status if provided
       if (status) {
         updateData.status = status;
       }
       
       const ticket = await storage.updateSupportTicket(ticketId, updateData);
+
+      const { broadcastNewMessage, broadcastTicketUpdate } = await import("./ticket-websocket");
+      if (addedMessage && ticket) {
+        broadcastNewMessage(ticketId, addedMessage, ticket);
+      } else if (ticket) {
+        broadcastTicketUpdate(ticketId, ticket);
+      }
+
       res.json(ticket);
     } catch (error) {
       console.error("Failed to update ticket:", error);

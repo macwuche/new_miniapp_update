@@ -21,6 +21,7 @@ import { MessageSquare, ArrowLeftRight, Plus, Send, Trash2, Loader2, Clock, Chec
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useTicketWebSocket } from "@/hooks/use-ticket-websocket";
 
 interface SupportTicketCategory {
   id: number;
@@ -99,6 +100,19 @@ export default function Support() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useTicketWebSocket({
+    ticketId: selectedTicket?.id ?? null,
+    role: "admin",
+    onNewMessage: (message, ticket) => {
+      setSelectedTicket(ticket);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+    },
+    onTicketUpdate: (ticket) => {
+      setSelectedTicket(ticket);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+    },
+  });
 
   const { data: tickets = [], isLoading: loadingTickets } = useQuery<SupportTicket[]>({
     queryKey: ['/api/admin/tickets'],

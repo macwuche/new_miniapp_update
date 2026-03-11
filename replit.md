@@ -102,8 +102,17 @@ The schema includes comprehensive tables for a trading platform:
    - Session storage via `connect-pg-simple` for Express sessions
 
 7. **Support & Settings Tables**
-   - `support_tickets`: User-admin communication with priority/status
+   - `support_tickets`: User-admin communication with priority/status, real-time messaging via WebSocket
+   - `support_ticket_categories`: Ticket categories managed by admin
    - `system_settings`: Platform-wide configuration and feature toggles
+
+8. **Real-Time Communication**
+   - WebSocket server at `/ws/tickets` for live ticket messaging
+   - Server module: `server/ticket-websocket.ts`
+   - Client hook: `client/src/hooks/use-ticket-websocket.ts`
+   - Broadcasts new messages and ticket updates to connected clients
+   - Auto-reconnects on connection drop (3-second retry)
+   - Sender role determined server-side from session (not client-trusted)
 
 **Enums for Data Integrity**
 - Transaction statuses: pending, approved, completed, failed, rejected
