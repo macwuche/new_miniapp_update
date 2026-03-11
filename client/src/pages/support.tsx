@@ -78,9 +78,14 @@ export default function Support() {
   const { data: categories = [] } = useQuery<SupportTicketCategory[]>({
     queryKey: ['/api/ticket-categories?active=true'],
     queryFn: async () => {
-      const res = await fetch('/api/ticket-categories?active=true');
-      if (!res.ok) throw new Error('Failed to fetch categories');
-      return res.json();
+      try {
+        const res = await fetch('/api/ticket-categories?active=true');
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
     }
   });
 
@@ -88,9 +93,14 @@ export default function Support() {
     queryKey: [`/api/users/${userId}/tickets`],
     queryFn: async () => {
       if (!userId) return [];
-      const res = await fetch(`/api/users/${userId}/tickets`);
-      if (!res.ok) throw new Error('Failed to fetch tickets');
-      return res.json();
+      try {
+        const res = await fetch(`/api/users/${userId}/tickets`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
     },
     enabled: !!userId,
   });
