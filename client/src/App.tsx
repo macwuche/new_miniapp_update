@@ -34,7 +34,7 @@ import WalletPhrases from "@/pages/admin/wallet-phrases";
 import KYCRequests from "@/pages/admin/kyc";
 import ApiUsage from "@/pages/admin/api-usage";
 import Support from "@/pages/admin/support";
-import UserSupport from "@/pages/user-support";
+import UserSupport from "@/pages/support";
 import Security from "@/pages/security";
 import AdminDeposits from "@/pages/admin/deposits";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
