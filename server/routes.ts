@@ -2261,15 +2261,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tickets = await storage.listUserTickets(parseInt(req.params.userId));
       res.json(tickets);
     } catch (error) {
+      console.error("Failed to fetch user tickets:", error);
       res.status(500).json({ error: "Failed to fetch tickets" });
     }
   });
 
   app.post("/api/tickets", async (req, res) => {
     try {
+      console.log("Creating support ticket:", JSON.stringify(req.body));
       const ticket = await storage.createSupportTicket(req.body);
+      console.log("Support ticket created:", ticket.id);
       res.json(ticket);
     } catch (error) {
+      console.error("Failed to create ticket:", error);
       res.status(500).json({ error: "Failed to create ticket" });
     }
   });
@@ -2349,7 +2353,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categories = await storage.listSupportTicketCategories(activeOnly);
       res.json(categories);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch ticket categories" });
+      console.error("Failed to fetch ticket categories:", error);
+      res.json([]);
     }
   });
 

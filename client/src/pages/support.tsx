@@ -78,21 +78,30 @@ export default function Support() {
   const { data: categories = [] } = useQuery<SupportTicketCategory[]>({
     queryKey: ['/api/ticket-categories?active=true'],
     queryFn: async () => {
-      const res = await fetch('/api/ticket-categories?active=true');
-      if (!res.ok) throw new Error('Failed to fetch categories');
-      return res.json();
-    }
+      try {
+        const res = await fetch('/api/ticket-categories?active=true');
+        if (!res.ok) return [];
+        return res.json();
+      } catch {
+        return [];
+      }
+    },
+    retry: false,
   });
 
-  const { data: tickets = [], isLoading } = useQuery<SupportTicket[]>({
+  const { data: tickets = [], isLoading, error: ticketsError } = useQuery<SupportTicket[]>({
     queryKey: [`/api/users/${userId}/tickets`],
     queryFn: async () => {
       if (!userId) return [];
       const res = await fetch(`/api/users/${userId}/tickets`);
-      if (!res.ok) throw new Error('Failed to fetch tickets');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to fetch tickets');
+      }
       return res.json();
     },
     enabled: !!userId,
+    retry: 1,
   });
 
   const handleCreateTicket = async () => {
@@ -226,6 +235,26 @@ export default function Support() {
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+        ) : ticketsError ? (
+          <div className="p-6">
+            <Card className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-8 shadow-sm">
+              <div className="text-center space-y-3">
+                <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+                <p className="text-red-600 dark:text-red-400 font-medium">Could not load tickets</p>
+                <p className="text-red-500 dark:text-red-500 text-sm">
+                  Please try again later. If this keeps happening, contact us on Telegram.
+                </p>
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 border-red-300 text-red-600"
+                  onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/tickets`] })}
+                >
+                  Try Again
+                </Button>
+              </div>
+            </Card>
           </div>
         ) : tickets.length === 0 ? (
           <div className="p-6">
