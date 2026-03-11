@@ -2260,21 +2260,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const tickets = await storage.listUserTickets(parseInt(req.params.userId));
       res.json(tickets);
-    } catch (error: any) {
-      console.error("[Tickets] Failed to fetch user tickets:", error?.message || error);
-      res.json([]);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tickets" });
     }
   });
 
   app.post("/api/tickets", async (req, res) => {
     try {
-      console.log("[Tickets] Creating ticket for user:", req.body.userId, "subject:", req.body.subject);
       const ticket = await storage.createSupportTicket(req.body);
-      console.log("[Tickets] Ticket created, id:", ticket.id);
       res.json(ticket);
-    } catch (error: any) {
-      console.error("[Tickets] Failed to create ticket:", error?.message || error);
-      res.status(500).json({ error: "Failed to create ticket. Please try again." });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create ticket" });
     }
   });
 
@@ -2352,9 +2348,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activeOnly = req.query.active === 'true';
       const categories = await storage.listSupportTicketCategories(activeOnly);
       res.json(categories);
-    } catch (error: any) {
-      console.error("[Tickets] Failed to fetch categories:", error?.message || error);
-      res.json([]);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch ticket categories" });
     }
   });
 
